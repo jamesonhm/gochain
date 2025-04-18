@@ -14,21 +14,39 @@ import (
 )
 
 const (
-	API_URL     = "https://api.tastyworks.com"
-	SANDBOX_URL = "https://api.cert.tastyworks.com"
+	API_URL      = "https://api.tastyworks.com"
+	SANDBOX_URL  = "https://api.cert.tastyworks.com"
+	BACKTEST_URL = "https://backtester.vast.tastyworks.com"
+)
+
+type TastyEnv string
+
+const (
+	TastyProd TastyEnv = "PROD"
+	TastySB   TastyEnv = "SANDBOX"
+)
+
+type AuthReq bool
+
+const (
+	noAuth AuthReq = false
+	auth   AuthReq = true
 )
 
 type TastyAPI struct {
 	baseurl    string
-	authToken  *string
+	session    *Session
 	httpClient *http.Client
 	uriBuilder *uri.URIBuilder
 	limiter    *rate.Limiter
 }
 
-func New(timeout time.Duration, rate_period time.Duration, rate_count int, sb bool) *TastyAPI {
-	base_url := API_URL
-	if sb {
+func New(timeout time.Duration, rate_period time.Duration, rate_count int, env TastyEnv) *TastyAPI {
+	var base_url string
+	switch env {
+	case TastyProd:
+		base_url = API_URL
+	case TastySB:
 		base_url = SANDBOX_URL
 	}
 	return &TastyAPI{
@@ -50,7 +68,7 @@ func (c *TastyAPI) encodePath(path string, params any) string {
 func (c *TastyAPI) request(
 	ctx context.Context,
 	method string,
-	auth bool,
+	auth AuthReq,
 	path string,
 	params,
 	payload,
@@ -61,17 +79,17 @@ func (c *TastyAPI) request(
 		return err
 	}
 
-	if auth && c.authToken == nil {
+	if auth && c.session.Data.SessionToken == nil {
 		return fmt.Errorf("invalid session")
 	}
 
-	body, err := json.Marshal(payload)
+	body, err := json.MarshalIndent(payload, "", "  ")
 	if err != nil {
 		return fmt.Errorf("error marshaling payload: %w", err)
 	}
+	fmt.Println("request payload:", string(body))
 
-	encPath := c.encodePath(path, params)
-	fullURL := c.baseurl + encPath
+	fullURL := c.encodePath(path, params)
 	slog.LogAttrs(ctx, slog.LevelInfo, "TastyTrade Call", slog.String("URI", fullURL))
 
 	req, err := http.NewRequestWithContext(ctx, method, fullURL, bytes.NewBuffer(body))
@@ -80,9 +98,10 @@ func (c *TastyAPI) request(
 	}
 
 	if auth {
-		req.Header.Add("Authorization", *c.authToken)
+		req.Header.Add("Authorization", *c.session.Data.SessionToken)
 	}
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("User-Agent", "gochain-client/0.1")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -91,10 +110,10 @@ func (c *TastyAPI) request(
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
-		return fmt.Errorf("client error occurred, status code: %d, err: %w", resp.StatusCode, err)
+		return fmt.Errorf("client error occurred, status code: %d", resp.StatusCode)
 	}
 	if resp.StatusCode >= 500 {
-		return fmt.Errorf("server error occurred, status code: %d, err: %w", resp.StatusCode, err)
+		return fmt.Errorf("server error occurred, status code: %d", resp.StatusCode)
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(response); err != nil {
@@ -102,4 +121,11 @@ func (c *TastyAPI) request(
 	}
 
 	return nil
+}
+
+func (c *TastyAPI) GetUser() string {
+	if c.session == nil {
+		return "NOT LOGGED IN"
+	}
+	return *c.session.Data.User.Username
 }

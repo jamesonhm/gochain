@@ -1,8 +1,7 @@
 package tasty
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -13,41 +12,37 @@ const (
 )
 
 type User struct {
-	Email      string `json:"email"`
-	Username   string `json:"username"`
-	Externalid string `json:"external-id"`
+	Email      *string `json:"email"`
+	Username   *string `json:"username"`
+	Externalid *string `json:"external-id"`
 }
 
 type Data struct {
-	User              User      `json:"user"`
-	SessionToken      string    `json:"session-token"`
+	User              *User     `json:"user"`
+	SessionToken      *string   `json:"session-token"`
 	SessionExpiration time.Time `json:"session-expiration"`
 }
 
-type AuthResponse struct {
-	Data    Data   `json:"data"`
-	Context string `json:"context"`
+type Session struct {
+	Data    *Data   `json:"data"`
+	Context *string `json:"context"`
 }
 
-func (c *TastyAPI) Authenticate(uname, pass string) error {
+type LoginInfo struct {
+	Login         string `json:"login"`
+	Password      string `json:"password,omitempty"`
+	RememberMe    bool   `json:"remember-me,omitempty"`
+	RememberToken string `json:"remember-token,omitempty"`
+}
+
+func (c *TastyAPI) CreateSession(ctx context.Context, login LoginInfo) error {
 	authURL := fmt.Sprintf("%s%s", c.baseurl, SessionURL)
-	authData := map[string]string{
-		"login":    uname,
-		"password": pass,
-	}
-	authBody, err := json.Marshal(authData)
+
+	session := &Session{}
+	err := c.request(ctx, http.MethodPost, noAuth, authURL, nil, login, session)
 	if err != nil {
 		return err
 	}
-
-	resp, err := c.httpClient.Post(authURL, "application/json", bytes.NewReader(authBody))
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-
-	}
+	c.session = session
 	return nil
 }

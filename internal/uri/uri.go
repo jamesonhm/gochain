@@ -20,6 +20,9 @@ func New() *URIBuilder {
 }
 
 func (b *URIBuilder) EncodeParams(path string, params any) string {
+	if params == nil {
+		return path
+	}
 	epath := encodePath(path, params)
 	equeries := encodeQuery(params)
 	if len(equeries) != 0 {

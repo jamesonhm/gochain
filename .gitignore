@@ -1,0 +1,15 @@
+# Ignore all
+*
+# Unignore files with extensions
+!*.*
+# Unignore directories
+!*/
+# Unignore makefile
+!Makefile
+!Dockerfile
+# Ignore bin dir
+bin/*
+# ignore .git dir
+.git/*
+# ignore .env
+*.env
