@@ -39,6 +39,16 @@ func main() {
 	accts, err := tastyClient.GetAccounts(ctx)
 	fmt.Printf("%+v\n", accts)
 
+	acctParams := tasty.AcctNumParams{
+		AcctNum: accts.Data.Items[0].Account.AccountNumber,
+	}
+
+	acct, err := tastyClient.GetAccount(ctx, &acctParams)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("%+v\n", acct)
+
 	//bt, err := tastyClient.BacktestSession(ctx)
 	//if err != nil {
 	//	logger.LogAttrs(ctx, slog.LevelError, "Tasty Backtest", slog.String("error creating session", err.Error()))
