@@ -49,6 +49,26 @@ func main() {
 	}
 	fmt.Printf("%+v\n", acct)
 
+	status, err := tastyClient.GetAccountTradingStatus(ctx, &acctParams)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("%+v\n", status)
+
+	posParams := tasty.AccountPositionParams{
+		AccountNumber: accts.Data.Items[0].Account.AccountNumber,
+	}
+	pos, err := tastyClient.GetAccountPositions(ctx, &posParams)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("%+v\n", pos)
+
+	bal, err := tastyClient.GetAccountBalances(ctx, &acctParams)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("%+v\n", bal)
 	//bt, err := tastyClient.BacktestSession(ctx)
 	//if err != nil {
 	//	logger.LogAttrs(ctx, slog.LevelError, "Tasty Backtest", slog.String("error creating session", err.Error()))
