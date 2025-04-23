@@ -40,7 +40,7 @@ func main() {
 	fmt.Printf("%+v\n", accts)
 
 	acctParams := tasty.AcctNumParams{
-		AcctNum: accts.Data.Items[0].Account.AccountNumber,
+		AcctNum: accts[0].Account.AccountNumber,
 	}
 
 	acct, err := tastyClient.GetAccount(ctx, &acctParams)
@@ -56,7 +56,7 @@ func main() {
 	fmt.Printf("%+v\n", status)
 
 	posParams := tasty.AccountPositionParams{
-		AccountNumber: accts.Data.Items[0].Account.AccountNumber,
+		AccountNumber: accts[0].Account.AccountNumber,
 	}
 	pos, err := tastyClient.GetAccountPositions(ctx, &posParams)
 	if err != nil {
@@ -69,6 +69,31 @@ func main() {
 		fmt.Println(err)
 	}
 	fmt.Printf("%+v\n", bal)
+
+	act := true
+	syms := []string{"XSP 250423P00529000"}
+	sym := "XSP 250423C00529000"
+	expd := false
+	eqOpParams := tasty.EquityOptionsParams{
+		Active:      &act,
+		Symbol:      &syms,
+		WithExpired: &expd,
+	}
+	eqOpts, err := tastyClient.GetEquityOptions(ctx, &eqOpParams)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("%+v\n", eqOpts)
+
+	eqOpSym := tasty.EquityOptionSymbol{
+		Symbol: sym,
+		Active: &act,
+	}
+	eqOpt, err := tastyClient.GetEquityOption(ctx, &eqOpSym)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("%+v\n", eqOpt)
 	//bt, err := tastyClient.BacktestSession(ctx)
 	//if err != nil {
 	//	logger.LogAttrs(ctx, slog.LevelError, "Tasty Backtest", slog.String("error creating session", err.Error()))

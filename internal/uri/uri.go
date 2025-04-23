@@ -76,13 +76,6 @@ func formatFieldValue(field reflect.Value) string {
 		field = field.Elem()
 	}
 
-	//switch typedValue := field.Interface().(type) {
-	//case pmodels.Date:
-	//	return typedValue.PathFormat()
-	//case emodels.NumericCIK:
-	//	return typedValue.Pad()
-	//}
-
 	switch field.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16:
 		return fmt.Sprintf("%d", field.Int())
