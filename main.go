@@ -73,28 +73,30 @@ func main() {
 		fmt.Printf("%+v\n", bal)
 	}
 
-	chain, err := tastyClient.GetOptionCompact(ctx, "SPY")
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Printf("%+v\n", chain)
-	}
-
-	//act := true
-	//syms := []string{"XSP 250430P00529000"}
-	//sym := "XSP 250430C00529000"
-	//expd := false
-	//eqOpParams := tasty.EquityOptionsParams{
-	//	Active:      &act,
-	//	Symbol:      syms,
-	//	WithExpired: &expd,
-	//}
-	//eqOpts, err := tastyClient.GetEquityOptions(ctx, &eqOpParams)
+	//chain, err := tastyClient.GetOptionCompact(ctx, "SPY")
 	//if err != nil {
 	//	fmt.Println(err)
 	//} else {
-	//	fmt.Printf("%+v\n", eqOpts)
+	//	fmt.Printf("%+v\n", chain)
 	//}
+
+	//act := true
+	//syms := []string{"XSP 250430P00529000"}
+	eoSymbol := tasty.EquityOptionsSymbology{
+		Symbol:     "XSP",
+		OptionType: tasty.Call,
+		Strike:     550,
+		Expiration: time.Date(2025, 04, 25, 0, 0, 0, 0, time.UTC),
+	}
+	eqOpParams := tasty.EquityOptionsParams{
+		Symbols: []string{eoSymbol.Build()},
+	}
+	eqOpts, err := tastyClient.GetEquityOptions(ctx, &eqOpParams)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("%+v\n", eqOpts)
+	}
 
 	//eqOpSym := tasty.EquityOptionSymbol{
 	//	Active: &act,
