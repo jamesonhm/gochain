@@ -51,3 +51,70 @@ type EquityOption struct {
 	OldSecurityNumber              string          `json:"old-security-number"`
 	StreamerSymbol                 string          `json:"streamer-symbol"`
 }
+
+type TickSize struct {
+	Value     decimal.Decimal `json:"value"`
+	Threshold decimal.Decimal `json:"threshold"`
+	Symbol    string          `json:"symbol"`
+}
+
+type Deliverable struct {
+	ID              int             `json:"id"`
+	RootSymbol      string          `json:"root-symbol"`
+	DeliverableType string          `json:"deliverable-type"`
+	Description     string          `json:"description"`
+	Amount          decimal.Decimal `json:"amount"`
+	Symbol          string          `json:"symbol"`
+	InstrumentType  InstrumentType  `json:"instrument-type"`
+	Percent         decimal.Decimal `json:"percent"`
+}
+
+type Expiration struct {
+	ExpirationType   string   `json:"expiration-type"`
+	ExpirationDate   string   `json:"expiration-date"`
+	DaysToExpiration int      `json:"days-to-expiration"`
+	SettlementType   string   `json:"settlement-type"`
+	Strikes          []Strike `json:"strikes"`
+}
+
+type Strike struct {
+	StrikePrice        decimal.Decimal `json:"strike-price"`
+	Call               string          `json:"call"`
+	CallStreamerSymbol string          `json:"call-streamer-symbol"`
+	Put                string          `json:"put"`
+	PutStreamerSymbol  string          `json:"put-streamer-symbol"`
+}
+
+type NestedOptionChainsResponse struct {
+	Data struct {
+		NestedOptionChains []NestedOptionChains `json:"items"`
+	} `json:"data"`
+}
+
+type NestedOptionChains struct {
+	UnderlyingSymbol  string        `json:"underlying-symbol"`
+	RootSymbol        string        `json:"root-symbol"`
+	OptionChainType   string        `json:"option-chain-type"`
+	SharesPerContract int           `json:"shares-per-contract"`
+	TickSizes         []TickSize    `json:"tick-sizes"`
+	Deliverables      []Deliverable `json:"deliverables"`
+	Expirations       []Expiration  `json:"expirations"`
+}
+
+type CompactOptionChainsResponse struct {
+	Data struct {
+		CompactOptionChains []CompactOptionChains `json:"items"`
+	} `json:"data"`
+}
+
+type CompactOptionChains struct {
+	UnderlyingSymbol  string        `json:"underlying-symbol"`
+	RootSymbol        string        `json:"root-symbol"`
+	OptionChainType   string        `json:"option-chain-type"`
+	SettlementType    string        `json:"settlement-type"`
+	SharesPerContract int           `json:"shares-per-contract"`
+	ExpirationType    string        `json:"expiration-type"`
+	Deliverables      []Deliverable `json:"deliverables"`
+	Symbols           []string      `json:"symbols"`
+	StreamerSymbols   []string      `json:"streamer-symbols"`
+}
