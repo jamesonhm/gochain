@@ -3,6 +3,7 @@ package tasty
 import (
 	"context"
 	"net/http"
+	"strings"
 )
 
 const (
@@ -28,30 +29,34 @@ func (c *TastyAPI) GetAccounts(ctx context.Context) ([]AccountContainer, error) 
 	return res.Data.Items, err
 }
 
-func (c *TastyAPI) GetAccount(ctx context.Context, params *AcctNumParams) (*AccountResponse, error) {
+func (c *TastyAPI) GetAccount(ctx context.Context, acctNum string) (*AccountResponse, error) {
 	res := &AccountResponse{}
 	path := c.baseurl + AccountPath
-	err := c.request(ctx, http.MethodGet, auth, path, params, nil, res)
+	path = strings.ReplaceAll(path, "{account_number}", acctNum)
+	err := c.request(ctx, http.MethodGet, auth, path, nil, nil, res)
 	return res, err
 }
 
-func (c *TastyAPI) GetAccountTradingStatus(ctx context.Context, params *AcctNumParams) (*AccountTradingStatus, error) {
+func (c *TastyAPI) GetAccountTradingStatus(ctx context.Context, acctNum string) (*AccountTradingStatus, error) {
 	res := &AccountTradingStatusResponse{}
 	path := c.baseurl + AccountPath
-	err := c.request(ctx, http.MethodGet, auth, path, params, nil, res)
+	path = strings.ReplaceAll(path, "{account_number}", acctNum)
+	err := c.request(ctx, http.MethodGet, auth, path, nil, nil, res)
 	return &res.Data, err
 }
 
-func (c *TastyAPI) GetAccountPositions(ctx context.Context, params *AccountPositionParams) ([]AccountPosition, error) {
+func (c *TastyAPI) GetAccountPositions(ctx context.Context, acctNum string, params *AccountPositionParams) ([]AccountPosition, error) {
 	res := &AccountPositionResponse{}
 	path := c.baseurl + AccountPositionsPath
+	path = strings.ReplaceAll(path, "{account_number}", acctNum)
 	err := c.request(ctx, http.MethodGet, auth, path, params, nil, res)
 	return res.Data.AccountPositions, err
 }
 
-func (c *TastyAPI) GetAccountBalances(ctx context.Context, params *AcctNumParams) (*AccountBalances, error) {
+func (c *TastyAPI) GetAccountBalances(ctx context.Context, acctNum string) (*AccountBalances, error) {
 	res := &AccountBalanceResponse{}
 	path := c.baseurl + AccountBalancesPath
-	err := c.request(ctx, http.MethodGet, auth, path, params, nil, res)
+	path = strings.ReplaceAll(path, "{account_number}", acctNum)
+	err := c.request(ctx, http.MethodGet, auth, path, nil, nil, res)
 	return &res.AccountBalances, err
 }

@@ -3,6 +3,7 @@ package tasty
 import (
 	"context"
 	"net/http"
+	"strings"
 )
 
 const (
@@ -17,9 +18,10 @@ func (c *TastyAPI) GetEquityOptions(ctx context.Context, params *EquityOptionsPa
 	return res.Data.EquityOptions, err
 }
 
-func (c *TastyAPI) GetEquityOption(ctx context.Context, params *EquityOptionSymbol) (*EquityOption, error) {
+func (c *TastyAPI) GetEquityOption(ctx context.Context, symbol string, params *EquityOptionSymbol) (*EquityOption, error) {
 	res := &EquityOptionResponse{}
 	path := c.baseurl + InstrumentOptionPath
+	path = strings.ReplaceAll(path, "{symbol}", symbol)
 	err := c.request(ctx, http.MethodGet, auth, path, params, nil, res)
 	return &res.EquityOption, err
 }

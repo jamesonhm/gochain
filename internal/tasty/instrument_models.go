@@ -7,15 +7,14 @@ import (
 )
 
 type EquityOptionsParams struct {
-	Active      *bool    `query:"active"`
-	Symbol      []string `query:"symbol[]"`
-	WithExpired *bool    `query:"with-expired"`
+	Active      *bool    `url:"active"`
+	Symbol      []string `url:"symbol[]"`
+	WithExpired *bool    `url:"with-expired"`
 }
 
 type EquityOptionSymbol struct {
 	// the symbol of the equity option using OCC symbology, i.e. FB 180629C00200000
-	Symbol string `path:"symbol"`
-	Active *bool  `query:"active"`
+	Active *bool `url:"active"`
 }
 
 type EquityOptionsResponse struct {

@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/go-querystring/query"
 	"github.com/jamesonhm/gochain/internal/rate"
-	"github.com/jamesonhm/gochain/internal/uri"
 )
 
 const (
@@ -22,8 +22,8 @@ const (
 type TastyEnv string
 
 const (
-	TastyProd TastyEnv = "PROD"
-	TastySB   TastyEnv = "SANDBOX"
+	TastyProd    TastyEnv = "PROD"
+	TastySandbox TastyEnv = "SANDBOX"
 )
 
 type AuthReq bool
@@ -37,8 +37,8 @@ type TastyAPI struct {
 	baseurl    string
 	session    *Session
 	httpClient *http.Client
-	uriBuilder *uri.URIBuilder
-	limiter    *rate.Limiter
+	//uriBuilder *uri.URIBuilder
+	limiter *rate.Limiter
 }
 
 func New(timeout time.Duration, rate_period time.Duration, rate_count int, env TastyEnv) *TastyAPI {
@@ -46,7 +46,7 @@ func New(timeout time.Duration, rate_period time.Duration, rate_count int, env T
 	switch env {
 	case TastyProd:
 		base_url = API_URL
-	case TastySB:
+	case TastySandbox:
 		base_url = SANDBOX_URL
 	}
 	return &TastyAPI{
@@ -54,16 +54,16 @@ func New(timeout time.Duration, rate_period time.Duration, rate_count int, env T
 		httpClient: &http.Client{
 			Timeout: timeout,
 		},
-		uriBuilder: uri.New(),
-		limiter:    rate.New(rate_period, rate_count),
+		//uriBuilder: uri.New(),
+		limiter: rate.New(rate_period, rate_count),
 	}
 }
 
 // encodePath takes the path format string and embeds the path params and adds any query params
-func (c *TastyAPI) encodePath(path string, params any) string {
-	encPath := c.uriBuilder.EncodeParams(path, params)
-	return encPath
-}
+//func (c *TastyAPI) encodePath(path string, params any) string {
+//	encPath := c.uriBuilder.EncodeParams(path, params)
+//	return encPath
+//}
 
 func (c *TastyAPI) request(
 	ctx context.Context,
@@ -89,10 +89,7 @@ func (c *TastyAPI) request(
 	}
 	fmt.Println("request payload:", string(body))
 
-	fullURL := c.encodePath(path, params)
-	slog.LogAttrs(ctx, slog.LevelInfo, "TastyTrade Call", slog.String("URI", fullURL))
-
-	req, err := http.NewRequestWithContext(ctx, method, fullURL, bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, method, path, bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
@@ -102,6 +99,16 @@ func (c *TastyAPI) request(
 	}
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("User-Agent", "gochain-client/0.1")
+
+	//fullURL := c.encodePath(path, params)
+	if params != nil {
+		qstring, qerr := query.Values(params)
+		if qerr != nil {
+			return fmt.Errorf("Query params error: %v", qerr)
+		}
+		req.URL.RawQuery = qstring.Encode()
+	}
+	slog.LogAttrs(ctx, slog.LevelInfo, "TastyTrade Call", slog.String("URL", req.URL.String()))
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

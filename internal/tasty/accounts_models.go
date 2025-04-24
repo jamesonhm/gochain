@@ -178,20 +178,19 @@ type AccountTradingStatus struct {
 }
 
 type AccountPositionParams struct {
-	AccountNumber string `path:"account_number"`
 	// An array of underlying symbol(s) for positions (e.g. underlying-symbol[]={value1}&underlying-symbol[]={value2})
-	UnderlyingSymbol []string `query:"underlying-symbol[]"`
+	UnderlyingSymbol []string `url:"underlying-symbol[]"`
 	// A single symbol, stock ticker symbol (AAPL), OCC Option Symbon (AAPL 191004P00275000), TW Future symbol, TW Future Option Symbol
-	Symbol *string `query:"symbol"`
+	Symbol *string `url:"symbol"`
 	// The type of instrument
-	InstrumentType         *InstrumentType `query:"instrument-type"`
-	IncludeClosedPositions *bool           `query:"include-closed-positions"`
-	UnderlyingProductCode  *string         `query:"underlying-product-code"`
-	PartitionKeys          []string        `query:"partition-keys[]"`
+	InstrumentType         *InstrumentType `url:"instrument-type"`
+	IncludeClosedPositions *bool           `url:"include-closed-positions"`
+	UnderlyingProductCode  *string         `url:"underlying-product-code"`
+	PartitionKeys          []string        `url:"partition-keys[]"`
 	// Returns net positions grouped by instrument type and symbol
-	NetPositions *bool `query:"net-positions"`
+	NetPositions *bool `url:"net-positions"`
 	// Include current quote mark (note: can decrease performance)
-	IncludeMarks *bool `query:"include-marks"`
+	IncludeMarks *bool `url:"include-marks"`
 }
 
 type AccountPositionResponse struct {
