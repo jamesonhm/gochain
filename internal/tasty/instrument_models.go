@@ -13,11 +13,6 @@ type EquityOptionsParams struct {
 	WithExpired *bool    `url:"with-expired,omitempty"`
 }
 
-type EquityOptionSymbol struct {
-	// the symbol of the equity option using OCC symbology, i.e. FB 180629C00200000
-	Active *bool `url:"active"`
-}
-
 type EquityOptionsResponse struct {
 	Data struct {
 		EquityOptions []EquityOption `json:"items"`
