@@ -33,8 +33,8 @@ func main() {
 	}
 	logger.Info("Tasty Session", "tasty user", tastyClient.GetUser())
 
-	customer, err := tastyClient.GetCustomer(ctx)
-	fmt.Println(customer)
+	//customer, err := tastyClient.GetCustomer(ctx)
+	//fmt.Println(customer)
 
 	accts, err := tastyClient.GetAccounts(ctx)
 	if err != nil {
@@ -45,26 +45,26 @@ func main() {
 
 	acctNum := accts[0].Account.AccountNumber
 
-	acct, err := tastyClient.GetAccount(ctx, acctNum)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Printf("%+v\n", acct)
-	}
+	//acct, err := tastyClient.GetAccount(ctx, acctNum)
+	//if err != nil {
+	//	fmt.Println(err)
+	//} else {
+	//	fmt.Printf("%+v\n", acct)
+	//}
 
-	status, err := tastyClient.GetAccountTradingStatus(ctx, acctNum)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Printf("%+v\n", status)
-	}
+	//status, err := tastyClient.GetAccountTradingStatus(ctx, acctNum)
+	//if err != nil {
+	//	fmt.Println(err)
+	//} else {
+	//	fmt.Printf("%+v\n", status)
+	//}
 
-	pos, err := tastyClient.GetAccountPositions(ctx, acctNum, nil)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Printf("%+v\n", pos)
-	}
+	//pos, err := tastyClient.GetAccountPositions(ctx, acctNum, nil)
+	//if err != nil {
+	//	fmt.Println(err)
+	//} else {
+	//	fmt.Printf("%+v\n", pos)
+	//}
 
 	bal, err := tastyClient.GetAccountBalances(ctx, acctNum)
 	if err != nil {
@@ -82,21 +82,21 @@ func main() {
 
 	//act := true
 	//syms := []string{"XSP 250430P00529000"}
-	eoSymbol := tasty.EquityOptionsSymbology{
-		Symbol:     "XSP",
-		OptionType: tasty.Call,
-		Strike:     550,
-		Expiration: time.Date(2025, 04, 25, 0, 0, 0, 0, time.UTC),
-	}
-	eqOpParams := tasty.EquityOptionsParams{
-		Symbols: []string{eoSymbol.Build()},
-	}
-	eqOpts, err := tastyClient.GetEquityOptions(ctx, &eqOpParams)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Printf("%+v\n", eqOpts)
-	}
+	//eoSymbol := tasty.EquityOptionsSymbology{
+	//	Symbol:     "XSP",
+	//	OptionType: tasty.Call,
+	//	Strike:     550,
+	//	Expiration: time.Date(2025, 04, 25, 0, 0, 0, 0, time.UTC),
+	//}
+	//eqOpParams := tasty.EquityOptionsParams{
+	//	Symbols: []string{eoSymbol.Build()},
+	//}
+	//eqOpts, err := tastyClient.GetEquityOptions(ctx, &eqOpParams)
+	//if err != nil {
+	//	fmt.Println(err)
+	//} else {
+	//	fmt.Printf("%+v\n", eqOpts)
+	//}
 
 	//eqOpSym := tasty.EquityOptionSymbol{
 	//	Active: &act,
@@ -107,6 +107,13 @@ func main() {
 	//} else {
 	//	fmt.Printf("%+v\n", eqOpt)
 	//}
+
+	streamer, err := tastyClient.GetQuoteStreamerToken(ctx)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("%+v\n", streamer)
+	}
 }
 
 func mustEnv(key string) string {
