@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"sync"
 	"time"
 
+	"github.com/jamesonhm/gochain/internal/dxlink"
 	"github.com/jamesonhm/gochain/internal/tasty"
 	"github.com/joho/godotenv"
 )
@@ -114,6 +116,22 @@ func main() {
 	} else {
 		fmt.Printf("%+v\n", streamer)
 	}
+
+	streamClient := dxlink.New(streamer.DXLinkURL)
+	//streamClient := dxlink.New("wss://demo.dxfeed.com/dxlink-ws")
+	err = streamClient.Connect()
+	if err != nil {
+		fmt.Println(err)
+	}
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func(wg *sync.WaitGroup) {
+		defer wg.Done()
+		time.Sleep(5 * time.Second)
+		streamClient.Close()
+	}(&wg)
+	wg.Wait()
+
 }
 
 func mustEnv(key string) string {

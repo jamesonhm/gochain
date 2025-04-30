@@ -9,4 +9,7 @@ require (
 	github.com/shopspring/decimal v1.4.0
 )
 
-require github.com/coder/websocket v1.8.13 // indirect
+require (
+	github.com/coder/websocket v1.8.13 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
+)
