@@ -117,12 +117,17 @@ func main() {
 		fmt.Printf("%+v\n", streamer)
 	}
 
-	streamClient := dxlink.New(streamer.DXLinkURL)
+	streamClient := dxlink.New(ctx, streamer.DXLinkURL, streamer.Token)
 	//streamClient := dxlink.New("wss://demo.dxfeed.com/dxlink-ws")
+
+	// register callback for setting up channels and feeds (called after Authorized)
+	// register calbacks for processing data (called at each msgType)
+
 	err = streamClient.Connect()
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func(wg *sync.WaitGroup) {

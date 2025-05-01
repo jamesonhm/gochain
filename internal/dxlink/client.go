@@ -25,34 +25,15 @@ type DxLinkClient struct {
 	cancel         context.CancelFunc
 }
 
-// MessageCallback is a function type for handling received messages
-type MessageCallback func(message []byte)
-
-type SetupMsg struct {
-	Type                   string `json:"type"`
-	Channel                int    `json:"channel"`
-	KeepAliveTimeout       int    `json:"keepaliveTimeout"`
-	AcceptKeepAliveTimeout int    `json:"acceptKeepaliveTimeout"`
-	Version                string `json:"version"`
-}
-
-// QuoteData represents quote data received from the server
-type QuoteData struct {
-	EventSymbol string  `json:"eventSymbol"`
-	BidPrice    float64 `json:"bidPrice"`
-	AskPrice    float64 `json:"askPrice"`
-	LastPrice   float64 `json:"lastPrice"`
-	Volume      int64   `json:"volume"`
-}
-
-func New(url string) *DxLinkClient {
-	ctx, cancel := context.WithCancel(context.Background())
+func New(ctx context.Context, url string, token string) *DxLinkClient {
+	ctx, cancel := context.WithCancel(ctx)
 	return &DxLinkClient{
 		url:           url,
 		subscriptions: make(map[string]bool),
 		callbacks:     make(map[string]MessageCallback),
 		ctx:           ctx,
 		cancel:        cancel,
+		token:         token,
 	}
 }
 
@@ -140,8 +121,10 @@ func (c *DxLinkClient) sendMessage(msg interface{}) error {
 	if err != nil {
 		return fmt.Errorf("error marshaling message: %w", err)
 	}
-	fd, _ := json.MarshalIndent(msg, "", "  ")
-	fmt.Printf("sent message: %s", string(fd))
+
+	slog.Info("CLIENT ->", "", msg)
+	//fd, _ := json.MarshalIndent(msg, "", "  ")
+	//fmt.Printf("sent message: %s\n", string(fd))
 
 	err = c.conn.WriteMessage(websocket.TextMessage, data)
 	if err != nil {
@@ -166,7 +149,7 @@ func (c *DxLinkClient) handleMessages() {
 			_, message, err := c.conn.ReadMessage()
 			if err != nil {
 				slog.Error("Error reading message", "err", err)
-				//TODO: try reconnect
+				// TODO: try reconnect
 				continue
 			}
 
@@ -182,40 +165,66 @@ func (c *DxLinkClient) processMessage(message []byte) {
 		return
 	}
 
-	fmt.Println("from process message handler")
-	fd, _ := json.MarshalIndent(message, "", "  ")
-	fmt.Println(string(fd))
-
 	msgType, ok := msgMap["type"].(string)
 	if !ok {
-		if _, hasData := msgMap["data"]; hasData {
-			c.handleDataMessage(message)
-			return
-		}
 		slog.Info("Unknown message format", "msg", string(message))
 		return
 	}
 
 	switch msgType {
-	case "CONNECTED":
-		slog.Info("Connected to the DxLink server")
-	case "AUTHENTICATED":
-		slog.Info("Successfully authenticated")
-	case "FEED_SUBSCRIBED":
-		slog.Info("Successfully subscribed to feed")
-	case "ERROR":
-		slog.Info("Error from server", "err", msgMap)
-	default:
-		c.mu.Lock()
-		callback, exists := c.callbacks[msgType]
-		c.mu.Unlock()
-
-		if exists {
-			callback(message)
-		} else {
-			c.handleDataMessage(message)
+	case string(Setup):
+		resp := SetupMsg{}
+		err := json.Unmarshal(message, &resp)
+		if err != nil {
+			slog.Error("unable to unmarshal setup msg")
+			return
 		}
+		slog.Info("SERVER <-", "", resp)
+	case string(AuthState):
+		resp := AuthStateMsg{}
+		err := json.Unmarshal(message, &resp)
+		if err != nil {
+			slog.Error("unable to unmarshal auth state msg")
+			return
+		}
+		slog.Info("SERVER <-", "", resp)
+		if resp.State == "UNAUTHORIZED" {
+			authMsg := AuthMsg{
+				Type:    Auth,
+				Channel: 0,
+				Token:   c.token,
+			}
+			c.sendMessage(authMsg)
+		} else if resp.State == "AUTHORIZED" {
+			slog.Info("this is where we setup the new channels and feeds")
+		}
+	case string(ChannelOpened):
+		slog.Info("Successfully subscribed to feed")
+	case string(Error):
+		resp := ErrorMsg{}
+		err := json.Unmarshal(message, &resp)
+		if err != nil {
+			slog.Error("unable to unmarshal error msg")
+			return
+		}
+		slog.Info("SERVER <-", "", resp)
+	default:
+		//c.mu.Lock()
+		//callback, exists := c.callbacks[msgType]
+		//c.mu.Unlock()
+		//if exists {
+		//	callback(message)
+		//} else {
+		//	c.handleDataMessage(message)
+		//}
+		//c.handleDataMessage(message)
+		slog.Info("Unknown message type", "msg", string(message))
 	}
+}
+
+func pprint(msg any) {
+	fd, _ := json.MarshalIndent(msg, "", "  ")
+	fmt.Println(string(fd))
 }
 
 func (c *DxLinkClient) handleDataMessage(message []byte) {
