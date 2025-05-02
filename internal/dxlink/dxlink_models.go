@@ -32,8 +32,8 @@ const (
 type MessageCallback func(message []byte)
 
 type ErrorMsg struct {
-	Channel int     `json:"channel"`
 	Type    MsgType `json:"type"`
+	Channel int     `json:"channel"`
 	Error   string  `json:"error"`
 	Message string  `json:"message"`
 }
@@ -47,19 +47,19 @@ type SetupMsg struct {
 }
 
 type AuthStateMsg struct {
-	Channel int     `json:"channel"`
 	Type    MsgType `json:"type"`
+	Channel int     `json:"channel"`
 	State   string  `json:"state"`
 	UserID  string  `json:"userId,omitempty"`
 }
 
 type AuthMsg struct {
-	Channel int     `json:"channel"`
 	Type    MsgType `json:"type"`
+	Channel int     `json:"channel"`
 	Token   string  `json:"token"`
 }
 
-type NewChannel struct {
+type ChannelReqRespMsg struct {
 	Type       MsgType        `json:"type"`
 	Channel    int            `json:"channel"`
 	Service    ChannelService `json:"service"`
@@ -67,7 +67,30 @@ type NewChannel struct {
 }
 
 type Parameters struct {
+	// Allowed values: "HISTORY", "TICKER", "STREAM", "AUTO"
 	Contract ChannelContract `json:"contract"`
+}
+
+type FeedSubscriptionMsg struct {
+	Type    MsgType       `json:"type"`
+	Channel int           `json:"channel"`
+	Add     []FeedSubItem `json:"add,omitempty"`
+	Remove  []FeedSubItem `json:"remove,omitempty"`
+	// Remove all subs when true
+	Reset bool `json:"reset,omitempty"`
+}
+
+type FeedSubItem struct {
+	// FeedRegularSubscription, these are the base fields that are required
+	// Type example vals: "Quote", "Trade", "Candle"
+	// Symbol example vals: "*" wildcard for "STREAM" and "AUTO" contracts only, or "symbol"
+	Type   string `json:"type"`
+	Symbol string `json:"symbol"`
+	// FeedOrderBookSubscription adds a source field,
+	// see https://kb.dxfeed.com/en/data-model/market-events/qd-model-of-market-events.html#order-x
+	Source string `json:"source,omitempty"`
+	// FeedTimeSeriesSubscription adds a fromTime field, unix timestamp start time
+	FromTime int64 `json:"fromTime,omitempty"`
 }
 
 // QuoteData represents quote data received from the server

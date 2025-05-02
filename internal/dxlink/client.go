@@ -196,10 +196,24 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			}
 			c.sendMessage(authMsg)
 		} else if resp.State == "AUTHORIZED" {
-			slog.Info("this is where we setup the new channels and feeds")
+			slog.Info("this is where we look for a callback to setup the new channels and feeds")
 		}
 	case string(ChannelOpened):
-		slog.Info("Successfully subscribed to feed")
+		resp := ChannelReqRespMsg{}
+		err := json.Unmarshal(message, &resp)
+		if err != nil {
+			slog.Error("unable to unmarshal channel open msg")
+			return
+		}
+		slog.Info("SERVER <-", "", resp)
+	case string(FeedConfig):
+		resp := FeedConfigMsg{}
+		err := json.Unmarshal(message, &resp)
+		if err != nil {
+			slog.Error("unable to unmarshal feed config msg")
+			return
+		}
+		slog.Info("SERVER <-", resp)
 	case string(Error):
 		resp := ErrorMsg{}
 		err := json.Unmarshal(message, &resp)
