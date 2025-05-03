@@ -1,10 +1,13 @@
 package dxlink
 
+import "encoding/json"
+
 //import "log/slog"
 
 type MsgType string
 type ChannelContract string
 type ChannelService string
+type FeedDataFormat string
 
 const (
 	// Primary Message Types
@@ -26,6 +29,9 @@ const (
 	ChannelAuto    ChannelContract = "AUTO"
 	// channel service type
 	FeedService ChannelService = "FEED"
+	// Feed Data Format
+	FullFormat    FeedDataFormat = "FULL"
+	CompactFormat FeedDataFormat = "COMPACT"
 )
 
 // MessageCallback is a function type for handling received messages
@@ -93,11 +99,83 @@ type FeedSubItem struct {
 	FromTime int64 `json:"fromTime,omitempty"`
 }
 
+type FeedConfigMsg struct {
+	Type              MsgType         `json:"type"`
+	Channel           int             `json:"channel"`
+	AggregationPeriod int             `json:"aggregationPeriod"`
+	DataFormat        FeedDataFormat  `json:"dataFormat"`
+	EventFields       FeedEventFields `json:"eventFields,omitempty"`
+}
+
+type FeedEventFields struct {
+	Quote  []string `json:"Quote,omitempty"`
+	Trade  []string `json:"Trade,omitempty"`
+	Candle []string `json:"Candle,omitempty"`
+}
+
+type FeedDataMsg struct {
+	Type    MsgType           `json:"type"`
+	Channel int               `json:"channel"`
+	Data    ProcessedFeedData `json:"data"`
+}
+
+type ProcessedFeedData struct {
+	Quotes []QuoteData
+	Trades []TradeData
+}
+
 // QuoteData represents quote data received from the server
 type QuoteData struct {
-	EventSymbol string  `json:"eventSymbol"`
-	BidPrice    float64 `json:"bidPrice"`
-	AskPrice    float64 `json:"askPrice"`
-	LastPrice   float64 `json:"lastPrice"`
-	Volume      int64   `json:"volume"`
+	Symbol   string
+	Type     string
+	BidPrice float64
+	AskPrice float64
+}
+
+type TradeData struct {
+	Symbol string
+	Type   string
+	Price  float64
+	Volume float64
+}
+
+func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
+	var content []interface{}
+	if err := json.Unmarshal(data, &content); err != nil {
+		return err
+	}
+
+	for i := 0; i < len(content); i += 2 {
+		typeName, ok := content[i].(string)
+		if !ok || i+1 >= len(content) {
+			continue
+		}
+
+		values, ok := content[i+1].([]interface{})
+		if !ok {
+			continue
+		}
+
+		switch typeName {
+		case "Quote":
+			for j := 0; j < len(values); j += 4 {
+				if j+3 > len(values) {
+					break
+				}
+				symbol, _ := values[j].(string)
+				evtType, _ := values[j+1].(string)
+				askPrice, _ := values[j+2].(float64)
+				bidPrice, _ := values[j+3].(float64)
+
+				quote := QuoteData{
+					Symbol:   symbol,
+					Type:     evtType,
+					BidPrice: bidPrice,
+					AskPrice: askPrice,
+				}
+				d.Quotes = append(d.Quotes, quote)
+			}
+		}
+
+	}
 }
