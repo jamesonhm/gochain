@@ -1,8 +1,9 @@
 package dxlink
 
-import "encoding/json"
-
-//import "log/slog"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type MsgType string
 type ChannelContract string
@@ -15,10 +16,12 @@ const (
 	Setup            MsgType = "SETUP"
 	AuthState        MsgType = "AUTH_STATE"
 	Auth             MsgType = "AUTH"
+	KeepAlive        MsgType = "KEEPALIVE"
 	ChannelRequest   MsgType = "CHANNEL_REQUEST"
 	ChannelOpened    MsgType = "CHANNEL_OPENED"
-	FeedSubscription MsgType = "FEED_SUBSCRIPTION"
+	FeedSetup        MsgType = "FEED_SETUP"
 	FeedConfig       MsgType = "FEED_CONFIG"
+	FeedSubscription MsgType = "FEED_SUBSCRIPTION"
 	FeedData         MsgType = "FEED_DATA"
 	ChannelCancel    MsgType = "CHANNEL_CANCEL"
 	ChannelClosed    MsgType = "CHANNEL_CLOSED"
@@ -65,6 +68,11 @@ type AuthMsg struct {
 	Token   string  `json:"token"`
 }
 
+type KeepAliveMsg struct {
+	Type    MsgType `json:"type"`
+	Channel int     `json:"channel"`
+}
+
 type ChannelReqRespMsg struct {
 	Type       MsgType        `json:"type"`
 	Channel    int            `json:"channel"`
@@ -75,6 +83,15 @@ type ChannelReqRespMsg struct {
 type Parameters struct {
 	// Allowed values: "HISTORY", "TICKER", "STREAM", "AUTO"
 	Contract ChannelContract `json:"contract"`
+}
+
+type FeedSetupMsg struct {
+	Type    MsgType `json:"type"`
+	Channel int     `json:"channel"`
+	// aggregation perion in seconds
+	AcceptAggregationPeriod int             `json:"acceptAggregationPeriod"`
+	AcceptEventFields       FeedEventFields `json:"acceptEventFields"`
+	AcceptDataFormat        FeedDataFormat  `json:"acceptDataFormat"`
 }
 
 type FeedSubscriptionMsg struct {
@@ -102,15 +119,16 @@ type FeedSubItem struct {
 type FeedConfigMsg struct {
 	Type              MsgType         `json:"type"`
 	Channel           int             `json:"channel"`
-	AggregationPeriod int             `json:"aggregationPeriod"`
+	AggregationPeriod float64         `json:"aggregationPeriod"`
 	DataFormat        FeedDataFormat  `json:"dataFormat"`
 	EventFields       FeedEventFields `json:"eventFields,omitempty"`
 }
 
 type FeedEventFields struct {
-	Quote  []string `json:"Quote,omitempty"`
+	Quote  []string `json:"Quote"`
 	Trade  []string `json:"Trade,omitempty"`
 	Candle []string `json:"Candle,omitempty"`
+	Greeks []string `json:"Greeks,omitempty"`
 }
 
 type FeedDataMsg struct {
@@ -162,10 +180,13 @@ func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
 				if j+3 > len(values) {
 					break
 				}
-				symbol, _ := values[j].(string)
-				evtType, _ := values[j+1].(string)
-				askPrice, _ := values[j+2].(float64)
-				bidPrice, _ := values[j+3].(float64)
+				symbol, ok := values[j].(string)
+				evtType, ok := values[j+1].(string)
+				askPrice, ok := values[j+2].(float64)
+				bidPrice, ok := values[j+3].(float64)
+				if !ok {
+					return fmt.Errorf("unable to unmarshal Quote values")
+				}
 
 				quote := QuoteData{
 					Symbol:   symbol,
@@ -178,4 +199,5 @@ func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
 		}
 
 	}
+	return nil
 }

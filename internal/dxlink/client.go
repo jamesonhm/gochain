@@ -197,6 +197,15 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			c.sendMessage(authMsg)
 		} else if resp.State == "AUTHORIZED" {
 			slog.Info("this is where we look for a callback to setup the new channels and feeds")
+			chanReq := ChannelReqRespMsg{
+				Type:    ChannelRequest,
+				Channel: 1,
+				Service: FeedService,
+				Parameters: Parameters{
+					Contract: ChannelAuto,
+				},
+			}
+			c.sendMessage(chanReq)
 		}
 	case string(ChannelOpened):
 		resp := ChannelReqRespMsg{}
@@ -206,14 +215,41 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			return
 		}
 		slog.Info("SERVER <-", "", resp)
+		feedSetup := FeedSetupMsg{
+			Type:                    FeedSetup,
+			Channel:                 1,
+			AcceptAggregationPeriod: 10,
+			AcceptDataFormat:        CompactFormat,
+			AcceptEventFields: FeedEventFields{
+				Quote: []string{"eventType", "eventSymbol", "bidPrice", "askPrice"},
+			},
+		}
+		c.sendMessage(feedSetup)
 	case string(FeedConfig):
 		resp := FeedConfigMsg{}
 		err := json.Unmarshal(message, &resp)
 		if err != nil {
 			slog.Error("unable to unmarshal feed config msg")
+			fmt.Printf("%s\n", string(message))
 			return
 		}
-		slog.Info("SERVER <-", resp)
+		slog.Info("SERVER <-", "", resp)
+		feedSub := FeedSubscriptionMsg{
+			Type:    FeedSubscription,
+			Channel: 1,
+			Reset:   true,
+			Add: []FeedSubItem{
+				{
+					Type:   "Trade",
+					Symbol: "SPY",
+				},
+				{
+					Type:   "Trade",
+					Symbol: "XSP",
+				},
+			},
+		}
+		c.sendMessage(feedSub)
 	case string(Error):
 		resp := ErrorMsg{}
 		err := json.Unmarshal(message, &resp)

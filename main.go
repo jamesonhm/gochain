@@ -132,7 +132,7 @@ func main() {
 	wg.Add(1)
 	go func(wg *sync.WaitGroup) {
 		defer wg.Done()
-		time.Sleep(5 * time.Second)
+		time.Sleep(20 * time.Second)
 		streamClient.Close()
 	}(&wg)
 	wg.Wait()
