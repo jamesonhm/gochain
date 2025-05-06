@@ -240,16 +240,34 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			Reset:   true,
 			Add: []FeedSubItem{
 				{
-					Type:   "Trade",
+					Type:   "Quote",
 					Symbol: "SPY",
 				},
 				{
-					Type:   "Trade",
-					Symbol: "XSP",
+					Type:   "Quote",
+					Symbol: ".XSP",
+				},
+				{
+					Type:   "Greeks",
+					Symbol: "SPY",
+				},
+				{
+					Type:   "Greeks",
+					Symbol: ".XSP",
 				},
 			},
 		}
 		c.sendMessage(feedSub)
+	case string(FeedData):
+		resp := FeedDataMsg{}
+		err := json.Unmarshal(message, &resp)
+		if err != nil {
+			slog.Error("unable to unmarshal feed data msg")
+			fmt.Printf("%s\n", string(message))
+			return
+		}
+		slog.Info("SERVER <-", "", resp)
+
 	case string(Error):
 		resp := ErrorMsg{}
 		err := json.Unmarshal(message, &resp)

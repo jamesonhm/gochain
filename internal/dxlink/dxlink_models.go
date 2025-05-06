@@ -138,23 +138,38 @@ type FeedDataMsg struct {
 }
 
 type ProcessedFeedData struct {
-	Quotes []QuoteData
-	Trades []TradeData
+	Quotes []QuoteEvent
+	Trades []TradeEvent
+	Greeks []GreeksEvent
 }
 
-// QuoteData represents quote data received from the server
-type QuoteData struct {
-	Symbol   string
-	Type     string
-	BidPrice float64
-	AskPrice float64
+// Quote event is a snapshot of the best bid and ask prices,
+// and other fields that change with each quote
+type QuoteEvent struct {
+	EventType string
+	Symbol    string
+	BidPrice  json.Number
+	AskPrice  json.Number
 }
 
-type TradeData struct {
-	Symbol string
-	Type   string
-	Price  float64
-	Volume float64
+type TradeEvent struct {
+	EventType string
+	Symbol    string
+	Price     json.Number
+	Volume    json.Number
+}
+
+// Greeks event is a snapshot of the option price, Black-Scholes volatility and greeks
+type GreeksEvent struct {
+	EventType  string
+	Symbol     string
+	Price      json.Number
+	Volatility json.Number
+	Delta      json.Number
+	Gamma      json.Number
+	Theta      json.Number
+	Rho        json.Number
+	Vega       json.Number
 }
 
 func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
@@ -180,21 +195,52 @@ func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
 				if j+3 > len(values) {
 					break
 				}
-				symbol, ok := values[j].(string)
-				evtType, ok := values[j+1].(string)
-				askPrice, ok := values[j+2].(float64)
-				bidPrice, ok := values[j+3].(float64)
+				evtType, ok := values[j].(string)
+				symbol, ok := values[j+1].(string)
+				askPrice, ok := values[j+2].(json.Number)
+				bidPrice, ok := values[j+3].(json.Number)
 				if !ok {
 					return fmt.Errorf("unable to unmarshal Quote values")
 				}
 
-				quote := QuoteData{
-					Symbol:   symbol,
-					Type:     evtType,
-					BidPrice: bidPrice,
-					AskPrice: askPrice,
+				quote := QuoteEvent{
+					EventType: evtType,
+					Symbol:    symbol,
+					BidPrice:  bidPrice,
+					AskPrice:  askPrice,
 				}
 				d.Quotes = append(d.Quotes, quote)
+			}
+		case "Greeks":
+			for j := 0; j < len(values); j += 9 {
+				if len(values)-j < 9 {
+					break
+				}
+				evtType, ok := values[j].(string)
+				symbol, ok := values[j+1].(string)
+				price, ok := values[j+2].(json.Number)
+				volatility, ok := values[j+3].(json.Number)
+				delta, ok := values[j+4].(json.Number)
+				gamma, ok := values[j+5].(json.Number)
+				theta, ok := values[j+6].(json.Number)
+				rho, ok := values[j+7].(json.Number)
+				vega, ok := values[j+8].(json.Number)
+				if !ok {
+					return fmt.Errorf("unable to unmarshal Greek values")
+				}
+
+				greeks := GreeksEvent{
+					EventType:  evtType,
+					Symbol:     symbol,
+					Price:      price,
+					Volatility: volatility,
+					Delta:      delta,
+					Gamma:      gamma,
+					Theta:      theta,
+					Rho:        rho,
+					Vega:       vega,
+				}
+				d.Greeks = append(d.Greeks, greeks)
 			}
 		}
 
