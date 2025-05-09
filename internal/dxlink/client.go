@@ -37,6 +37,23 @@ func New(ctx context.Context, url string, token string) *DxLinkClient {
 	}
 }
 
+func (c *DxLinkClient) UpdateOptionSubs(symbol string, options []string, days int) error {
+	cut_date := time.Now().AddDate(0, 0, days)
+	for _, option := range options {
+		opt_date := option[len(symbol)+1 : len(symbol)+7]
+		date, err := time.Parse("060102", opt_date)
+		if err != nil {
+			return err
+		}
+		if date.After(cut_date) {
+			continue
+		}
+		c.subscriptions[option] = true
+		fmt.Printf("Added %s to subs\n", option)
+	}
+	return nil
+}
+
 func (c *DxLinkClient) Connect() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()

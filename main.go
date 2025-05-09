@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"sync"
+
+	//"sync"
 	"time"
 
 	"github.com/jamesonhm/gochain/internal/dxlink"
@@ -45,7 +46,7 @@ func main() {
 		fmt.Printf("%+v\n", accts)
 	}
 
-	acctNum := accts[0].Account.AccountNumber
+	//acctNum := accts[0].Account.AccountNumber
 
 	//acct, err := tastyClient.GetAccount(ctx, acctNum)
 	//if err != nil {
@@ -68,19 +69,25 @@ func main() {
 	//	fmt.Printf("%+v\n", pos)
 	//}
 
-	bal, err := tastyClient.GetAccountBalances(ctx, acctNum)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Printf("%+v\n", bal)
-	}
-
-	//chain, err := tastyClient.GetOptionCompact(ctx, "SPY")
+	//bal, err := tastyClient.GetAccountBalances(ctx, acctNum)
 	//if err != nil {
 	//	fmt.Println(err)
 	//} else {
-	//	fmt.Printf("%+v\n", chain)
+	//	fmt.Printf("%+v\n", bal)
 	//}
+
+	chains, err := tastyClient.GetOptionCompact(ctx, "XSP")
+	if err != nil {
+		fmt.Println(err)
+	}
+	//	else {
+	//		//fmt.Printf("%+v\n", chain)
+	//		for _, chain := range chains {
+	//			fmt.Println(chain.ExpirationType)
+	//			fmt.Println(chain.StreamerSymbols)
+	//			fmt.Println("=============================================================")
+	//		}
+	//	}
 
 	//act := true
 	//syms := []string{"XSP 250430P00529000"}
@@ -118,24 +125,24 @@ func main() {
 	}
 
 	streamClient := dxlink.New(ctx, streamer.DXLinkURL, streamer.Token)
-	//streamClient := dxlink.New("wss://demo.dxfeed.com/dxlink-ws")
+	streamClient.UpdateOptionSubs("XSP", chains[0].StreamerSymbols, 1)
 
 	// register callback for setting up channels and feeds (called after Authorized)
 	// register calbacks for processing data (called at each msgType)
 
-	err = streamClient.Connect()
-	if err != nil {
-		fmt.Println(err)
-	}
+	//err = streamClient.Connect()
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func(wg *sync.WaitGroup) {
-		defer wg.Done()
-		time.Sleep(20 * time.Second)
-		streamClient.Close()
-	}(&wg)
-	wg.Wait()
+	//var wg sync.WaitGroup
+	//wg.Add(1)
+	//go func(wg *sync.WaitGroup) {
+	//	defer wg.Done()
+	//	time.Sleep(20 * time.Second)
+	//	streamClient.Close()
+	//}(&wg)
+	//wg.Wait()
 
 }
 

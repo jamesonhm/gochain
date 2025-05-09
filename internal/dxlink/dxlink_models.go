@@ -148,8 +148,8 @@ type ProcessedFeedData struct {
 type QuoteEvent struct {
 	EventType string
 	Symbol    string
-	BidPrice  json.Number
-	AskPrice  json.Number
+	BidPrice  float64
+	AskPrice  float64
 }
 
 type TradeEvent struct {
@@ -197,8 +197,8 @@ func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
 				}
 				evtType, ok := values[j].(string)
 				symbol, ok := values[j+1].(string)
-				askPrice, ok := values[j+2].(json.Number)
-				bidPrice, ok := values[j+3].(json.Number)
+				askPrice, ok := values[j+2].(float64)
+				bidPrice, ok := values[j+3].(float64)
 				if !ok {
 					return fmt.Errorf("unable to unmarshal Quote values")
 				}
