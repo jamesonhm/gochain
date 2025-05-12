@@ -125,7 +125,13 @@ func main() {
 	}
 
 	streamClient := dxlink.New(ctx, streamer.DXLinkURL, streamer.Token)
-	streamClient.UpdateOptionSubs("XSP", chains[0].StreamerSymbols, 1)
+	for _, c := range chains {
+		fmt.Printf("%s - %s\n", c.ExpirationType, c.StreamerSymbols[0])
+		err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols, 0)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 
 	// register callback for setting up channels and feeds (called after Authorized)
 	// register calbacks for processing data (called at each msgType)

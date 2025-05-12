@@ -38,14 +38,18 @@ func New(ctx context.Context, url string, token string) *DxLinkClient {
 }
 
 func (c *DxLinkClient) UpdateOptionSubs(symbol string, options []string, days int) error {
-	cut_date := time.Now().AddDate(0, 0, days)
+	nytz, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		return err
+	}
+	today := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 23, 59, 59, 0, nytz)
+	cut_date := today.AddDate(0, 0, days)
 	for _, option := range options {
-		opt_date := option[len(symbol)+1 : len(symbol)+7]
-		date, err := time.Parse("060102", opt_date)
+		opt, err := ParseOption(option)
 		if err != nil {
 			return err
 		}
-		if date.After(cut_date) {
+		if opt.Date.After(cut_date) {
 			continue
 		}
 		c.subscriptions[option] = true
