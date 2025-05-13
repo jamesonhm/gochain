@@ -109,16 +109,7 @@ func (c *DxLinkClient) Close() error {
 
 	c.cancel()
 
-	disconnectMsg := map[string]interface{}{
-		"type": "DISCONNECT",
-	}
-
-	err := c.sendMessage(disconnectMsg)
-	if err != nil {
-		slog.Error("Error sending disconnect message", "err", err)
-	}
-
-	err = c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	err := c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	if err != nil {
 		slog.Error("Error sending close message", "err", err)
 	}
@@ -217,7 +208,7 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			}
 			c.sendMessage(authMsg)
 		} else if resp.State == "AUTHORIZED" {
-			slog.Info("this is where we look for a callback to setup the new channels and feeds")
+			// TODO: setup a channel each for underlying (indices, equities) and options
 			chanReq := ChannelReqRespMsg{
 				Type:    ChannelRequest,
 				Channel: 1,
@@ -242,7 +233,8 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			AcceptAggregationPeriod: 10,
 			AcceptDataFormat:        CompactFormat,
 			AcceptEventFields: FeedEventFields{
-				Quote: []string{"eventType", "eventSymbol", "bidPrice", "askPrice"},
+				Quote:  []string{"eventType", "eventSymbol", "bidPrice", "askPrice"},
+				Greeks: []string{"eventType", "eventSymbol", "price", "volatility", "delta", "gamma", "theta", "rho", "vega"},
 			},
 		}
 		c.sendMessage(feedSetup)
@@ -251,7 +243,7 @@ func (c *DxLinkClient) processMessage(message []byte) {
 		err := json.Unmarshal(message, &resp)
 		if err != nil {
 			slog.Error("unable to unmarshal feed config msg")
-			fmt.Printf("%s\n", string(message))
+			fmt.Printf("%s\n\n", string(message))
 			return
 		}
 		slog.Info("SERVER <-", "", resp)
@@ -266,15 +258,11 @@ func (c *DxLinkClient) processMessage(message []byte) {
 				},
 				{
 					Type:   "Quote",
-					Symbol: ".XSP",
+					Symbol: ".XSP250606P580",
 				},
 				{
 					Type:   "Greeks",
-					Symbol: "SPY",
-				},
-				{
-					Type:   "Greeks",
-					Symbol: ".XSP",
+					Symbol: ".XSP250606P580",
 				},
 			},
 		}

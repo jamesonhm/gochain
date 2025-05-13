@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"os"
 
-	//"sync"
+	"sync"
 	"time"
 
 	"github.com/jamesonhm/gochain/internal/dxlink"
@@ -136,19 +136,19 @@ func main() {
 	// register callback for setting up channels and feeds (called after Authorized)
 	// register calbacks for processing data (called at each msgType)
 
-	//err = streamClient.Connect()
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
+	err = streamClient.Connect()
+	if err != nil {
+		fmt.Println(err)
+	}
 
-	//var wg sync.WaitGroup
-	//wg.Add(1)
-	//go func(wg *sync.WaitGroup) {
-	//	defer wg.Done()
-	//	time.Sleep(20 * time.Second)
-	//	streamClient.Close()
-	//}(&wg)
-	//wg.Wait()
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func(wg *sync.WaitGroup) {
+		defer wg.Done()
+		time.Sleep(20 * time.Second)
+		streamClient.Close()
+	}(&wg)
+	wg.Wait()
 
 }
 

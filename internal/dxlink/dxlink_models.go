@@ -159,21 +159,21 @@ type QuoteEvent struct {
 type TradeEvent struct {
 	EventType string
 	Symbol    string
-	Price     json.Number
-	Volume    json.Number
+	Price     float64
+	Volume    float64
 }
 
 // Greeks event is a snapshot of the option price, Black-Scholes volatility and greeks
 type GreeksEvent struct {
 	EventType  string
 	Symbol     string
-	Price      json.Number
-	Volatility json.Number
-	Delta      json.Number
-	Gamma      json.Number
-	Theta      json.Number
-	Rho        json.Number
-	Vega       json.Number
+	Price      float64
+	Volatility float64
+	Delta      float64
+	Gamma      float64
+	Theta      float64
+	Rho        float64
+	Vega       float64
 }
 
 func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
@@ -222,13 +222,13 @@ func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
 				}
 				evtType, ok := values[j].(string)
 				symbol, ok := values[j+1].(string)
-				price, ok := values[j+2].(json.Number)
-				volatility, ok := values[j+3].(json.Number)
-				delta, ok := values[j+4].(json.Number)
-				gamma, ok := values[j+5].(json.Number)
-				theta, ok := values[j+6].(json.Number)
-				rho, ok := values[j+7].(json.Number)
-				vega, ok := values[j+8].(json.Number)
+				price, ok := values[j+2].(float64)
+				volatility, ok := values[j+3].(float64)
+				delta, ok := values[j+4].(float64)
+				gamma, ok := values[j+5].(float64)
+				theta, ok := values[j+6].(float64)
+				rho, ok := values[j+7].(float64)
+				vega, ok := values[j+8].(float64)
 				if !ok {
 					return fmt.Errorf("unable to unmarshal Greek values")
 				}
