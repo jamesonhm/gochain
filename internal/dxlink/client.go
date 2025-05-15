@@ -16,7 +16,8 @@ type DxLinkClient struct {
 	conn           *websocket.Conn
 	url            string
 	token          string
-	subscriptions  map[string]bool
+	optionSubs     map[string]OptionData
+	underlyingSubs map[string]UnderlyingData
 	mu             sync.Mutex
 	connected      bool
 	messageCounter int
@@ -28,22 +29,28 @@ type DxLinkClient struct {
 func New(ctx context.Context, url string, token string) *DxLinkClient {
 	ctx, cancel := context.WithCancel(ctx)
 	return &DxLinkClient{
-		url:           url,
-		subscriptions: make(map[string]bool),
-		callbacks:     make(map[string]MessageCallback),
-		ctx:           ctx,
-		cancel:        cancel,
-		token:         token,
+		url:            url,
+		optionSubs:     make(map[string]OptionData),
+		underlyingSubs: make(map[string]UnderlyingData),
+		callbacks:      make(map[string]MessageCallback),
+		ctx:            ctx,
+		cancel:         cancel,
+		token:          token,
 	}
 }
 
+func (c *DxLinkClient) ResetData() {
+	clear(c.optionSubs)
+	clear(c.underlyingSubs)
+}
+
 func (c *DxLinkClient) UpdateOptionSubs(symbol string, options []string, days int) error {
-	nytz, err := time.LoadLocation("America/New_York")
+	today, err := endOfDay(time.Now())
 	if err != nil {
 		return err
 	}
-	today := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 23, 59, 59, 0, nytz)
 	cut_date := today.AddDate(0, 0, days)
+	c.underlyingSubs[symbol] = UnderlyingData{}
 	for _, option := range options {
 		opt, err := ParseOption(option)
 		if err != nil {
@@ -52,15 +59,15 @@ func (c *DxLinkClient) UpdateOptionSubs(symbol string, options []string, days in
 		if opt.Date.After(cut_date) {
 			continue
 		}
-		c.subscriptions[option] = true
+		c.optionSubs[option] = OptionData{}
 		fmt.Printf("Added %s to subs\n", option)
 	}
 	return nil
 }
 
 func (c *DxLinkClient) Connect() error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	//c.mu.Lock()
+	//defer c.mu.Unlock()
 
 	if c.connected {
 		return fmt.Errorf("client already connected")
@@ -127,6 +134,8 @@ func (c *DxLinkClient) sendMessage(msg interface{}) error {
 	if c.conn == nil {
 		return fmt.Errorf("unable to send message, no connection")
 	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	c.messageCounter++
 	data, err := json.Marshal(msg)
@@ -208,10 +217,21 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			}
 			c.sendMessage(authMsg)
 		} else if resp.State == "AUTHORIZED" {
-			// TODO: setup a channel each for underlying (indices, equities) and options
+			// setup a channel for underlying (indices, equities) and options
 			chanReq := ChannelReqRespMsg{
 				Type:    ChannelRequest,
 				Channel: 1,
+				Service: FeedService,
+				Parameters: Parameters{
+					Contract: ChannelAuto,
+				},
+			}
+			c.sendMessage(chanReq)
+
+			// setup a channel for options
+			chanReq = ChannelReqRespMsg{
+				Type:    ChannelRequest,
+				Channel: 3,
 				Service: FeedService,
 				Parameters: Parameters{
 					Contract: ChannelAuto,
@@ -227,51 +247,57 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			return
 		}
 		slog.Info("SERVER <-", "", resp)
-		feedSetup := FeedSetupMsg{
-			Type:                    FeedSetup,
-			Channel:                 1,
-			AcceptAggregationPeriod: 10,
-			AcceptDataFormat:        CompactFormat,
-			AcceptEventFields: FeedEventFields{
-				Quote:  []string{"eventType", "eventSymbol", "bidPrice", "askPrice"},
-				Greeks: []string{"eventType", "eventSymbol", "price", "volatility", "delta", "gamma", "theta", "rho", "vega"},
-			},
+		// TODO: add eventTime to quote for age validation
+		var feedSetup FeedSetupMsg
+		if resp.Channel == 1 {
+			// UNDERLYING
+			feedSetup = FeedSetupMsg{
+				Type:                    FeedSetup,
+				Channel:                 1,
+				AcceptAggregationPeriod: 10,
+				AcceptDataFormat:        CompactFormat,
+				AcceptEventFields: FeedEventFields{
+					//Quote: []string{"eventType", "eventSymbol", "bidPrice", "askPrice"},
+					Trade: []string{"eventType", "eventSymbol", "price", "size"},
+					//Candle: []string{"eventType", "eventSymbol", "eventTime", "time", "open", "high", "low", "close", "volume", "VWAP", "impVolatility"},
+				},
+			}
+		} else if resp.Channel == 3 {
+			// OPTIONS
+			feedSetup = FeedSetupMsg{
+				Type:                    FeedSetup,
+				Channel:                 3,
+				AcceptAggregationPeriod: 10,
+				AcceptDataFormat:        CompactFormat,
+				AcceptEventFields: FeedEventFields{
+					Quote:  []string{"eventType", "eventSymbol", "bidPrice", "askPrice"},
+					Greeks: []string{"eventType", "eventSymbol", "price", "volatility", "delta", "gamma", "theta", "rho", "vega"},
+				},
+			}
 		}
 		c.sendMessage(feedSetup)
 	case string(FeedConfig):
 		resp := FeedConfigMsg{}
 		err := json.Unmarshal(message, &resp)
 		if err != nil {
-			slog.Error("unable to unmarshal feed config msg")
+			slog.Error("unable to unmarshal feed config msg", "err", err)
 			fmt.Printf("%s\n\n", string(message))
 			return
 		}
 		slog.Info("SERVER <-", "", resp)
-		feedSub := FeedSubscriptionMsg{
-			Type:    FeedSubscription,
-			Channel: 1,
-			Reset:   true,
-			Add: []FeedSubItem{
-				{
-					Type:   "Quote",
-					Symbol: "SPY",
-				},
-				{
-					Type:   "Quote",
-					Symbol: ".XSP250606P580",
-				},
-				{
-					Type:   "Greeks",
-					Symbol: ".XSP250606P580",
-				},
-			},
+		var feedSub FeedSubscriptionMsg
+		if resp.Channel == 1 {
+			feedSub = c.underlyingFeedSub()
+		} else if resp.Channel == 3 {
+			fmt.Println("Channel 3 response, getting option feed subs")
+			feedSub = c.optionFeedSub()
 		}
 		c.sendMessage(feedSub)
 	case string(FeedData):
 		resp := FeedDataMsg{}
 		err := json.Unmarshal(message, &resp)
 		if err != nil {
-			slog.Error("unable to unmarshal feed data msg")
+			slog.Error("unable to unmarshal feed data msg", "err", err)
 			fmt.Printf("%s\n", string(message))
 			return
 		}
@@ -281,7 +307,7 @@ func (c *DxLinkClient) processMessage(message []byte) {
 		resp := ErrorMsg{}
 		err := json.Unmarshal(message, &resp)
 		if err != nil {
-			slog.Error("unable to unmarshal error msg")
+			slog.Error("unable to unmarshal error msg", "err", err)
 			return
 		}
 		slog.Info("SERVER <-", "", resp)
@@ -299,6 +325,37 @@ func (c *DxLinkClient) processMessage(message []byte) {
 	}
 }
 
+func (c *DxLinkClient) underlyingFeedSub() FeedSubscriptionMsg {
+	feedSub := FeedSubscriptionMsg{
+		Type:    FeedSubscription,
+		Channel: 1,
+		Reset:   true,
+		Add:     []FeedSubItem{},
+	}
+	//fromTime := time.Now().AddDate(0, 0, -2).Unix()
+	for under := range c.underlyingSubs {
+		//feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Quote", Symbol: under})
+		//feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Candle", Symbol: under, FromTime: fromTime})
+		feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Trade", Symbol: under})
+	}
+	return feedSub
+}
+
+func (c *DxLinkClient) optionFeedSub() FeedSubscriptionMsg {
+	feedSub := FeedSubscriptionMsg{
+		Type:    FeedSubscription,
+		Channel: 3,
+		Reset:   true,
+		Add:     []FeedSubItem{},
+	}
+	for opt := range c.optionSubs {
+		slog.Info("OptionFeedSub method", "OptionSub iter:", opt)
+		feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Quote", Symbol: opt})
+		feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Greeks", Symbol: opt})
+	}
+	return feedSub
+}
+
 func pprint(msg any) {
 	fd, _ := json.MarshalIndent(msg, "", "  ")
 	fmt.Println(string(fd))
@@ -314,4 +371,13 @@ func (c *DxLinkClient) handleDataMessage(message []byte) {
 	fmt.Println("from data message handler")
 	fd, _ := json.MarshalIndent(message, "", "  ")
 	fmt.Println(string(fd))
+}
+
+func endOfDay(date time.Time) (*time.Time, error) {
+	nytz, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		return nil, err
+	}
+	end := time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 59, 0, nytz)
+	return &end, nil
 }

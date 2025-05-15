@@ -10,6 +10,7 @@ type ChannelContract string
 type ChannelService string
 type FeedDataFormat string
 type OptionType string
+type JSONDoubleConst string
 
 const (
 	// Primary Message Types
@@ -39,6 +40,10 @@ const (
 	// Option type - Call or Put
 	PutOption  OptionType = "P"
 	CallOption OptionType = "C"
+	// JSONDouble string constants
+	NaN         JSONDoubleConst = "NaN"
+	Infinity    JSONDoubleConst = "Infinity"
+	NegInfinity JSONDoubleConst = "-Infinity"
 )
 
 // MessageCallback is a function type for handling received messages
@@ -129,7 +134,7 @@ type FeedConfigMsg struct {
 }
 
 type FeedEventFields struct {
-	Quote  []string `json:"Quote"`
+	Quote  []string `json:"Quote,omitempty"`
 	Trade  []string `json:"Trade,omitempty"`
 	Candle []string `json:"Candle,omitempty"`
 	Greeks []string `json:"Greeks,omitempty"`
@@ -159,8 +164,8 @@ type QuoteEvent struct {
 type TradeEvent struct {
 	EventType string
 	Symbol    string
-	Price     float64
-	Volume    float64
+	Price     json.Number
+	Size      json.Number
 }
 
 // Greeks event is a snapshot of the option price, Black-Scholes volatility and greeks
@@ -175,6 +180,35 @@ type GreeksEvent struct {
 	Rho        float64
 	Vega       float64
 }
+
+type CandleEvent struct {
+	EventType     string
+	Symbol        string
+	EventTime     int64
+	Time          int64
+	Open          float64
+	High          float64
+	Low           float64
+	Close         float64
+	Volume        float64
+	VWAP          float64
+	ImpVolatility float64
+}
+
+type optionSubs map[string]OptionData
+type underlyingSubs map[string]UnderlyingData
+
+type OptionData struct {
+	Quote QuoteEvent
+	Greek GreeksEvent
+}
+
+type UnderlyingData struct {
+	Quote   QuoteEvent
+	Candles []CandleEvent
+}
+
+func jsonDouble(value interface{})
 
 func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
 	var content []interface{}
@@ -194,6 +228,27 @@ func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
 		}
 
 		switch typeName {
+		case "Trade":
+			for j := 0; j < len(values); j += 4 {
+				if j+3 > len(values) {
+					break
+				}
+				evtType, ok := values[j].(string)
+				symbol, ok := values[j+1].(string)
+				price, ok := values[j+2].(json.Number)
+				size, ok := values[j+3].(json.Number)
+				if !ok {
+					return fmt.Errorf("unable to unmarshal Trade values")
+				}
+
+				trade := TradeEvent{
+					EventType: evtType,
+					Symbol:    symbol,
+					Price:     price,
+					Size:      size,
+				}
+				d.Trades = append(d.Trades, trade)
+			}
 		case "Quote":
 			for j := 0; j < len(values); j += 4 {
 				if j+3 > len(values) {

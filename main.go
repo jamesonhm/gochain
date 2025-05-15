@@ -43,7 +43,7 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		fmt.Printf("%+v\n", accts)
+		fmt.Printf("Got Accounts, Day Trader?: %t\n", accts[0].Account.DayTraderStatus)
 	}
 
 	//acctNum := accts[0].Account.AccountNumber
@@ -126,8 +126,8 @@ func main() {
 
 	streamClient := dxlink.New(ctx, streamer.DXLinkURL, streamer.Token)
 	for _, c := range chains {
-		fmt.Printf("%s - %s\n", c.ExpirationType, c.StreamerSymbols[0])
-		err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols, 0)
+		fmt.Printf("%s - %s\n", c.ExpirationType, c.StreamerSymbols[0:3])
+		err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols[0:3], 0)
 		if err != nil {
 			fmt.Println(err)
 		}
