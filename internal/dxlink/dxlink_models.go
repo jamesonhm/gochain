@@ -143,9 +143,10 @@ type FeedDataMsg struct {
 }
 
 type ProcessedFeedData struct {
-	Quotes []QuoteEvent
-	Trades []TradeEvent
-	Greeks []GreeksEvent
+	Quotes  []QuoteEvent
+	Trades  []TradeEvent
+	Greeks  []GreeksEvent
+	Candles []CandleEvent
 }
 
 // Quote event is a snapshot of the best bid and ask prices,
@@ -299,6 +300,41 @@ func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
 					Vega:       vega,
 				}
 				d.Greeks = append(d.Greeks, greeks)
+			}
+		case "Candle":
+			for j := 0; j < len(values); j += 11 {
+				if len(values)-j < 11 {
+					break
+				}
+				evtType, ok := values[j].(string)
+				symbol, ok := values[j+1].(string)
+				eventTime, ok := values[j+2].(int64)
+				time, ok := values[j+3].(int64)
+				if !ok {
+					return fmt.Errorf("unable to unmarshal Candle values")
+				}
+				open := jsonDouble(values[j+4])
+				high := jsonDouble(values[j+5])
+				low := jsonDouble(values[j+6])
+				closep := jsonDouble(values[j+7])
+				volume := jsonDouble(values[j+8])
+				vwap := jsonDouble(values[j+9])
+				impVol := jsonDouble(values[j+10])
+
+				candle := CandleEvent{
+					EventType:     evtType,
+					Symbol:        symbol,
+					EventTime:     eventTime,
+					Time:          time,
+					Open:          open,
+					Low:           low,
+					High:          high,
+					Close:         closep,
+					Volume:        volume,
+					VWAP:          vwap,
+					ImpVolatility: impVol,
+				}
+				d.Candles = append(d.Candles, candle)
 			}
 		}
 

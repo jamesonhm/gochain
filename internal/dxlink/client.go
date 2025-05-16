@@ -16,8 +16,8 @@ type DxLinkClient struct {
 	conn           *websocket.Conn
 	url            string
 	token          string
-	optionSubs     map[string]OptionData
-	underlyingSubs map[string]UnderlyingData
+	optionSubs     map[string]*OptionData
+	underlyingSubs map[string]*UnderlyingData
 	mu             sync.Mutex
 	connected      bool
 	messageCounter int
@@ -30,8 +30,8 @@ func New(ctx context.Context, url string, token string) *DxLinkClient {
 	ctx, cancel := context.WithCancel(ctx)
 	return &DxLinkClient{
 		url:            url,
-		optionSubs:     make(map[string]OptionData),
-		underlyingSubs: make(map[string]UnderlyingData),
+		optionSubs:     make(map[string]*OptionData),
+		underlyingSubs: make(map[string]*UnderlyingData),
 		callbacks:      make(map[string]MessageCallback),
 		ctx:            ctx,
 		cancel:         cancel,
@@ -50,7 +50,7 @@ func (c *DxLinkClient) UpdateOptionSubs(symbol string, options []string, days in
 		return err
 	}
 	cut_date := today.AddDate(0, 0, days)
-	c.underlyingSubs[symbol] = UnderlyingData{}
+	c.underlyingSubs[symbol] = &UnderlyingData{}
 	for _, option := range options {
 		opt, err := ParseOption(option)
 		if err != nil {
@@ -59,7 +59,7 @@ func (c *DxLinkClient) UpdateOptionSubs(symbol string, options []string, days in
 		if opt.Date.After(cut_date) {
 			continue
 		}
-		c.optionSubs[option] = OptionData{}
+		c.optionSubs[option] = &OptionData{}
 		fmt.Printf("Added %s to subs\n", option)
 	}
 	return nil
@@ -254,12 +254,12 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			feedSetup = FeedSetupMsg{
 				Type:                    FeedSetup,
 				Channel:                 1,
-				AcceptAggregationPeriod: 10,
+				AcceptAggregationPeriod: 60,
 				AcceptDataFormat:        CompactFormat,
 				AcceptEventFields: FeedEventFields{
 					//Quote: []string{"eventType", "eventSymbol", "bidPrice", "askPrice"},
-					Trade: []string{"eventType", "eventSymbol", "price", "size"},
-					//Candle: []string{"eventType", "eventSymbol", "eventTime", "time", "open", "high", "low", "close", "volume", "VWAP", "impVolatility"},
+					Trade:  []string{"eventType", "eventSymbol", "price", "size"},
+					Candle: []string{"eventType", "eventSymbol", "eventTime", "time", "open", "high", "low", "close", "volume", "VWAP", "impVolatility"},
 				},
 			}
 		} else if resp.Channel == 3 {
@@ -267,7 +267,7 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			feedSetup = FeedSetupMsg{
 				Type:                    FeedSetup,
 				Channel:                 3,
-				AcceptAggregationPeriod: 100,
+				AcceptAggregationPeriod: 60,
 				AcceptDataFormat:        CompactFormat,
 				AcceptEventFields: FeedEventFields{
 					Quote:  []string{"eventType", "eventSymbol", "bidPrice", "askPrice"},
@@ -303,6 +303,21 @@ func (c *DxLinkClient) processMessage(message []byte) {
 		}
 		slog.Info("SERVER <-", "", resp)
 
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		switch resp.Channel {
+		case 1:
+			for _, trade := range resp.Data.Trades {
+				c.underlyingSubs[trade.Symbol].Trade = trade
+			}
+		case 3:
+			for _, quote := range resp.Data.Quotes {
+				c.optionSubs[quote.Symbol].Quote = quote
+			}
+			for _, greek := range resp.Data.Greeks {
+				c.optionSubs[greek.Symbol].Greek = greek
+			}
+		}
 	case string(Error):
 		resp := ErrorMsg{}
 		err := json.Unmarshal(message, &resp)
