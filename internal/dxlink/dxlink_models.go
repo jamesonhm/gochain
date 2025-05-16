@@ -181,14 +181,12 @@ type GreeksEvent struct {
 type CandleEvent struct {
 	EventType     string
 	Symbol        string
-	EventTime     int64
-	Time          int64
+	Time          *float64
 	Open          *float64
 	High          *float64
 	Low           *float64
 	Close         *float64
 	Volume        *float64
-	VWAP          *float64
 	ImpVolatility *float64
 }
 
@@ -302,36 +300,35 @@ func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
 				d.Greeks = append(d.Greeks, greeks)
 			}
 		case "Candle":
-			for j := 0; j < len(values); j += 11 {
-				if len(values)-j < 11 {
+			for j := 0; j < len(values); j += 9 {
+				if len(values)-j < 9 {
 					break
 				}
 				evtType, ok := values[j].(string)
-				symbol, ok := values[j+1].(string)
-				eventTime, ok := values[j+2].(int64)
-				time, ok := values[j+3].(int64)
 				if !ok {
-					return fmt.Errorf("unable to unmarshal Candle values")
+					return fmt.Errorf("unable to unmarshal Candle type")
 				}
-				open := jsonDouble(values[j+4])
-				high := jsonDouble(values[j+5])
-				low := jsonDouble(values[j+6])
-				closep := jsonDouble(values[j+7])
-				volume := jsonDouble(values[j+8])
-				vwap := jsonDouble(values[j+9])
-				impVol := jsonDouble(values[j+10])
+				symbol, ok := values[j+1].(string)
+				if !ok {
+					return fmt.Errorf("unable to unmarshal Candle symbol")
+				}
+				time := jsonDouble(values[j+2])
+				open := jsonDouble(values[j+3])
+				high := jsonDouble(values[j+4])
+				low := jsonDouble(values[j+5])
+				closep := jsonDouble(values[j+6])
+				volume := jsonDouble(values[j+7])
+				impVol := jsonDouble(values[j+8])
 
 				candle := CandleEvent{
 					EventType:     evtType,
 					Symbol:        symbol,
-					EventTime:     eventTime,
 					Time:          time,
 					Open:          open,
 					Low:           low,
 					High:          high,
 					Close:         closep,
 					Volume:        volume,
-					VWAP:          vwap,
 					ImpVolatility: impVol,
 				}
 				d.Candles = append(d.Candles, candle)

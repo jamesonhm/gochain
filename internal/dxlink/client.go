@@ -259,7 +259,7 @@ func (c *DxLinkClient) processMessage(message []byte) {
 				AcceptEventFields: FeedEventFields{
 					//Quote: []string{"eventType", "eventSymbol", "bidPrice", "askPrice"},
 					Trade:  []string{"eventType", "eventSymbol", "price", "size"},
-					Candle: []string{"eventType", "eventSymbol", "eventTime", "time", "open", "high", "low", "close", "volume", "VWAP", "impVolatility"},
+					Candle: []string{"eventType", "eventSymbol", "time", "open", "high", "low", "close", "volume", "impVolatility"},
 				},
 			}
 		} else if resp.Channel == 3 {
@@ -347,10 +347,12 @@ func (c *DxLinkClient) underlyingFeedSub() FeedSubscriptionMsg {
 		Reset:   true,
 		Add:     []FeedSubItem{},
 	}
-	//fromTime := time.Now().AddDate(0, 0, -2).Unix()
+	fromTime := time.Now().AddDate(0, 0, -2).Unix()
+
 	for under := range c.underlyingSubs {
+		candle_symbol := under + "{=30m}"
 		//feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Quote", Symbol: under})
-		//feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Candle", Symbol: under, FromTime: fromTime})
+		feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Candle", Symbol: candle_symbol, FromTime: fromTime})
 		feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Trade", Symbol: under})
 	}
 	return feedSub
