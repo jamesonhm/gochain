@@ -40,10 +40,6 @@ const (
 	// Option type - Call or Put
 	PutOption  OptionType = "P"
 	CallOption OptionType = "C"
-	// JSONDouble string constants
-	NaN         JSONDoubleConst = "NaN"
-	Infinity    JSONDoubleConst = "Infinity"
-	NegInfinity JSONDoubleConst = "-Infinity"
 )
 
 // MessageCallback is a function type for handling received messages
@@ -157,28 +153,28 @@ type ProcessedFeedData struct {
 type QuoteEvent struct {
 	EventType string
 	Symbol    string
-	BidPrice  float64
-	AskPrice  float64
+	BidPrice  *float64
+	AskPrice  *float64
 }
 
 type TradeEvent struct {
 	EventType string
 	Symbol    string
-	Price     json.Number
-	Size      json.Number
+	Price     *float64
+	Size      *float64
 }
 
 // Greeks event is a snapshot of the option price, Black-Scholes volatility and greeks
 type GreeksEvent struct {
 	EventType  string
 	Symbol     string
-	Price      float64
-	Volatility float64
-	Delta      float64
-	Gamma      float64
-	Theta      float64
-	Rho        float64
-	Vega       float64
+	Price      *float64
+	Volatility *float64
+	Delta      *float64
+	Gamma      *float64
+	Theta      *float64
+	Rho        *float64
+	Vega       *float64
 }
 
 type CandleEvent struct {
@@ -186,17 +182,14 @@ type CandleEvent struct {
 	Symbol        string
 	EventTime     int64
 	Time          int64
-	Open          float64
-	High          float64
-	Low           float64
-	Close         float64
-	Volume        float64
-	VWAP          float64
-	ImpVolatility float64
+	Open          *float64
+	High          *float64
+	Low           *float64
+	Close         *float64
+	Volume        *float64
+	VWAP          *float64
+	ImpVolatility *float64
 }
-
-type optionSubs map[string]OptionData
-type underlyingSubs map[string]UnderlyingData
 
 type OptionData struct {
 	Quote QuoteEvent
@@ -204,11 +197,17 @@ type OptionData struct {
 }
 
 type UnderlyingData struct {
-	Quote   QuoteEvent
+	Trade   TradeEvent
 	Candles []CandleEvent
 }
 
-func jsonDouble(value interface{})
+func jsonDouble(value interface{}) *float64 {
+	var jd *float64
+	if v, ok := value.(float64); ok {
+		return &v
+	}
+	return jd
+}
 
 func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
 	var content []interface{}
@@ -235,11 +234,11 @@ func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
 				}
 				evtType, ok := values[j].(string)
 				symbol, ok := values[j+1].(string)
-				price, ok := values[j+2].(json.Number)
-				size, ok := values[j+3].(json.Number)
 				if !ok {
 					return fmt.Errorf("unable to unmarshal Trade values")
 				}
+				price := jsonDouble(values[j+2])
+				size := jsonDouble(values[j+3])
 
 				trade := TradeEvent{
 					EventType: evtType,
@@ -256,8 +255,8 @@ func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
 				}
 				evtType, ok := values[j].(string)
 				symbol, ok := values[j+1].(string)
-				askPrice, ok := values[j+2].(float64)
-				bidPrice, ok := values[j+3].(float64)
+				askPrice := jsonDouble(values[j+2])
+				bidPrice := jsonDouble(values[j+3])
 				if !ok {
 					return fmt.Errorf("unable to unmarshal Quote values")
 				}
@@ -277,16 +276,16 @@ func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
 				}
 				evtType, ok := values[j].(string)
 				symbol, ok := values[j+1].(string)
-				price, ok := values[j+2].(float64)
-				volatility, ok := values[j+3].(float64)
-				delta, ok := values[j+4].(float64)
-				gamma, ok := values[j+5].(float64)
-				theta, ok := values[j+6].(float64)
-				rho, ok := values[j+7].(float64)
-				vega, ok := values[j+8].(float64)
 				if !ok {
 					return fmt.Errorf("unable to unmarshal Greek values")
 				}
+				price := jsonDouble(values[j+2])
+				volatility := jsonDouble(values[j+3])
+				delta := jsonDouble(values[j+4])
+				gamma := jsonDouble(values[j+5])
+				theta := jsonDouble(values[j+6])
+				rho := jsonDouble(values[j+7])
+				vega := jsonDouble(values[j+8])
 
 				greeks := GreeksEvent{
 					EventType:  evtType,

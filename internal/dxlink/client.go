@@ -267,7 +267,7 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			feedSetup = FeedSetupMsg{
 				Type:                    FeedSetup,
 				Channel:                 3,
-				AcceptAggregationPeriod: 10,
+				AcceptAggregationPeriod: 100,
 				AcceptDataFormat:        CompactFormat,
 				AcceptEventFields: FeedEventFields{
 					Quote:  []string{"eventType", "eventSymbol", "bidPrice", "askPrice"},
