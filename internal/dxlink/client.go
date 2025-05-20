@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -259,7 +260,7 @@ func (c *DxLinkClient) processMessage(message []byte) {
 				AcceptEventFields: FeedEventFields{
 					//Quote: []string{"eventType", "eventSymbol", "bidPrice", "askPrice"},
 					Trade:  []string{"eventType", "eventSymbol", "price", "size"},
-					Candle: []string{"eventType", "eventSymbol", "time", "open", "high", "low", "close", "volume", "impVolatility"},
+					Candle: []string{"eventType", "eventSymbol", "time", "open", "high", "low", "close", "volume", "impVolatility", "openInterest"},
 				},
 			}
 		} else if resp.Channel == 3 {
@@ -301,21 +302,39 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			fmt.Printf("%s\n", string(message))
 			return
 		}
-		slog.Info("SERVER <-", "", resp)
+		//slog.Info("SERVER <-", "", resp)
 
 		c.mu.Lock()
 		defer c.mu.Unlock()
 		switch resp.Channel {
 		case 1:
-			for _, trade := range resp.Data.Trades {
-				c.underlyingSubs[trade.Symbol].Trade = trade
+			if len(resp.Data.Trades) > 0 {
+				slog.Info("SERVER <-", "symbol", resp.Data.Trades[0].Symbol, "trades", resp.Data.Trades)
+				for _, trade := range resp.Data.Trades {
+					c.underlyingSubs[trade.Symbol].Trade = trade
+				}
+			}
+			if len(resp.Data.Candles) > 0 {
+				symbol := resp.Data.Candles[0].Symbol[0:strings.Index(resp.Data.Candles[0].Symbol, "{")]
+				slog.Info("SERVER <-", "symbol", symbol, "start", time.UnixMilli(int64(*resp.Data.Candles[0].Time)), "end", time.UnixMilli(int64(*resp.Data.Candles[len(resp.Data.Candles)-1].Time)))
+
+				if _, ok := c.underlyingSubs[symbol]; !ok {
+					c.underlyingSubs[symbol] = &UnderlyingData{}
+				}
+				copy(c.underlyingSubs[symbol].Candles, resp.Data.Candles)
 			}
 		case 3:
-			for _, quote := range resp.Data.Quotes {
-				c.optionSubs[quote.Symbol].Quote = quote
+			if len(resp.Data.Quotes) > 0 {
+				slog.Info("SERVER <-", "symbol", resp.Data.Quotes[0].Symbol, "quotes", resp.Data.Quotes)
+				for _, quote := range resp.Data.Quotes {
+					c.optionSubs[quote.Symbol].Quote = quote
+				}
 			}
-			for _, greek := range resp.Data.Greeks {
-				c.optionSubs[greek.Symbol].Greek = greek
+			if len(resp.Data.Greeks) > 0 {
+				slog.Info("SERVER <-", "symbol", resp.Data.Greeks[0].Symbol, "greeks", resp.Data.Greeks)
+				for _, greek := range resp.Data.Greeks {
+					c.optionSubs[greek.Symbol].Greek = greek
+				}
 			}
 		}
 	case string(Error):
@@ -347,7 +366,7 @@ func (c *DxLinkClient) underlyingFeedSub() FeedSubscriptionMsg {
 		Reset:   true,
 		Add:     []FeedSubItem{},
 	}
-	fromTime := time.Now().AddDate(0, 0, -2).Unix()
+	fromTime := time.Now().AddDate(0, 0, -2).UnixMilli()
 
 	for under := range c.underlyingSubs {
 		candle_symbol := under + "{=30m}"
@@ -355,6 +374,11 @@ func (c *DxLinkClient) underlyingFeedSub() FeedSubscriptionMsg {
 		feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Candle", Symbol: candle_symbol, FromTime: fromTime})
 		feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Trade", Symbol: under})
 	}
+	feedSub.Add = append(feedSub.Add, FeedSubItem{
+		Type:     "Candle",
+		Symbol:   "VIX{=1d}",
+		FromTime: fromTime,
+	})
 	return feedSub
 }
 

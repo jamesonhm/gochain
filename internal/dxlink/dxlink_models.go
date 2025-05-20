@@ -188,6 +188,7 @@ type CandleEvent struct {
 	Close         *float64
 	Volume        *float64
 	ImpVolatility *float64
+	OpenInterest  *float64
 }
 
 type OptionData struct {
@@ -300,8 +301,8 @@ func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
 				d.Greeks = append(d.Greeks, greeks)
 			}
 		case "Candle":
-			for j := 0; j < len(values); j += 9 {
-				if len(values)-j < 9 {
+			for j := 0; j < len(values); j += 10 {
+				if len(values)-j < 10 {
 					break
 				}
 				evtType, ok := values[j].(string)
@@ -319,6 +320,7 @@ func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
 				closep := jsonDouble(values[j+6])
 				volume := jsonDouble(values[j+7])
 				impVol := jsonDouble(values[j+8])
+				openInt := jsonDouble(values[j+9])
 
 				candle := CandleEvent{
 					EventType:     evtType,
@@ -330,6 +332,7 @@ func (d *ProcessedFeedData) UnmarshalJSON(data []byte) error {
 					Close:         closep,
 					Volume:        volume,
 					ImpVolatility: impVol,
+					OpenInterest:  openInt,
 				}
 				d.Candles = append(d.Candles, candle)
 			}
