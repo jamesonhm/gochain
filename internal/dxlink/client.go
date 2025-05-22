@@ -19,7 +19,7 @@ type DxLinkClient struct {
 	token          string
 	optionSubs     map[string]*OptionData
 	underlyingSubs map[string]*UnderlyingData
-	mu             sync.Mutex
+	mu             sync.RWMutex
 	connected      bool
 	messageCounter int
 	callbacks      map[string]MessageCallback
@@ -357,6 +357,20 @@ func (c *DxLinkClient) processMessage(message []byte) {
 		//c.handleDataMessage(message)
 		slog.Info("Unknown message type", "msg", string(message))
 	}
+}
+
+func (c *DxLinkClient) VixONMove() (float64, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	vix, ok := c.underlyingSubs["VIX"]
+	if !ok {
+		return 0, fmt.Errorf("no VIX underlying data")
+	}
+	candles := vix.Candles
+	if len(candles) < 2 {
+		return 0, fmt.Errorf("not enough VIX candles")
+	}
+	return *candles[0].Open - *candles[1].Close, nil
 }
 
 func (c *DxLinkClient) underlyingFeedSub() FeedSubscriptionMsg {
