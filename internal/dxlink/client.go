@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/jamesonhm/gochain/internal/dt"
 )
 
 type DxLinkClient struct {
@@ -46,12 +47,12 @@ func (c *DxLinkClient) ResetData() {
 }
 
 func (c *DxLinkClient) UpdateOptionSubs(symbol string, options []string, days int) error {
-	today, err := endOfDay(time.Now())
+	today, err := dt.EndOfDay(time.Now())
 	if err != nil {
 		return err
 	}
 	cut_date := today.AddDate(0, 0, days)
-	c.underlyingSubs[symbol] = &UnderlyingData{}
+	c.underlyingSubs[symbol] = NewUnderlying()
 	for _, option := range options {
 		opt, err := ParseOption(option)
 		if err != nil {
@@ -311,17 +312,28 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			if len(resp.Data.Trades) > 0 {
 				slog.Info("SERVER <-", "symbol", resp.Data.Trades[0].Symbol, "trades", resp.Data.Trades)
 				for _, trade := range resp.Data.Trades {
+					if _, ok := c.underlyingSubs[trade.Symbol]; !ok {
+						c.underlyingSubs[trade.Symbol] = NewUnderlying()
+					}
 					c.underlyingSubs[trade.Symbol].Trade = trade
 				}
 			}
 			if len(resp.Data.Candles) > 0 {
 				symbol := resp.Data.Candles[0].Symbol[0:strings.Index(resp.Data.Candles[0].Symbol, "{")]
+				if symbol == "VIX" {
+					for _, c := range resp.Data.Candles {
+						fmt.Println(time.UnixMilli(int64(*c.Time)))
+					}
+				}
 				slog.Info("SERVER <-", "symbol", symbol, "start", time.UnixMilli(int64(*resp.Data.Candles[0].Time)), "end", time.UnixMilli(int64(*resp.Data.Candles[len(resp.Data.Candles)-1].Time)))
 
 				if _, ok := c.underlyingSubs[symbol]; !ok {
-					c.underlyingSubs[symbol] = &UnderlyingData{}
+					c.underlyingSubs[symbol] = NewUnderlying()
 				}
-				copy(c.underlyingSubs[symbol].Candles, resp.Data.Candles)
+				for _, candle := range resp.Data.Candles {
+					c.underlyingSubs[symbol].Candles[int64(*candle.Time)] = candle
+				}
+				//copy(c.underlyingSubs[symbol].Candles, resp.Data.Candles)
 			}
 		case 3:
 			if len(resp.Data.Quotes) > 0 {
@@ -368,9 +380,34 @@ func (c *DxLinkClient) VixONMove() (float64, error) {
 	}
 	candles := vix.Candles
 	if len(candles) < 2 {
+		slog.Info("VIX", "Candles", candles)
 		return 0, fmt.Errorf("not enough VIX candles")
 	}
-	return *candles[0].Open - *candles[1].Close, nil
+	now := time.Now()
+	previous_dt := dt.PreviousWeekday(
+		time.Date(
+			now.Year(),
+			now.Month(),
+			now.Day(),
+			18, 0, 0, 0,
+			time.Local,
+		),
+	)
+	previous_ts := previous_dt.UnixMilli()
+	var prev_candle CandleEvent
+	if prev_candle, ok = candles[previous_ts]; !ok {
+		return 0, fmt.Errorf("no candle found for previous day: %d, %s", previous_ts, previous_dt)
+	}
+	var curr_candle CandleEvent
+	for ts, c := range candles {
+		if ts > previous_ts {
+			curr_candle = c
+		}
+	}
+	if curr_candle.EventType == "" {
+		return 0, fmt.Errorf("no candle found for current day")
+	}
+	return *curr_candle.Open - *prev_candle.Close, nil
 }
 
 func (c *DxLinkClient) underlyingFeedSub() FeedSubscriptionMsg {
@@ -380,7 +417,7 @@ func (c *DxLinkClient) underlyingFeedSub() FeedSubscriptionMsg {
 		Reset:   true,
 		Add:     []FeedSubItem{},
 	}
-	fromTime := time.Now().AddDate(0, 0, -2).UnixMilli()
+	fromTime := time.Now().AddDate(0, 0, -3).UnixMilli()
 
 	for under := range c.underlyingSubs {
 		candle_symbol := under + "{=30m}"
@@ -388,11 +425,21 @@ func (c *DxLinkClient) underlyingFeedSub() FeedSubscriptionMsg {
 		feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Candle", Symbol: candle_symbol, FromTime: fromTime})
 		feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Trade", Symbol: under})
 	}
-	feedSub.Add = append(feedSub.Add, FeedSubItem{
-		Type:     "Candle",
-		Symbol:   "VIX{=1d}",
-		FromTime: fromTime,
-	})
+	feedSub.Add = append(
+		feedSub.Add,
+		FeedSubItem{
+			Type:     "Candle",
+			Symbol:   "VIX{=1d}",
+			FromTime: fromTime,
+		},
+	)
+	feedSub.Add = append(
+		feedSub.Add,
+		FeedSubItem{
+			Type:   "Trade",
+			Symbol: "VIX",
+		},
+	)
 	return feedSub
 }
 
@@ -414,25 +461,4 @@ func (c *DxLinkClient) optionFeedSub() FeedSubscriptionMsg {
 func pprint(msg any) {
 	fd, _ := json.MarshalIndent(msg, "", "  ")
 	fmt.Println(string(fd))
-}
-
-func (c *DxLinkClient) handleDataMessage(message []byte) {
-	var dataMap map[string]interface{}
-	if err := json.Unmarshal(message, &dataMap); err != nil {
-		slog.Error("Error unmarshaling data message", "err", err)
-		return
-	}
-
-	fmt.Println("from data message handler")
-	fd, _ := json.MarshalIndent(message, "", "  ")
-	fmt.Println(string(fd))
-}
-
-func endOfDay(date time.Time) (*time.Time, error) {
-	nytz, err := time.LoadLocation("America/New_York")
-	if err != nil {
-		return nil, err
-	}
-	end := time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 59, 0, nytz)
-	return &end, nil
 }

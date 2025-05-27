@@ -198,7 +198,15 @@ type OptionData struct {
 
 type UnderlyingData struct {
 	Trade   TradeEvent
-	Candles []CandleEvent
+	Candles map[int64]CandleEvent
+	//Candles []*CandleEvent
+}
+
+func NewUnderlying() *UnderlyingData {
+	return &UnderlyingData{
+		Trade:   TradeEvent{},
+		Candles: make(map[int64]CandleEvent),
+	}
 }
 
 func jsonDouble(value interface{}) *float64 {

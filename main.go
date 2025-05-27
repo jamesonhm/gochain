@@ -145,7 +145,15 @@ func main() {
 	wg.Add(1)
 	go func(wg *sync.WaitGroup) {
 		defer wg.Done()
-		time.Sleep(20 * time.Second)
+		time.Sleep(30 * time.Second)
+		vixMove, err := streamClient.VixONMove()
+		if err != nil {
+			slog.Error("Error getting VIX ON move", "error", err)
+		} else {
+			slog.Info("VIX ON Move:", "data", vixMove)
+		}
+
+		time.Sleep(10 * time.Second)
 		streamClient.Close()
 	}(&wg)
 	wg.Wait()
