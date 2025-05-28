@@ -11,6 +11,7 @@ import (
 
 	"github.com/jamesonhm/gochain/internal/dxlink"
 	"github.com/jamesonhm/gochain/internal/tasty"
+	"github.com/jamesonhm/gochain/internal/yahoo"
 	"github.com/joho/godotenv"
 )
 
@@ -24,13 +25,26 @@ func main() {
 
 	// Env Variable Load
 	godotenv.Load()
+
+	yahooClient := yahoo.New(mustEnv("YAHOO_API_KEY"), 10*time.Second, 1*time.Minute, 1)
+	histParams := yahoo.HistoryParams{
+		Symbol:        "^XSP",
+		Interval:      "1h",
+		DiffAndSplits: false,
+	}
+	xspHist, err := yahooClient.GetOHLCHistory(ctx, &histParams)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("XSP 1h history: %+v\n", xspHist)
+
 	tastyClient := tasty.New(10*time.Second, 60*time.Second, 60, tasty.TastySandbox)
 	login := tasty.LoginInfo{
 		Login:      mustEnv("TASTY_USER"),
 		Password:   mustEnv("SB_PASSWORD"),
 		RememberMe: true,
 	}
-	err := tastyClient.CreateSession(ctx, login)
+	err = tastyClient.CreateSession(ctx, login)
 	if err != nil {
 		logger.LogAttrs(ctx, slog.LevelError, "Tasty Session", slog.String("error creating session", err.Error()))
 	}
@@ -145,13 +159,13 @@ func main() {
 	wg.Add(1)
 	go func(wg *sync.WaitGroup) {
 		defer wg.Done()
-		time.Sleep(30 * time.Second)
-		vixMove, err := streamClient.VixONMove()
-		if err != nil {
-			slog.Error("Error getting VIX ON move", "error", err)
-		} else {
-			slog.Info("VIX ON Move:", "data", vixMove)
-		}
+		//time.Sleep(30 * time.Second)
+		//vixMove, err := streamClient.VixONMove()
+		//if err != nil {
+		//	slog.Error("Error getting VIX ON move", "error", err)
+		//} else {
+		//	slog.Info("VIX ON Move:", "data", vixMove)
+		//}
 
 		time.Sleep(10 * time.Second)
 		streamClient.Close()
