@@ -22,6 +22,7 @@ type YahooAPI struct {
 	baseurl    string
 	httpClient *http.Client
 	limiter    *rate.Limiter
+	cache      map[string]*HistoryResponse
 }
 
 func New(key string, timeout time.Duration, rate_period time.Duration, rate_count int) *YahooAPI {

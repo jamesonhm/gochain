@@ -21,3 +21,19 @@ type RiskParams struct {
 	PctPortfolio float64
 	NumContracts int
 }
+
+type PortfolioState struct {
+}
+
+func (s *Strategy) CheckEntryConditions(
+	options OptionsProvider,
+	candles CandlesProvider,
+	portfolio PortfolioState,
+) bool {
+	for _, condition := range s.EntryConditions {
+		if !condition(options, candles, portfolio) {
+			return false
+		}
+	}
+	return true
+}

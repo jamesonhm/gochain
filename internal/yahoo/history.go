@@ -3,6 +3,9 @@ package yahoo
 import (
 	"context"
 	"net/http"
+	"time"
+
+	"github.com/jamesonhm/gochain/internal/dt"
 )
 
 const (
@@ -16,9 +19,9 @@ type HistoryParams struct {
 }
 
 type HistoryResponse struct {
-	Meta  HistoryMeta         `json:"meta"`
-	Body  map[string]OHLCItem `json:"body"`
-	Error string              `json:"error"`
+	Meta  HistoryMeta        `json:"meta"`
+	Body  map[int64]OHLCItem `json:"body"`
+	Error string             `json:"error"`
 }
 
 type HistoryMeta struct {
@@ -55,4 +58,41 @@ func (c *YahooAPI) GetOHLCHistory(ctx context.Context, params *HistoryParams) (*
 	path := c.baseurl + HistoryPath
 	err := c.request(ctx, http.MethodGet, path, params, nil, res)
 	return res, err
+}
+
+func (c *YahooAPI) VixONMove() (float64, error) {
+	reqNewData := false
+	midnight := dt.Midnight(time.Now()).Unix()
+	if hist, ok := c.cache["^VIX"]; !ok {
+		reqNewData = true
+	} else if hist.Meta.RegularMarketTime < midnight {
+		reqNewData = true
+	}
+	if reqNewData {
+		ctx := context.TODO()
+		histParams := HistoryParams{
+			Symbol:        "^VIX",
+			Interval:      "1d",
+			DiffAndSplits: false,
+		}
+		res, err := c.GetOHLCHistory(ctx, &histParams)
+		if err != nil {
+			return 0, err
+		}
+		c.cache["^VIX"] = res
+	}
+	var currOpen, prevClose float64
+	var prevTS int64
+	var minTS int64 = 0
+	for ts, ohlc := range c.cache["^VIX"].Body {
+		if ts > midnight {
+			currOpen = ohlc.Open
+		}
+		if ts > minTS && ts < midnight {
+			prevTS = ts
+		}
+	}
+	prevClose = c.cache["^VIX"].Body[prevTS].Close
+
+	return currOpen - prevClose, nil
 }

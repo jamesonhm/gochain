@@ -26,10 +26,10 @@ func main() {
 	// Env Variable Load
 	godotenv.Load()
 
-	yahooClient := yahoo.New(mustEnv("YAHOO_API_KEY"), 10*time.Second, 1*time.Minute, 1)
+	yahooClient := yahoo.New(mustEnv("YAHOO_API_KEY"), 10*time.Second, 1*time.Second, 1)
 	histParams := yahoo.HistoryParams{
-		Symbol:        "^XSP",
-		Interval:      "1h",
+		Symbol:        "^VIX",
+		Interval:      "1d",
 		DiffAndSplits: false,
 	}
 	xspHist, err := yahooClient.GetOHLCHistory(ctx, &histParams)

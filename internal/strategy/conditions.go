@@ -6,14 +6,15 @@ import (
 
 	"github.com/jamesonhm/gochain/internal/dxlink"
 	"github.com/jamesonhm/gochain/internal/tasty"
+	"github.com/jamesonhm/gochain/internal/yahoo"
 )
 
-type EntryCondition func(marketData *dxlink.DxLinkClient, accountData *tasty.TastyAPI) bool
-type ExitCondition func(marketData *dxlink.DxLinkClient, accountData *tasty.TastyAPI) bool
-type StrikeCalc func(marketData *dxlink.DxLinkClient) float64
+type EntryCondition func(options *dxlink.DxLinkClient, candles *yahoo.YahooAPI, accountData *tasty.TastyAPI) bool
+type ExitCondition func(options *dxlink.DxLinkClient, candles *yahoo.YahooAPI, accountData *tasty.TastyAPI) bool
+type StrikeCalc func(options *dxlink.DxLinkClient) float64
 
 func EntryDayOfWeeek(allowedDays []time.Weekday) EntryCondition {
-	return func(_ *dxlink.DxLinkClient, _ *tasty.TastyAPI) bool {
+	return func(_ *dxlink.DxLinkClient, _ *yahoo.YahooAPI, _ *tasty.TastyAPI) bool {
 		today := time.Now().Weekday()
 		for _, day := range allowedDays {
 			if day == today {
@@ -25,8 +26,8 @@ func EntryDayOfWeeek(allowedDays []time.Weekday) EntryCondition {
 }
 
 func VixONMoveMin(threshold float64) EntryCondition {
-	return func(marketData *dxlink.DxLinkClient, _ *tasty.TastyAPI) bool {
-		vixMove, err := marketData.VixONMove()
+	return func(_ *dxlink.DxLinkClient, candles *yahoo.YahooAPI, _ *tasty.TastyAPI) bool {
+		vixMove, err := candles.VixONMove()
 		if err != nil {
 			slog.Error("VixONMoveMin Entry Condition", "error", err)
 			return false
@@ -36,8 +37,8 @@ func VixONMoveMin(threshold float64) EntryCondition {
 }
 
 func VixONMoveMax(threshold float64) EntryCondition {
-	return func(marketData *dxlink.DxLinkClient, _ *tasty.TastyAPI) bool {
-		vixMove, err := marketData.VixONMove()
+	return func(_ *dxlink.DxLinkClient, candles *yahoo.YahooAPI, _ *tasty.TastyAPI) bool {
+		vixMove, err := candles.VixONMove()
 		if err != nil {
 			slog.Error("VixONMoveMax Entry Condition", "error", err)
 			return false
