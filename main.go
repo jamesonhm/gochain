@@ -27,16 +27,16 @@ func main() {
 	godotenv.Load()
 
 	yahooClient := yahoo.New(mustEnv("YAHOO_API_KEY"), 10*time.Second, 1*time.Second, 1)
-	histParams := yahoo.HistoryParams{
-		Symbol:        "^VIX",
-		Interval:      "1d",
-		DiffAndSplits: false,
-	}
-	xspHist, err := yahooClient.GetOHLCHistory(ctx, &histParams)
+	//histParams := yahoo.HistoryParams{
+	//	Symbol:        "^VIX",
+	//	Interval:      "1d",
+	//	DiffAndSplits: false,
+	//}
+	move, err := yahooClient.ONMove("^VIX")
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Printf("XSP 1h history: %+v\n", xspHist)
+	fmt.Printf("VIX ON MOVE: %.2f\n", move)
 
 	tastyClient := tasty.New(10*time.Second, 60*time.Second, 60, tasty.TastySandbox)
 	login := tasty.LoginInfo{

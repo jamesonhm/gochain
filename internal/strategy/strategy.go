@@ -22,13 +22,20 @@ type RiskParams struct {
 	NumContracts int
 }
 
-type PortfolioState struct {
+type OptionsProvider interface {
+}
+
+type CandlesProvider interface {
+	ONMove(string) (float64, error)
+}
+
+type PortfolioProvider interface {
 }
 
 func (s *Strategy) CheckEntryConditions(
 	options OptionsProvider,
 	candles CandlesProvider,
-	portfolio PortfolioState,
+	portfolio PortfolioProvider,
 ) bool {
 	for _, condition := range s.EntryConditions {
 		if !condition(options, candles, portfolio) {

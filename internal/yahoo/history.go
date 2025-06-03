@@ -2,6 +2,7 @@ package yahoo
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -60,10 +61,10 @@ func (c *YahooAPI) GetOHLCHistory(ctx context.Context, params *HistoryParams) (*
 	return res, err
 }
 
-func (c *YahooAPI) VixONMove() (float64, error) {
+func (c *YahooAPI) ONMove(symbol string) (float64, error) {
 	reqNewData := false
 	midnight := dt.Midnight(time.Now()).Unix()
-	if hist, ok := c.cache["^VIX"]; !ok {
+	if hist, ok := c.cache[symbol]; !ok {
 		reqNewData = true
 	} else if hist.Meta.RegularMarketTime < midnight {
 		reqNewData = true
@@ -71,7 +72,7 @@ func (c *YahooAPI) VixONMove() (float64, error) {
 	if reqNewData {
 		ctx := context.TODO()
 		histParams := HistoryParams{
-			Symbol:        "^VIX",
+			Symbol:        symbol,
 			Interval:      "1d",
 			DiffAndSplits: false,
 		}
@@ -79,20 +80,22 @@ func (c *YahooAPI) VixONMove() (float64, error) {
 		if err != nil {
 			return 0, err
 		}
-		c.cache["^VIX"] = res
+		c.cache[symbol] = res
 	}
 	var currOpen, prevClose float64
-	var prevTS int64
-	var minTS int64 = 0
-	for ts, ohlc := range c.cache["^VIX"].Body {
+	var prevTS int64 = 0
+
+	for ts, ohlc := range c.cache[symbol].Body {
 		if ts > midnight {
 			currOpen = ohlc.Open
+			fmt.Printf("Current opent %.2f at TS %d, %s\n", currOpen, ts, time.Unix(ts, 0))
 		}
-		if ts > minTS && ts < midnight {
+		if ts > prevTS && ts < midnight {
 			prevTS = ts
 		}
 	}
-	prevClose = c.cache["^VIX"].Body[prevTS].Close
+	prevClose = c.cache[symbol].Body[prevTS].Close
+	fmt.Printf("Prev Close %.2f at TS %d, %s\n", prevClose, prevTS, time.Unix(prevTS, 0))
 
 	return currOpen - prevClose, nil
 }

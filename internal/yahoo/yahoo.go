@@ -33,6 +33,7 @@ func New(key string, timeout time.Duration, rate_period time.Duration, rate_coun
 			Timeout: timeout,
 		},
 		limiter: rate.New(rate_period, rate_count),
+		cache:   make(map[string]*HistoryResponse),
 	}
 }
 
