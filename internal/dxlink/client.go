@@ -371,44 +371,44 @@ func (c *DxLinkClient) processMessage(message []byte) {
 	}
 }
 
-func (c *DxLinkClient) VixONMove() (float64, error) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	vix, ok := c.underlyingSubs["VIX"]
-	if !ok {
-		return 0, fmt.Errorf("no VIX underlying data")
-	}
-	candles := vix.Candles
-	if len(candles) < 2 {
-		slog.Info("VIX", "Candles", candles)
-		return 0, fmt.Errorf("not enough VIX candles")
-	}
-	now := time.Now()
-	previous_dt := dt.PreviousWeekday(
-		time.Date(
-			now.Year(),
-			now.Month(),
-			now.Day(),
-			18, 0, 0, 0,
-			time.Local,
-		),
-	)
-	previous_ts := previous_dt.UnixMilli()
-	var prev_candle CandleEvent
-	if prev_candle, ok = candles[previous_ts]; !ok {
-		return 0, fmt.Errorf("no candle found for previous day: %d, %s", previous_ts, previous_dt)
-	}
-	var curr_candle CandleEvent
-	for ts, c := range candles {
-		if ts > previous_ts {
-			curr_candle = c
-		}
-	}
-	if curr_candle.EventType == "" {
-		return 0, fmt.Errorf("no candle found for current day")
-	}
-	return *curr_candle.Open - *prev_candle.Close, nil
-}
+//func (c *DxLinkClient) VixONMove() (float64, error) {
+//	c.mu.RLock()
+//	defer c.mu.RUnlock()
+//	vix, ok := c.underlyingSubs["VIX"]
+//	if !ok {
+//		return 0, fmt.Errorf("no VIX underlying data")
+//	}
+//	candles := vix.Candles
+//	if len(candles) < 2 {
+//		slog.Info("VIX", "Candles", candles)
+//		return 0, fmt.Errorf("not enough VIX candles")
+//	}
+//	now := time.Now()
+//	previous_dt := dt.PreviousWeekday(
+//		time.Date(
+//			now.Year(),
+//			now.Month(),
+//			now.Day(),
+//			18, 0, 0, 0,
+//			time.Local,
+//		),
+//	)
+//	previous_ts := previous_dt.UnixMilli()
+//	var prev_candle CandleEvent
+//	if prev_candle, ok = candles[previous_ts]; !ok {
+//		return 0, fmt.Errorf("no candle found for previous day: %d, %s", previous_ts, previous_dt)
+//	}
+//	var curr_candle CandleEvent
+//	for ts, c := range candles {
+//		if ts > previous_ts {
+//			curr_candle = c
+//		}
+//	}
+//	if curr_candle.EventType == "" {
+//		return 0, fmt.Errorf("no candle found for current day")
+//	}
+//	return *curr_candle.Open - *prev_candle.Close, nil
+//}
 
 func (c *DxLinkClient) underlyingFeedSub() FeedSubscriptionMsg {
 	feedSub := FeedSubscriptionMsg{

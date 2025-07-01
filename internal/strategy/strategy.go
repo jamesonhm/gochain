@@ -1,12 +1,12 @@
 package strategy
 
-type Strategy struct {
-	Name            string
-	Underlying      string
-	Legs            []OptionLeg
-	EntryConditions map[string]EntryCondition
-	RiskParams      RiskParams
-	ExitConditions  map[string]ExitCondition
+type strategy struct {
+	name            string
+	underlying      string
+	legs            []OptionLeg
+	entryConditions []EntryCondition
+	riskParams      RiskParams
+	exitConditions  []ExitCondition
 }
 
 type OptionLeg struct {
@@ -21,6 +21,13 @@ type RiskParams struct {
 	PctPortfolio float64
 	NumContracts int
 }
+
+func NewStrategy(name, underlying string, risk RiskParams, entries ...EntryCondition) *strategy {
+
+}
+
+func (*strategy) WithLeg() *strategy       {}
+func (*strategy) WithLinkedLeg() *strategy {}
 
 type OptionsProvider interface {
 }

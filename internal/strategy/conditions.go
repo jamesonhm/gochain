@@ -32,6 +32,19 @@ func EntryDayOfWeeek(allowedDays []time.Weekday) EntryCondition {
 	}
 }
 
+func TimeRange(startHour, startMin, endHour, endMin int) EntryCondition {
+	return func(_ OptionsProvider, _ CandlesProvider, _ PortfolioProvider) bool {
+		nytz, err := time.LoadLocation("America/New_York")
+		if err != nil {
+			return false
+		}
+		now := time.Now().In(nytz)
+		start := time.Date(now.Year(), now.Month(), now.Day(), startHour, startMin, 0, 0, nytz)
+		end := time.Date(now.Year(), now.Month(), now.Day(), endHour, endMin, 0, 0, nytz)
+		return now.After(start) && now.Before(end)
+	}
+}
+
 func VixONMoveMin(threshold float64) EntryCondition {
 	return func(_ OptionsProvider, candles CandlesProvider, _ PortfolioProvider) bool {
 		vixMove, err := candles.ONMove("^VIX")
