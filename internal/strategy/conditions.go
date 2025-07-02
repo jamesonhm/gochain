@@ -18,7 +18,6 @@ type ExitCondition func(
 	candles CandlesProvider,
 	portfolio PortfolioProvider,
 ) bool
-type StrikeCalc func(options OptionsProvider) float64
 
 func EntryDayOfWeeek(allowedDays []time.Weekday) EntryCondition {
 	return func(_ OptionsProvider, _ CandlesProvider, _ PortfolioProvider) bool {

@@ -1,20 +1,22 @@
 package strategy
 
-type strategy struct {
+type StrategyConfig struct {
 	name            string
 	underlying      string
-	legs            []OptionLeg
-	entryConditions []EntryCondition
+	legs            []*Leg
 	riskParams      RiskParams
+	entryConditions []EntryCondition
 	exitConditions  []ExitCondition
 }
 
-type OptionLeg struct {
-	Type     string // call or put
-	Side     string // sell or buy
-	Quantity int
-	DTE      int
-	Strike   StrikeCalc
+type Leg struct {
+	optType       OptType // call or put
+	side          OptSide // sell or buy
+	quantity      int
+	dte           int
+	strikeMethod  StrikeMethod
+	strikeMethVal float64
+	round         int
 }
 
 type RiskParams struct {
@@ -22,12 +24,44 @@ type RiskParams struct {
 	NumContracts int
 }
 
-func NewStrategy(name, underlying string, risk RiskParams, entries ...EntryCondition) *strategy {
-
+func NewStrategy(
+	name,
+	underlying string,
+	legs []*Leg,
+	risk RiskParams,
+	entries ...EntryCondition,
+) *StrategyConfig {
+	strat := &StrategyConfig{
+		name:       name,
+		underlying: underlying,
+		legs:       legs,
+		riskParams: risk,
+	}
+	for _, entry := range entries {
+		strat.entryConditions = append(strat.entryConditions, entry)
+	}
+	return strat
 }
 
-func (*strategy) WithLeg() *strategy       {}
-func (*strategy) WithLinkedLeg() *strategy {}
+func NewLeg(
+	optType OptType,
+	side OptSide,
+	quantity int,
+	dte int,
+	strikeMethod StrikeMethod,
+	strikeMethVal float64,
+	round int,
+) *Leg {
+	return &Leg{
+		optType:       optType,
+		side:          side,
+		quantity:      quantity,
+		dte:           dte,
+		strikeMethod:  strikeMethod,
+		strikeMethVal: strikeMethVal,
+		round:         round,
+	}
+}
 
 type OptionsProvider interface {
 }
@@ -39,12 +73,12 @@ type CandlesProvider interface {
 type PortfolioProvider interface {
 }
 
-func (s *Strategy) CheckEntryConditions(
+func (s *StrategyConfig) CheckEntryConditions(
 	options OptionsProvider,
 	candles CandlesProvider,
 	portfolio PortfolioProvider,
 ) bool {
-	for _, condition := range s.EntryConditions {
+	for _, condition := range s.entryConditions {
 		if !condition(options, candles, portfolio) {
 			return false
 		}
