@@ -1,11 +1,13 @@
 package strategy
 
 type StrategyConfig struct {
-	name            string
-	underlying      string
-	legs            []*Leg
-	riskParams      RiskParams
-	entryConditions []EntryCondition
+	Name            string
+	Underlying      string
+	Legs            []*Leg
+	RiskParams      RiskParams
+	EntryParams     map[string]interface{}
+	entryConditions map[string]EntryCondition
+	ExitParams      map[string]interface{}
 	exitConditions  []ExitCondition
 }
 
@@ -29,18 +31,20 @@ func NewStrategy(
 	underlying string,
 	legs []*Leg,
 	risk RiskParams,
-	entries ...EntryCondition,
+	entries map[string]EntryCondition,
 ) *StrategyConfig {
 	strat := &StrategyConfig{
-		name:       name,
-		underlying: underlying,
-		legs:       legs,
-		riskParams: risk,
-	}
-	for _, entry := range entries {
-		strat.entryConditions = append(strat.entryConditions, entry)
+		Name:            name,
+		Underlying:      underlying,
+		Legs:            legs,
+		RiskParams:      risk,
+		entryConditions: entries,
 	}
 	return strat
+}
+
+func StrategyFromFile(filpath string) (*StrategyConfig, error) {
+	return nil, nil
 }
 
 func NewLeg(

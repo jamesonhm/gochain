@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jamesonhm/gochain/internal/dxlink"
+	"github.com/jamesonhm/gochain/internal/strategy"
 	"github.com/jamesonhm/gochain/internal/tasty"
 	"github.com/jamesonhm/gochain/internal/yahoo"
 	"github.com/joho/godotenv"
@@ -37,6 +38,20 @@ func main() {
 		fmt.Println(err)
 	}
 	fmt.Printf("VIX ON MOVE: %.2f\n", move)
+
+	rp := strategy.RiskParams{
+		PercentPortfolio: 100,
+		NumContracts: 1,
+	}
+	strat := strategy.NewStrategy(
+		"test", 
+		"^XSP", 
+		[]*strategy.Leg{
+			strategy.NewLeg(strategy.Put, strategy.Sell, 1, 45, strategy.Delta, 35, 5), 
+			strategy.NewLeg(strategy.Put, strategy.Buy, 1, 45, strategy.Offset, -5, 0),
+		},
+		rp, 
+		entries map[string]strategy.EntryCondition)
 
 	tastyClient := tasty.New(10*time.Second, 60*time.Second, 60, tasty.TastySandbox)
 	login := tasty.LoginInfo{

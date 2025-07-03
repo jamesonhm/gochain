@@ -22,7 +22,14 @@ func NewEngine(
 	portfolio *tasty.TastyAPI,
 	options *dxlink.DxLinkClient,
 	candles *yahoo.YahooAPI,
+	strategies []strategy.StrategyConfig,
 	scanInterval time.Duration,
 ) *Engine {
-	return &Engine{}
+	return &Engine{
+		portfolio:    portfolio,
+		options:      options,
+		candles:      candles,
+		strategies:   strategies,
+		scanInterval: scanInterval,
+	}
 }
