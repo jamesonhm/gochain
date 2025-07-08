@@ -39,19 +39,25 @@ func main() {
 	}
 	fmt.Printf("VIX ON MOVE: %.2f\n", move)
 
-	rp := strategy.RiskParams{
-		PercentPortfolio: 100,
-		NumContracts: 1,
-	}
+	entries := make(map[string]strategy.EntryCondition)
+	entries["days"] = strategy.EntryDayOfWeek(time.Monday, time.Tuesday, time.Wednesday, time.Thursday, time.Friday)
+	entries["d2"] = strategy.EntryDayOfWeek(1, 2, 3)
+
 	strat := strategy.NewStrategy(
-		"test", 
-		"^XSP", 
-		[]*strategy.Leg{
-			strategy.NewLeg(strategy.Put, strategy.Sell, 1, 45, strategy.Delta, 35, 5), 
+		"test",
+		"^XSP",
+		[]strategy.Leg{
+			strategy.NewLeg(strategy.Put, strategy.Sell, 1, 45, strategy.Delta, 35, 5),
 			strategy.NewLeg(strategy.Put, strategy.Buy, 1, 45, strategy.Offset, -5, 0),
 		},
-		rp, 
-		entries map[string]strategy.EntryCondition)
+		strategy.RiskParams{
+			PctPortfolio: 100,
+			NumContracts: 1,
+		},
+		entries,
+	)
+
+	fmt.Printf("Strategy: %+v\n", strat)
 
 	tastyClient := tasty.New(10*time.Second, 60*time.Second, 60, tasty.TastySandbox)
 	login := tasty.LoginInfo{

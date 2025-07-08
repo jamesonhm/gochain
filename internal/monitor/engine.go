@@ -1,6 +1,8 @@
 package monitor
 
 import (
+	"context"
+	"log/slog"
 	"time"
 
 	"github.com/jamesonhm/gochain/internal/dxlink"
@@ -31,5 +33,31 @@ func NewEngine(
 		candles:      candles,
 		strategies:   strategies,
 		scanInterval: scanInterval,
+	}
+}
+
+func (e *Engine) AddStrategy(s strategy.StrategyConfig) {
+	e.strategies = append(e.strategies, s)
+}
+
+func (e *Engine) Run(ctx context.Context) {
+	ticker := time.NewTicker(e.scanInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			e.checkAllStrategies(ctx)
+		}
+	}
+}
+
+func (e *Engine) checkAllStrategies(ctx context.Context) {
+	for _, s := range e.strategies {
+		if s.CheckEntryConditions(e.portfolio, e.candles, e.options) {
+			slog.LogAttrs(ctx, slog.LevelInfo, "Entry Conditions met", slog.String("strat name", s.Name))
+		}
 	}
 }

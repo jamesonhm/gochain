@@ -1,14 +1,12 @@
 package strategy
 
-type StrategyConfig struct {
+type Strategy struct {
 	Name            string
 	Underlying      string
-	Legs            []*Leg
+	Legs            []Leg
 	RiskParams      RiskParams
-	EntryParams     map[string]interface{}
 	entryConditions map[string]EntryCondition
-	ExitParams      map[string]interface{}
-	exitConditions  []ExitCondition
+	exitConditions  map[string]ExitCondition
 }
 
 type Leg struct {
@@ -29,11 +27,11 @@ type RiskParams struct {
 func NewStrategy(
 	name,
 	underlying string,
-	legs []*Leg,
+	legs []Leg,
 	risk RiskParams,
 	entries map[string]EntryCondition,
-) *StrategyConfig {
-	strat := &StrategyConfig{
+) *Strategy {
+	strat := &Strategy{
 		Name:            name,
 		Underlying:      underlying,
 		Legs:            legs,
@@ -43,7 +41,7 @@ func NewStrategy(
 	return strat
 }
 
-func StrategyFromFile(filpath string) (*StrategyConfig, error) {
+func StrategyFromFile(filpath string) (*Strategy, error) {
 	return nil, nil
 }
 
@@ -55,8 +53,8 @@ func NewLeg(
 	strikeMethod StrikeMethod,
 	strikeMethVal float64,
 	round int,
-) *Leg {
-	return &Leg{
+) Leg {
+	return Leg{
 		optType:       optType,
 		side:          side,
 		quantity:      quantity,
@@ -77,7 +75,7 @@ type CandlesProvider interface {
 type PortfolioProvider interface {
 }
 
-func (s *StrategyConfig) CheckEntryConditions(
+func (s *Strategy) CheckEntryConditions(
 	options OptionsProvider,
 	candles CandlesProvider,
 	portfolio PortfolioProvider,
