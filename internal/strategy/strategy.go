@@ -1,5 +1,7 @@
 package strategy
 
+import "log/slog"
+
 type Strategy struct {
 	Name            string
 	Underlying      string
@@ -30,8 +32,8 @@ func NewStrategy(
 	legs []Leg,
 	risk RiskParams,
 	entries map[string]EntryCondition,
-) *Strategy {
-	strat := &Strategy{
+) Strategy {
+	strat := Strategy{
 		Name:            name,
 		Underlying:      underlying,
 		Legs:            legs,
@@ -39,10 +41,6 @@ func NewStrategy(
 		entryConditions: entries,
 	}
 	return strat
-}
-
-func StrategyFromFile(filpath string) (*Strategy, error) {
-	return nil, nil
 }
 
 func NewLeg(
@@ -80,10 +78,11 @@ func (s *Strategy) CheckEntryConditions(
 	candles CandlesProvider,
 	portfolio PortfolioProvider,
 ) bool {
-	for _, condition := range s.entryConditions {
+	for name, condition := range s.entryConditions {
 		if !condition(options, candles, portfolio) {
 			return false
 		}
+		slog.Info("Condition evaluated True", "strategy", s.Name, "condition", name)
 	}
 	return true
 }

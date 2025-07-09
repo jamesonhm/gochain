@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jamesonhm/gochain/internal/dxlink"
+	"github.com/jamesonhm/gochain/internal/monitor"
 	"github.com/jamesonhm/gochain/internal/strategy"
 	"github.com/jamesonhm/gochain/internal/tasty"
 	"github.com/jamesonhm/gochain/internal/yahoo"
@@ -175,6 +176,15 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	monitor := monitor.NewEngine(
+		tastyClient,
+		streamClient,
+		yahooClient,
+		5*time.Second,
+	)
+	monitor.AddStrategy(strat)
+	monitor.Run(ctx)
 
 	var wg sync.WaitGroup
 	wg.Add(1)

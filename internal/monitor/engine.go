@@ -15,7 +15,7 @@ type Engine struct {
 	portfolio  *tasty.TastyAPI
 	options    *dxlink.DxLinkClient
 	candles    *yahoo.YahooAPI
-	strategies []strategy.StrategyConfig
+	strategies []strategy.Strategy
 	//executor *executor.Engine
 	scanInterval time.Duration
 }
@@ -24,19 +24,17 @@ func NewEngine(
 	portfolio *tasty.TastyAPI,
 	options *dxlink.DxLinkClient,
 	candles *yahoo.YahooAPI,
-	strategies []strategy.StrategyConfig,
 	scanInterval time.Duration,
 ) *Engine {
 	return &Engine{
 		portfolio:    portfolio,
 		options:      options,
 		candles:      candles,
-		strategies:   strategies,
 		scanInterval: scanInterval,
 	}
 }
 
-func (e *Engine) AddStrategy(s strategy.StrategyConfig) {
+func (e *Engine) AddStrategy(s strategy.Strategy) {
 	e.strategies = append(e.strategies, s)
 }
 
