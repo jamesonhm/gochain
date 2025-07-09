@@ -320,12 +320,24 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			}
 			if len(resp.Data.Candles) > 0 {
 				symbol := resp.Data.Candles[0].Symbol[0:strings.Index(resp.Data.Candles[0].Symbol, "{")]
-				if symbol == "VIX" {
-					for _, c := range resp.Data.Candles {
-						fmt.Println(time.UnixMilli(int64(*c.Time)))
-					}
-				}
-				slog.Info("SERVER <-", "symbol", symbol, "start", time.UnixMilli(int64(*resp.Data.Candles[0].Time)), "end", time.UnixMilli(int64(*resp.Data.Candles[len(resp.Data.Candles)-1].Time)))
+				//if symbol == "VIX" {
+				//	for _, c := range resp.Data.Candles {
+				//		fmt.Println(time.UnixMilli(int64(*c.Time)))
+				//	}
+				//}
+				slog.Info(
+					"SERVER <-",
+					"symbol",
+					symbol,
+					"start",
+					time.UnixMilli(int64(*resp.Data.Candles[0].Time)),
+					"startValClose",
+					resp.Data.Candles[0].Close,
+					"end",
+					time.UnixMilli(int64(*resp.Data.Candles[len(resp.Data.Candles)-1].Time)),
+					"endValClose",
+					resp.Data.Candles[len(resp.Data.Candles)-1].Close,
+				)
 
 				if _, ok := c.underlyingSubs[symbol]; !ok {
 					c.underlyingSubs[symbol] = NewUnderlying()
@@ -425,21 +437,21 @@ func (c *DxLinkClient) underlyingFeedSub() FeedSubscriptionMsg {
 		feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Candle", Symbol: candle_symbol, FromTime: fromTime})
 		feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Trade", Symbol: under})
 	}
-	feedSub.Add = append(
-		feedSub.Add,
-		FeedSubItem{
-			Type:     "Candle",
-			Symbol:   "VIX{=1d}",
-			FromTime: fromTime,
-		},
-	)
-	feedSub.Add = append(
-		feedSub.Add,
-		FeedSubItem{
-			Type:   "Trade",
-			Symbol: "VIX",
-		},
-	)
+	//feedSub.Add = append(
+	//	feedSub.Add,
+	//	FeedSubItem{
+	//		Type:     "Candle",
+	//		Symbol:   "VIX{=1d}",
+	//		FromTime: fromTime,
+	//	},
+	//)
+	//feedSub.Add = append(
+	//	feedSub.Add,
+	//	FeedSubItem{
+	//		Type:   "Trade",
+	//		Symbol: "VIX",
+	//	},
+	//)
 	return feedSub
 }
 
