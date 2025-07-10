@@ -197,15 +197,15 @@ type OptionData struct {
 }
 
 type UnderlyingData struct {
-	Trade   TradeEvent
-	Candles map[int64]CandleEvent
+	Trade TradeEvent
+	//Candles map[int64]CandleEvent
 	//Candles []*CandleEvent
 }
 
 func NewUnderlying() *UnderlyingData {
 	return &UnderlyingData{
-		Trade:   TradeEvent{},
-		Candles: make(map[int64]CandleEvent),
+		Trade: TradeEvent{},
+		//Candles: make(map[int64]CandleEvent),
 	}
 }
 

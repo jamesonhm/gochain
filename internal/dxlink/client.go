@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
-	"strings"
+	//"strings"
 	"sync"
 	"time"
 
@@ -260,8 +260,8 @@ func (c *DxLinkClient) processMessage(message []byte) {
 				AcceptDataFormat:        CompactFormat,
 				AcceptEventFields: FeedEventFields{
 					//Quote: []string{"eventType", "eventSymbol", "bidPrice", "askPrice"},
-					Trade:  []string{"eventType", "eventSymbol", "price", "size"},
-					Candle: []string{"eventType", "eventSymbol", "time", "open", "high", "low", "close", "volume", "impVolatility", "openInterest"},
+					Trade: []string{"eventType", "eventSymbol", "price", "size"},
+					//Candle: []string{"eventType", "eventSymbol", "time", "open", "high", "low", "close", "volume", "impVolatility", "openInterest"},
 				},
 			}
 		} else if resp.Channel == 3 {
@@ -318,35 +318,35 @@ func (c *DxLinkClient) processMessage(message []byte) {
 					c.underlyingSubs[trade.Symbol].Trade = trade
 				}
 			}
-			if len(resp.Data.Candles) > 0 {
-				symbol := resp.Data.Candles[0].Symbol[0:strings.Index(resp.Data.Candles[0].Symbol, "{")]
-				//if symbol == "VIX" {
-				//	for _, c := range resp.Data.Candles {
-				//		fmt.Println(time.UnixMilli(int64(*c.Time)))
-				//	}
-				//}
-				slog.Info(
-					"SERVER <-",
-					"symbol",
-					symbol,
-					"start",
-					time.UnixMilli(int64(*resp.Data.Candles[0].Time)),
-					"startValClose",
-					resp.Data.Candles[0].Close,
-					"end",
-					time.UnixMilli(int64(*resp.Data.Candles[len(resp.Data.Candles)-1].Time)),
-					"endValClose",
-					resp.Data.Candles[len(resp.Data.Candles)-1].Close,
-				)
+			//if len(resp.Data.Candles) > 0 {
+			//	symbol := resp.Data.Candles[0].Symbol[0:strings.Index(resp.Data.Candles[0].Symbol, "{")]
+			//	//if symbol == "VIX" {
+			//	//	for _, c := range resp.Data.Candles {
+			//	//		fmt.Println(time.UnixMilli(int64(*c.Time)))
+			//	//	}
+			//	//}
+			//	slog.Info(
+			//		"SERVER <-",
+			//		"symbol",
+			//		symbol,
+			//		"start",
+			//		time.UnixMilli(int64(*resp.Data.Candles[0].Time)),
+			//		"startValClose",
+			//		resp.Data.Candles[0].Close,
+			//		"end",
+			//		time.UnixMilli(int64(*resp.Data.Candles[len(resp.Data.Candles)-1].Time)),
+			//		"endValClose",
+			//		resp.Data.Candles[len(resp.Data.Candles)-1].Close,
+			//	)
 
-				if _, ok := c.underlyingSubs[symbol]; !ok {
-					c.underlyingSubs[symbol] = NewUnderlying()
-				}
-				for _, candle := range resp.Data.Candles {
-					c.underlyingSubs[symbol].Candles[int64(*candle.Time)] = candle
-				}
-				//copy(c.underlyingSubs[symbol].Candles, resp.Data.Candles)
-			}
+			//	if _, ok := c.underlyingSubs[symbol]; !ok {
+			//		c.underlyingSubs[symbol] = NewUnderlying()
+			//	}
+			//	for _, candle := range resp.Data.Candles {
+			//		c.underlyingSubs[symbol].Candles[int64(*candle.Time)] = candle
+			//	}
+			//copy(c.underlyingSubs[symbol].Candles, resp.Data.Candles)
+			//}
 		case 3:
 			if len(resp.Data.Quotes) > 0 {
 				slog.Info("SERVER <-", "symbol", resp.Data.Quotes[0].Symbol, "quotes", resp.Data.Quotes)
@@ -429,12 +429,12 @@ func (c *DxLinkClient) underlyingFeedSub() FeedSubscriptionMsg {
 		Reset:   true,
 		Add:     []FeedSubItem{},
 	}
-	fromTime := time.Now().AddDate(0, 0, -3).UnixMilli()
+	//fromTime := time.Now().AddDate(0, 0, -3).UnixMilli()
 
 	for under := range c.underlyingSubs {
-		candle_symbol := under + "{=30m}"
+		//candle_symbol := under + "{=30m}"
 		//feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Quote", Symbol: under})
-		feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Candle", Symbol: candle_symbol, FromTime: fromTime})
+		//feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Candle", Symbol: candle_symbol, FromTime: fromTime})
 		feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Trade", Symbol: under})
 	}
 	//feedSub.Add = append(
