@@ -3,10 +3,13 @@ package strategy
 import (
 	"log/slog"
 	"time"
-	//"github.com/jamesonhm/gochain/internal/dxlink"
-	//"github.com/jamesonhm/gochain/internal/tasty"
-	//"github.com/jamesonhm/gochain/internal/yahoo"
 )
+
+type Condition func(
+	options OptionsProvider,
+	candles CandlesProvider,
+	portfolio PortfolioProvider,
+) bool
 
 type EntryCondition func(
 	options OptionsProvider,

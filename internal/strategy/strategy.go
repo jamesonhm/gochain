@@ -3,10 +3,11 @@ package strategy
 import "log/slog"
 
 type Strategy struct {
-	Name            string
-	Underlying      string
-	Legs            []Leg
+	Name            string `json:"name"`
+	Underlying      string `json:"underlying"`
+	Legs            []Leg  `json:"legs"`
 	RiskParams      RiskParams
+	EntryConditions map[string]map[string]interface{} `json:"entry-conditions"`
 	entryConditions map[string]EntryCondition
 	exitConditions  map[string]ExitCondition
 }

@@ -1,0 +1,39 @@
+{
+    "name": "example-strategy",
+    "symbol": "^XSP",
+    "legs": [
+        {
+            "option-type": "call",
+            "option-side": "buy",
+            "quantity": 1,
+            "days-to-expiration": 7,
+            "strike-selection-method": "delta",
+            "strike-selection-value": 30,
+            "round-nearest": 5
+        },
+        {
+            "option-type": "call",
+            "option-side": "sell",
+            "quantity": 1,
+            "days-to-expiration": 7,
+            "strike-selection-method": "relative",
+            "strike-selection-value": 5,
+            "round-nearest": 0
+        },
+    ],
+    "entry-conditions": {
+        "day-of-week": {
+            "days": ["mon", "tues", "weds"]
+        },
+        "time-of-day": {
+            "hour": 9,
+            "minute": 55
+        },
+        "vix-overnight-move": {
+            "min": 0.2
+        },
+        "intraday-move": {
+            "max-pct": 0.5
+        }
+    }
+}

@@ -1,0 +1,17 @@
+{
+    "entry-conditions": {
+        "day-of-week": {
+            "days": ["mon", "tues", "weds"]
+        },
+        "time-of-day": {
+            "hour": 9,
+            "minute": 55
+        },
+        "vix-overnight-move": {
+            "min": 0.2
+        },
+        "intraday-move": {
+            "max-pct": 0.5
+        }
+    }
+}
