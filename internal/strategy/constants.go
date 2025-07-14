@@ -5,12 +5,12 @@ type OptType string
 type OptSide string
 
 const (
-	Delta  StrikeMethod = "Delta"
-	Offset StrikeMethod = "Offset"
+	Delta  StrikeMethod = "delta"
+	Offset StrikeMethod = "offset"
 	//
-	Call OptType = "Call"
-	Put  OptType = "Put"
+	Call OptType = "call"
+	Put  OptType = "put"
 	//
-	Buy  OptSide = "Buy"
-	Sell OptSide = "Sell"
+	Buy  OptSide = "buy"
+	Sell OptSide = "sell"
 )

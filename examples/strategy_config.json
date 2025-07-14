@@ -1,6 +1,6 @@
 {
     "name": "example-strategy",
-    "symbol": "^XSP",
+    "underlying": "^XSP",
     "legs": [
         {
             "option-type": "call",
@@ -19,7 +19,7 @@
             "strike-selection-method": "relative",
             "strike-selection-value": 5,
             "round-nearest": 0
-        },
+        }
     ],
     "entry-conditions": {
         "day-of-week": {

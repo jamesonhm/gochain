@@ -22,7 +22,7 @@ type ExitCondition func(
 	portfolio PortfolioProvider,
 ) bool
 
-func EntryDayOfWeek(allowedDays ...time.Weekday) EntryCondition {
+func EntryDayOfWeek(allowedDays ...time.Weekday) Condition {
 	return func(_ OptionsProvider, _ CandlesProvider, _ PortfolioProvider) bool {
 		today := time.Now().Weekday()
 		for _, day := range allowedDays {

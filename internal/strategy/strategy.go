@@ -1,6 +1,10 @@
 package strategy
 
-import "log/slog"
+import (
+	"encoding/json"
+	"log/slog"
+	"os"
+)
 
 type Strategy struct {
 	Name            string `json:"name"`
@@ -13,18 +17,37 @@ type Strategy struct {
 }
 
 type Leg struct {
-	optType       OptType // call or put
-	side          OptSide // sell or buy
-	quantity      int
-	dte           int
-	strikeMethod  StrikeMethod
-	strikeMethVal float64
-	round         int
+	// call or put
+	OptType string `json:"option-type"`
+	// sell or buy
+	Side     string `json:"option-side"`
+	Quantity int    `json:"quantity"`
+	DTE      int    `json:"days-to-expiration"`
+	// delta or offset
+	StrikeMethod  string  `json:"strike-selection-method"`
+	StrikeMethVal float64 `json:"strike-selection-value"`
+	Round         int     `json:"round-nearest"`
 }
 
 type RiskParams struct {
 	PctPortfolio float64
 	NumContracts int
+}
+
+func FromFile(fpath string) (Strategy, error) {
+	var strat Strategy
+	file, err := os.Open(fpath)
+	if err != nil {
+		return strat, err
+	}
+	defer file.Close()
+
+	decoder := json.NewDecoder(file)
+	if err := decoder.Decode(&strat); err != nil {
+		return strat, err
+	}
+
+	return strat, nil
 }
 
 func NewStrategy(
@@ -45,22 +68,22 @@ func NewStrategy(
 }
 
 func NewLeg(
-	optType OptType,
-	side OptSide,
+	optType string,
+	side string,
 	quantity int,
 	dte int,
-	strikeMethod StrikeMethod,
+	strikeMethod string,
 	strikeMethVal float64,
 	round int,
 ) Leg {
 	return Leg{
-		optType:       optType,
-		side:          side,
-		quantity:      quantity,
-		dte:           dte,
-		strikeMethod:  strikeMethod,
-		strikeMethVal: strikeMethVal,
-		round:         round,
+		OptType:       optType,
+		Side:          side,
+		Quantity:      quantity,
+		DTE:           dte,
+		StrikeMethod:  strikeMethod,
+		StrikeMethVal: strikeMethVal,
+		Round:         round,
 	}
 }
 
