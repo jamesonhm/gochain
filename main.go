@@ -11,7 +11,6 @@ import (
 
 	"github.com/jamesonhm/gochain/internal/dxlink"
 	"github.com/jamesonhm/gochain/internal/monitor"
-	"github.com/jamesonhm/gochain/internal/strategy"
 	"github.com/jamesonhm/gochain/internal/tasty"
 	"github.com/jamesonhm/gochain/internal/yahoo"
 	"github.com/joho/godotenv"
@@ -40,29 +39,7 @@ func main() {
 	}
 	fmt.Printf("VIX ON MOVE: %.2f\n", move)
 
-	//entries := make(map[string]strategy.EntryCondition)
-	//entries["days"] = strategy.EntryDayOfWeek(time.Monday, time.Tuesday, time.Wednesday, time.Thursday, time.Friday)
-	//entries["d2"] = strategy.EntryDayOfWeek(1, 2, 3)
-
-	//strat := strategy.NewStrategy(
-	//	"test",
-	//	"^XSP",
-	//	[]strategy.Leg{
-	//		strategy.NewLeg(strategy.Put, strategy.Sell, 1, 45, strategy.Delta, 35, 5),
-	//		strategy.NewLeg(strategy.Put, strategy.Buy, 1, 45, strategy.Offset, -5, 0),
-	//	},
-	//	strategy.RiskParams{
-	//		PctPortfolio: 100,
-	//		NumContracts: 1,
-	//	},
-	//	entries,
-	//)
-	strat, err := strategy.FromFile("examples/strategy_config.json")
-	if err != nil {
-		logger.Error("unable to create strategy from file", "err", err)
-	}
-
-	fmt.Printf("Strategy: %+v\n", strat)
+	strats := loadStrategies()
 
 	tastyClient := tasty.New(10*time.Second, 60*time.Second, 60, tasty.TastySandbox)
 	login := tasty.LoginInfo{
@@ -116,19 +93,43 @@ func main() {
 	//	fmt.Printf("%+v\n", bal)
 	//}
 
-	chains, err := tastyClient.GetOptionCompact(ctx, "XSP")
+	//chains, err := tastyClient.GetOptionCompact(ctx, "XSP")
+	//if err != nil {
+	//	fmt.Println(err)
+	//} else {
+	//	//fmt.Printf("%+v\n", chain)
+	//	for _, chain := range chains {
+	//		fmt.Println(chain.ExpirationType)
+	//		fmt.Println(chain.StreamerSymbols)
+	//		fmt.Println("=============================================================")
+	//	}
+	//}
+
+	chains, err := tastyClient.GetOptionNested(ctx, "XSP")
 	if err != nil {
 		fmt.Println(err)
+	} else {
+		//fmt.Printf("%+v\n", chains[0])
+		//fmt.Println("=============================================================")
+		minDTE := 999
+		var expType string
+		var expDate string
+		for _, chain := range chains {
+			for _, exp := range chain.Expirations {
+				if exp.DaysToExpiration < minDTE {
+					minDTE = exp.DaysToExpiration
+					expType = exp.ExpirationType
+					expDate = exp.ExpirationDate
+				}
+				//fmt.Println(exp.ExpirationType)
+				//fmt.Println(exp.DaysToExpiration)
+				//fmt.Println(exp.ExpirationDate)
+				//fmt.Println("=============================================================")
+			}
+		}
+		fmt.Printf("minDTE: %d, expType: %s, expDate: %s\n", minDTE, expType, expDate)
+		fmt.Println("=============================================================")
 	}
-	//	else {
-	//		//fmt.Printf("%+v\n", chain)
-	//		for _, chain := range chains {
-	//			fmt.Println(chain.ExpirationType)
-	//			fmt.Println(chain.StreamerSymbols)
-	//			fmt.Println("=============================================================")
-	//		}
-	//	}
-
 	//act := true
 	//syms := []string{"XSP 250430P00529000"}
 	//eoSymbol := tasty.EquityOptionsSymbology{
@@ -165,13 +166,13 @@ func main() {
 	}
 
 	streamClient := dxlink.New(ctx, streamer.DXLinkURL, streamer.Token)
-	for _, c := range chains {
-		fmt.Printf("%s - %s\n", c.ExpirationType, c.StreamerSymbols[0:3])
-		err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols[0:3], 0)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
+	//for _, c := range chains {
+	//	fmt.Printf("%s - %s\n", c.ExpirationType, c.StreamerSymbols[0:3])
+	//	err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols[0:3], 0)
+	//	if err != nil {
+	//		fmt.Println(err)
+	//	}
+	//}
 
 	// register callback for setting up channels and feeds (called after Authorized)
 	// register calbacks for processing data (called at each msgType)
@@ -187,21 +188,15 @@ func main() {
 		yahooClient,
 		5*time.Second,
 	)
-	monitor.AddStrategy(strat)
+	for _, strat := range strats {
+		monitor.AddStrategy(strat)
+	}
 	monitor.Run(ctx)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func(wg *sync.WaitGroup) {
 		defer wg.Done()
-		//time.Sleep(30 * time.Second)
-		//vixMove, err := streamClient.VixONMove()
-		//if err != nil {
-		//	slog.Error("Error getting VIX ON move", "error", err)
-		//} else {
-		//	slog.Info("VIX ON Move:", "data", vixMove)
-		//}
-
 		time.Sleep(10 * time.Second)
 		streamClient.Close()
 	}(&wg)

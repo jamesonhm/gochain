@@ -12,8 +12,8 @@ type Strategy struct {
 	Legs            []Leg  `json:"legs"`
 	RiskParams      RiskParams
 	EntryConditions map[string]map[string]interface{} `json:"entry-conditions"`
-	entryConditions map[string]EntryCondition
-	exitConditions  map[string]ExitCondition
+	entryConditions map[string]Condition
+	exitConditions  map[string]Condition
 }
 
 type Leg struct {
@@ -34,7 +34,7 @@ type RiskParams struct {
 	NumContracts int
 }
 
-func FromFile(fpath string) (Strategy, error) {
+func FromFile(fpath string, f *ConditionFactory) (Strategy, error) {
 	var strat Strategy
 	file, err := os.Open(fpath)
 	if err != nil {
@@ -46,6 +46,13 @@ func FromFile(fpath string) (Strategy, error) {
 	if err := decoder.Decode(&strat); err != nil {
 		return strat, err
 	}
+	if strat.EntryConditions != nil {
+		conditions, err := f.FromConfig(strat.EntryConditions)
+		if err != nil {
+			return strat, err
+		}
+		strat.entryConditions = conditions
+	}
 
 	return strat, nil
 }
@@ -55,7 +62,7 @@ func NewStrategy(
 	underlying string,
 	legs []Leg,
 	risk RiskParams,
-	entries map[string]EntryCondition,
+	entries map[string]Condition,
 ) Strategy {
 	strat := Strategy{
 		Name:            name,

@@ -1,0 +1,29 @@
+{
+    "name": "basic PCS",
+    "underlying": "^XSP",
+    "legs": [
+        {
+            "option-type": "put",
+            "option-side": "buy",
+            "quantity": 1,
+            "days-to-expiration": 7,
+            "strike-selection-method": "delta",
+            "strike-selection-value": 30,
+            "round-nearest": 5
+        },
+        {
+            "option-type": "put",
+            "option-side": "sell",
+            "quantity": 1,
+            "days-to-expiration": 7,
+            "strike-selection-method": "relative",
+            "strike-selection-value": -5,
+            "round-nearest": 0
+        }
+    ],
+    "entry-conditions": {
+        "day-of-week": {
+            "days": ["mon", "tues", "weds"]
+        }
+    }
+}

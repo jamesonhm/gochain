@@ -48,7 +48,28 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) tasty.NewOrder {
 	// for each leg, calculate strike price
 	// create leg(s)
 	// create order struct
-	return tasty.NewOrder{}
+
+	//type NewOrder struct {
+	//	TimeInForce  TimeInForce   `json:"time-in-force"`
+	//	GtcDate      string        `json:"gtc-date"`
+	//	OrderType    OrderType     `json:"order-type"`
+	//	StopTrigger  float32       `json:"stop-trigger,omitempty"`
+	//	Price        float32       `json:"price,omitempty"`
+	//	PriceEffect  PriceEffect   `json:"price-effect,omitempty"`
+	//	Value        float32       `json:"value,omitempty"`
+	//	ValueEffect  PriceEffect   `json:"value-effect,omitempty"`
+	//	Source       string        `json:"source,omitempty"`
+	//	PartitionKey string        `json:"partition-key,omitempty"`
+	//	PreflightID  string        `json:"preflight-id,omitempty"`
+	//	Legs         []NewOrderLeg `json:"legs"`
+	//	Rules        NewOrderRules `json:"rules,omitempty"`
+	//}
+	return tasty.NewOrder{
+		TimeInForce: "Day",
+		// price = sum(legs_midpoint) +/- slippage
+		// price-effect = Credit if price > 0
+		OrderType: "Limit",
+	}
 }
 
 func (e *Engine) startWorkers() {

@@ -29,6 +29,26 @@ func (f *ConditionFactory) RegisterFactory(name string, factory FactoryFunc) {
 //
 //}
 
+func (f *ConditionFactory) FromConfig(raw map[string]map[string]interface{}) (map[string]Condition, error) {
+	conditions := make(map[string]Condition)
+
+	for name, params := range raw {
+		factory, exists := f.factories[name]
+		if !exists {
+			return nil, fmt.Errorf("unknown condition type: %s", name)
+		}
+
+		condition, err := factory(params)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create condition %s: %w", name, err)
+		}
+
+		conditions[name] = condition
+	}
+
+	return conditions, nil
+}
+
 // Factory functions for each condition type
 
 func createDayOfWeekCondition(params map[string]interface{}) (Condition, error) {
@@ -74,5 +94,13 @@ func createDayOfWeekCondition(params map[string]interface{}) (Condition, error) 
 		}
 	}
 
-	return EntryDayOfWeek(weekdays...), nil
+	return func(_ OptionsProvider, _ CandlesProvider, _ PortfolioProvider) bool {
+		today := time.Now().Weekday()
+		for _, day := range weekdays {
+			if day == today {
+				return true
+			}
+		}
+		return false
+	}, nil
 }
