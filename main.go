@@ -93,43 +93,20 @@ func main() {
 	//	fmt.Printf("%+v\n", bal)
 	//}
 
-	//chains, err := tastyClient.GetOptionCompact(ctx, "XSP")
-	//if err != nil {
-	//	fmt.Println(err)
-	//} else {
-	//	//fmt.Printf("%+v\n", chain)
-	//	for _, chain := range chains {
-	//		fmt.Println(chain.ExpirationType)
-	//		fmt.Println(chain.StreamerSymbols)
-	//		fmt.Println("=============================================================")
-	//	}
-	//}
+	// Get curr market price for each tracked symbol
 
-	chains, err := tastyClient.GetOptionNested(ctx, "XSP")
+	chains, err := tastyClient.GetOptionCompact(ctx, "XSP")
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		//fmt.Printf("%+v\n", chains[0])
-		//fmt.Println("=============================================================")
-		minDTE := 999
-		var expType string
-		var expDate string
+		//fmt.Printf("%+v\n", chain)
 		for _, chain := range chains {
-			for _, exp := range chain.Expirations {
-				if exp.DaysToExpiration < minDTE {
-					minDTE = exp.DaysToExpiration
-					expType = exp.ExpirationType
-					expDate = exp.ExpirationDate
-				}
-				//fmt.Println(exp.ExpirationType)
-				//fmt.Println(exp.DaysToExpiration)
-				//fmt.Println(exp.ExpirationDate)
-				//fmt.Println("=============================================================")
-			}
+			fmt.Println(chain.ExpirationType)
+			fmt.Println(chain.StreamerSymbols[0:10])
+			fmt.Println("=============================================================")
 		}
-		fmt.Printf("minDTE: %d, expType: %s, expDate: %s\n", minDTE, expType, expDate)
-		fmt.Println("=============================================================")
 	}
+
 	//act := true
 	//syms := []string{"XSP 250430P00529000"}
 	//eoSymbol := tasty.EquityOptionsSymbology{
@@ -166,13 +143,13 @@ func main() {
 	}
 
 	streamClient := dxlink.New(ctx, streamer.DXLinkURL, streamer.Token)
-	//for _, c := range chains {
-	//	fmt.Printf("%s - %s\n", c.ExpirationType, c.StreamerSymbols[0:3])
-	//	err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols[0:3], 0)
-	//	if err != nil {
-	//		fmt.Println(err)
-	//	}
-	//}
+	for _, c := range chains {
+		fmt.Printf("%s - %s\n", c.ExpirationType, c.StreamerSymbols[0:10])
+		err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols[0:10], 5)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 
 	// register callback for setting up channels and feeds (called after Authorized)
 	// register calbacks for processing data (called at each msgType)

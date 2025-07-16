@@ -18,15 +18,15 @@ type Strategy struct {
 
 type Leg struct {
 	// call or put
-	OptType string `json:"option-type"`
+	OptType OptType `json:"option-type"`
 	// sell or buy
-	Side     string `json:"option-side"`
-	Quantity int    `json:"quantity"`
-	DTE      int    `json:"days-to-expiration"`
+	Side     OptSide `json:"option-side"`
+	Quantity int     `json:"quantity"`
+	DTE      int     `json:"days-to-expiration"`
 	// delta or offset
-	StrikeMethod  string  `json:"strike-selection-method"`
-	StrikeMethVal float64 `json:"strike-selection-value"`
-	Round         int     `json:"round-nearest"`
+	StrikeMethod  StrikeMethod `json:"strike-selection-method"`
+	StrikeMethVal float64      `json:"strike-selection-value"`
+	Round         int          `json:"round-nearest"`
 }
 
 type RiskParams struct {
@@ -75,11 +75,11 @@ func NewStrategy(
 }
 
 func NewLeg(
-	optType string,
-	side string,
+	optType OptType,
+	side OptSide,
 	quantity int,
 	dte int,
-	strikeMethod string,
+	strikeMethod StrikeMethod,
 	strikeMethVal float64,
 	round int,
 ) Leg {

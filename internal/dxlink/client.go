@@ -318,35 +318,6 @@ func (c *DxLinkClient) processMessage(message []byte) {
 					c.underlyingSubs[trade.Symbol].Trade = trade
 				}
 			}
-			//if len(resp.Data.Candles) > 0 {
-			//	symbol := resp.Data.Candles[0].Symbol[0:strings.Index(resp.Data.Candles[0].Symbol, "{")]
-			//	//if symbol == "VIX" {
-			//	//	for _, c := range resp.Data.Candles {
-			//	//		fmt.Println(time.UnixMilli(int64(*c.Time)))
-			//	//	}
-			//	//}
-			//	slog.Info(
-			//		"SERVER <-",
-			//		"symbol",
-			//		symbol,
-			//		"start",
-			//		time.UnixMilli(int64(*resp.Data.Candles[0].Time)),
-			//		"startValClose",
-			//		resp.Data.Candles[0].Close,
-			//		"end",
-			//		time.UnixMilli(int64(*resp.Data.Candles[len(resp.Data.Candles)-1].Time)),
-			//		"endValClose",
-			//		resp.Data.Candles[len(resp.Data.Candles)-1].Close,
-			//	)
-
-			//	if _, ok := c.underlyingSubs[symbol]; !ok {
-			//		c.underlyingSubs[symbol] = NewUnderlying()
-			//	}
-			//	for _, candle := range resp.Data.Candles {
-			//		c.underlyingSubs[symbol].Candles[int64(*candle.Time)] = candle
-			//	}
-			//copy(c.underlyingSubs[symbol].Candles, resp.Data.Candles)
-			//}
 		case 3:
 			if len(resp.Data.Quotes) > 0 {
 				slog.Info("SERVER <-", "symbol", resp.Data.Quotes[0].Symbol, "quotes", resp.Data.Quotes)
@@ -383,44 +354,18 @@ func (c *DxLinkClient) processMessage(message []byte) {
 	}
 }
 
-//func (c *DxLinkClient) VixONMove() (float64, error) {
-//	c.mu.RLock()
-//	defer c.mu.RUnlock()
-//	vix, ok := c.underlyingSubs["VIX"]
-//	if !ok {
-//		return 0, fmt.Errorf("no VIX underlying data")
-//	}
-//	candles := vix.Candles
-//	if len(candles) < 2 {
-//		slog.Info("VIX", "Candles", candles)
-//		return 0, fmt.Errorf("not enough VIX candles")
-//	}
-//	now := time.Now()
-//	previous_dt := dt.PreviousWeekday(
-//		time.Date(
-//			now.Year(),
-//			now.Month(),
-//			now.Day(),
-//			18, 0, 0, 0,
-//			time.Local,
-//		),
-//	)
-//	previous_ts := previous_dt.UnixMilli()
-//	var prev_candle CandleEvent
-//	if prev_candle, ok = candles[previous_ts]; !ok {
-//		return 0, fmt.Errorf("no candle found for previous day: %d, %s", previous_ts, previous_dt)
-//	}
-//	var curr_candle CandleEvent
-//	for ts, c := range candles {
-//		if ts > previous_ts {
-//			curr_candle = c
-//		}
-//	}
-//	if curr_candle.EventType == "" {
-//		return 0, fmt.Errorf("no candle found for current day")
-//	}
-//	return *curr_candle.Open - *prev_candle.Close, nil
-//}
+// searches the map of optionSubs for the date, and strike nearest the delta based on the rounding value
+func (c *DxLinkClient) StrikeFromDelta(underlying string, dte int, optType string, delta int, roundNear int) (string, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	for k, v := range c.optionSubs {
+		opt, err := ParseOption(k)
+		if err != nil {
+			return "", fmt.Errorf("unable to parse option: %s", k)
+		}
+	}
+	return "", nil
+}
 
 func (c *DxLinkClient) underlyingFeedSub() FeedSubscriptionMsg {
 	feedSub := FeedSubscriptionMsg{
@@ -429,29 +374,11 @@ func (c *DxLinkClient) underlyingFeedSub() FeedSubscriptionMsg {
 		Reset:   true,
 		Add:     []FeedSubItem{},
 	}
-	//fromTime := time.Now().AddDate(0, 0, -3).UnixMilli()
 
 	for under := range c.underlyingSubs {
-		//candle_symbol := under + "{=30m}"
 		//feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Quote", Symbol: under})
-		//feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Candle", Symbol: candle_symbol, FromTime: fromTime})
 		feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Trade", Symbol: under})
 	}
-	//feedSub.Add = append(
-	//	feedSub.Add,
-	//	FeedSubItem{
-	//		Type:     "Candle",
-	//		Symbol:   "VIX{=1d}",
-	//		FromTime: fromTime,
-	//	},
-	//)
-	//feedSub.Add = append(
-	//	feedSub.Add,
-	//	FeedSubItem{
-	//		Type:   "Trade",
-	//		Symbol: "VIX",
-	//	},
-	//)
 	return feedSub
 }
 
