@@ -46,13 +46,24 @@ func (c *DxLinkClient) ResetData() {
 	clear(c.underlyingSubs)
 }
 
-func (c *DxLinkClient) UpdateOptionSubs(symbol string, options []string, days int) error {
+func (c *DxLinkClient) UpdateOptionSubs(symbol string, options []string, days int, mktPrice float64, pctRange float64) error {
+	c.underlyingSubs[symbol] = NewUnderlying()
+	err := c.filterOptions(options, days, mktPrice, pctRange)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *DxLinkClient) filterOptions(options []string, days int, mktPrice float64, pctRange float64) error {
+	fmt.Printf("Length Options before filter: %d\n", len(options))
 	today, err := dt.EndOfDay(time.Now())
 	if err != nil {
 		return err
 	}
 	cut_date := today.AddDate(0, 0, days)
-	c.underlyingSubs[symbol] = NewUnderlying()
+	upper := mktPrice * (1 + pctRange/100)
+	lower := mktPrice * (1 - pctRange/100)
 	for _, option := range options {
 		opt, err := ParseOption(option)
 		if err != nil {
@@ -61,9 +72,13 @@ func (c *DxLinkClient) UpdateOptionSubs(symbol string, options []string, days in
 		if opt.Date.After(cut_date) {
 			continue
 		}
+		if opt.Strike > upper || opt.Strike < lower {
+			continue
+		}
 		c.optionSubs[option] = &OptionData{}
-		fmt.Printf("Added %s to subs\n", option)
+		//fmt.Printf("Added %s to subs\n", option)
 	}
+	fmt.Printf("Length Option subs after filter: %d\n", len(c.optionSubs))
 	return nil
 }
 
@@ -355,17 +370,17 @@ func (c *DxLinkClient) processMessage(message []byte) {
 }
 
 // searches the map of optionSubs for the date, and strike nearest the delta based on the rounding value
-func (c *DxLinkClient) StrikeFromDelta(underlying string, dte int, optType string, delta int, roundNear int) (string, error) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	for k, v := range c.optionSubs {
-		opt, err := ParseOption(k)
-		if err != nil {
-			return "", fmt.Errorf("unable to parse option: %s", k)
-		}
-	}
-	return "", nil
-}
+//func (c *DxLinkClient) StrikeFromDelta(underlying string, dte int, optType string, delta int, roundNear int) (string, error) {
+//	c.mu.RLock()
+//	defer c.mu.RUnlock()
+//	for k, v := range c.optionSubs {
+//		opt, err := ParseOption(k)
+//		if err != nil {
+//			return "", fmt.Errorf("unable to parse option: %s", k)
+//		}
+//	}
+//	return "", nil
+//}
 
 func (c *DxLinkClient) underlyingFeedSub() FeedSubscriptionMsg {
 	feedSub := FeedSubscriptionMsg{
@@ -390,7 +405,10 @@ func (c *DxLinkClient) optionFeedSub() FeedSubscriptionMsg {
 		Add:     []FeedSubItem{},
 	}
 	for opt := range c.optionSubs {
-		slog.Info("OptionFeedSub method", "OptionSub iter:", opt)
+		//slog.Info("OptionFeedSub method", "OptionSub iter:", opt)
+		if len(feedSub.Add) >= 90 {
+			break
+		}
 		feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Quote", Symbol: opt})
 		feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Greeks", Symbol: opt})
 	}

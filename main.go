@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strconv"
 
 	"sync"
 	"time"
@@ -41,10 +42,18 @@ func main() {
 
 	strats := loadStrategies()
 
-	tastyClient := tasty.New(10*time.Second, 60*time.Second, 60, tasty.TastySandbox)
+	// SB USER
+	//tastyClient := tasty.New(10*time.Second, 60*time.Second, 60, tasty.TastySandbox)
+	//login := tasty.LoginInfo{
+	//	Login:      mustEnv("TASTY_USER"),
+	//	Password:   mustEnv("SB_PASSWORD"),
+	//	RememberMe: true,
+	//}
+	// PROD USER
+	tastyClient := tasty.New(10*time.Second, 60*time.Second, 60, tasty.TastyProd)
 	login := tasty.LoginInfo{
 		Login:      mustEnv("TASTY_USER"),
-		Password:   mustEnv("SB_PASSWORD"),
+		Password:   mustEnv("PW"),
 		RememberMe: true,
 	}
 	err = tastyClient.CreateSession(ctx, login)
@@ -94,6 +103,28 @@ func main() {
 	//}
 
 	// Get curr market price for each tracked symbol
+	mktPrices := make(map[string]float64)
+	if tastyClient.Env == tasty.TastyProd {
+		mktParams := tasty.MarketDataParams{
+			Index: []string{"XSP"},
+		}
+		mktData, err := tastyClient.GetMarketData(ctx, &mktParams)
+		if err != nil {
+			logger.Error("error getting Tasty Market Data", "error", err)
+		} else {
+			for _, item := range mktData {
+				flVal, err := strconv.ParseFloat(item.Last, 64)
+				if err != nil {
+					logger.Error("unable to parse float", "string val", item.Last, "for symbol", item.Symbol)
+					flVal = 0.0
+				}
+				mktPrices[item.Symbol] = flVal
+			}
+		}
+	} else {
+		mktPrices["XSP"] = 623.37
+	}
+	fmt.Printf("Last Market Prices: %+v\n", mktPrices)
 
 	chains, err := tastyClient.GetOptionCompact(ctx, "XSP")
 	if err != nil {
@@ -145,7 +176,7 @@ func main() {
 	streamClient := dxlink.New(ctx, streamer.DXLinkURL, streamer.Token)
 	for _, c := range chains {
 		fmt.Printf("%s - %s\n", c.ExpirationType, c.StreamerSymbols[0:10])
-		err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols[0:10], 5)
+		err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols, 5, mktPrices["XSP"], 9)
 		if err != nil {
 			fmt.Println(err)
 		}

@@ -13,5 +13,5 @@ func (c *TastyAPI) GetMarketData(ctx context.Context, params *MarketDataParams) 
 	res := &MarketDataResponse{}
 	path := c.baseurl + MarketDataPath
 	err := c.request(ctx, http.MethodGet, auth, path, params, nil, res)
-	return res.Data.EquityOptions, err
+	return res.Data.Items, err
 }

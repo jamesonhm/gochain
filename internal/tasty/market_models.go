@@ -4,6 +4,15 @@ import (
 	"time"
 )
 
+type MarketDataParams struct {
+	Crypto       []string `url:"cryptocurrency"`
+	Equity       []string `url:"equity"`
+	EquityOption []string `url:"equity-option"`
+	Index        []string `url:"index"`
+	Future       []string `url:"future"`
+	FutureOption []string `url:"future-option"`
+}
+
 type MarketDataResponse struct {
 	Data struct {
 		Items []MarketData `json:"items"`

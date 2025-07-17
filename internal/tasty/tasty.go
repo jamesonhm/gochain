@@ -39,6 +39,7 @@ type TastyAPI struct {
 	httpClient *http.Client
 	//uriBuilder *uri.URIBuilder
 	limiter *rate.Limiter
+	Env     TastyEnv
 }
 
 func New(timeout time.Duration, rate_period time.Duration, rate_count int, env TastyEnv) *TastyAPI {
@@ -56,6 +57,7 @@ func New(timeout time.Duration, rate_period time.Duration, rate_count int, env T
 		},
 		//uriBuilder: uri.New(),
 		limiter: rate.New(rate_period, rate_count),
+		Env:     env,
 	}
 }
 
