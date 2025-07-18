@@ -4,8 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"iter"
 	"log/slog"
+	"maps"
 	"net/url"
+	"slices"
+
 	//"strings"
 	"sync"
 	"time"
@@ -305,11 +309,14 @@ func (c *DxLinkClient) processMessage(message []byte) {
 		var feedSub FeedSubscriptionMsg
 		if resp.Channel == 1 {
 			feedSub = c.underlyingFeedSub()
+			c.sendMessage(feedSub)
 		} else if resp.Channel == 3 {
 			fmt.Println("Channel 3 response, getting option feed subs")
-			feedSub = c.optionFeedSub()
+			//feedSub = c.optionFeedSub()
+			for m := range c.optionFeedIter() {
+				c.sendMessage(m)
+			}
 		}
-		c.sendMessage(feedSub)
 	case string(FeedData):
 		resp := FeedDataMsg{}
 		err := json.Unmarshal(message, &resp)
@@ -413,6 +420,46 @@ func (c *DxLinkClient) optionFeedSub() FeedSubscriptionMsg {
 		feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Greeks", Symbol: opt})
 	}
 	return feedSub
+}
+
+func (c *DxLinkClient) optionFeedIter() iter.Seq[FeedSubscriptionMsg] {
+	return func(yield func(FeedSubscriptionMsg) bool) {
+		syms := slices.Collect(maps.Keys(c.optionSubs))
+		chunks := chunkSlice(syms, 45)
+
+		for _, c := range chunks {
+			feedSub := FeedSubscriptionMsg{
+				Type:    FeedSubscription,
+				Channel: 3,
+				Reset:   true,
+				Add:     []FeedSubItem{},
+			}
+			for _, v := range c {
+				feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Quote", Symbol: v})
+				feedSub.Add = append(feedSub.Add, FeedSubItem{Type: "Greeks", Symbol: v})
+			}
+			if !yield(feedSub) {
+				return
+			}
+		}
+	}
+}
+
+func chunkSlice[T any](slice []T, chunkSize int) [][]T {
+	var chunks [][]T
+	if chunkSize <= 0 {
+		return chunks // Return empty if chunk size is invalid
+	}
+
+	for i := 0; i < len(slice); i += chunkSize {
+		end := i + chunkSize
+		// Ensure the end index does not exceed the slice's length
+		if end > len(slice) {
+			end = len(slice)
+		}
+		chunks = append(chunks, slice[i:end])
+	}
+	return chunks
 }
 
 func pprint(msg any) {
