@@ -14,6 +14,10 @@ type OptionSymbol struct {
 	Strike     float64
 }
 
+func (o OptionSymbol) String() string {
+	return fmt.Sprintf(".%s%s%s%.0f", o.Underlying, o.Date.Format("060102"), o.Type, o.Strike)
+}
+
 func ParseOption(option string) (*OptionSymbol, error) {
 	var split int
 	if string(option[0]) != "." {

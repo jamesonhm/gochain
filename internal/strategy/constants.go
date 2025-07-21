@@ -8,8 +8,8 @@ const (
 	Delta  StrikeMethod = "delta"
 	Offset StrikeMethod = "offset"
 	//
-	Call OptType = "call"
-	Put  OptType = "put"
+	Call OptType = "C"
+	Put  OptType = "P"
 	//
 	Buy  OptSide = "buy"
 	Sell OptSide = "sell"

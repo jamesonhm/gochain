@@ -40,6 +40,8 @@ func PreviousWeekday(d time.Time) time.Time {
 func NextWeekday(d time.Time) time.Time {
 	if d.Weekday() == 5 {
 		return d.AddDate(0, 0, 3)
+	} else if d.Weekday() == 6 {
+		return d.AddDate(0, 0, 2)
 	}
 	return d.AddDate(0, 0, 1)
 }

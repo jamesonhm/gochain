@@ -16,6 +16,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/jamesonhm/gochain/internal/dt"
+	"github.com/jamesonhm/gochain/internal/strategy"
 )
 
 type DxLinkClient struct {
@@ -377,17 +378,29 @@ func (c *DxLinkClient) processMessage(message []byte) {
 }
 
 // searches the map of optionSubs for the date, and strike nearest the delta based on the rounding value
-//func (c *DxLinkClient) StrikeFromDelta(underlying string, dte int, optType string, delta int, roundNear int) (string, error) {
-//	c.mu.RLock()
-//	defer c.mu.RUnlock()
-//	for k, v := range c.optionSubs {
-//		opt, err := ParseOption(k)
-//		if err != nil {
-//			return "", fmt.Errorf("unable to parse option: %s", k)
-//		}
-//	}
-//	return "", nil
-//}
+func (c *DxLinkClient) StrikeFromDelta(
+	underlying string,
+	currentPrice float64,
+	leg strategy.Leg,
+) (string, error) {
+	// find exp date
+	exp := time.Now().AddDate(0, 0, leg.DTE)
+	if exp.Weekday() < 1 || exp.Weekday() > 5 {
+		exp = dt.NextWeekday(exp)
+	}
+	atmOption := OptionSymbol{
+		Underlying: underlying,
+		Date:       exp,
+		Strike:     currentPrice,
+		Type:       OptionType(leg.OptType),
+	}.String()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	data, ok := c.optionSubs[atmOption]
+	if !ok {
+		return "", fmt.Errorf("unable to find ATM option in subscription data: %s", atmOption)
+	}
+}
 
 func (c *DxLinkClient) underlyingFeedSub() FeedSubscriptionMsg {
 	feedSub := FeedSubscriptionMsg{
@@ -431,7 +444,7 @@ func (c *DxLinkClient) optionFeedIter() iter.Seq[FeedSubscriptionMsg] {
 			feedSub := FeedSubscriptionMsg{
 				Type:    FeedSubscription,
 				Channel: 3,
-				Reset:   true,
+				Reset:   false,
 				Add:     []FeedSubItem{},
 			}
 			for _, v := range c {
