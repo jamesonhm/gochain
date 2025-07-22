@@ -7,6 +7,7 @@ import (
 	"iter"
 	"log/slog"
 	"maps"
+	"math"
 	"net/url"
 	"slices"
 
@@ -16,6 +17,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/jamesonhm/gochain/internal/dt"
+	"github.com/jamesonhm/gochain/internal/options"
 	"github.com/jamesonhm/gochain/internal/strategy"
 )
 
@@ -60,8 +62,8 @@ func (c *DxLinkClient) UpdateOptionSubs(symbol string, options []string, days in
 	return nil
 }
 
-func (c *DxLinkClient) filterOptions(options []string, days int, mktPrice float64, pctRange float64) error {
-	fmt.Printf("Length Options before filter: %d\n", len(options))
+func (c *DxLinkClient) filterOptions(rawOptions []string, days int, mktPrice float64, pctRange float64) error {
+	fmt.Printf("Length Options before filter: %d\n", len(rawOptions))
 	today, err := dt.EndOfDay(time.Now())
 	if err != nil {
 		return err
@@ -69,8 +71,8 @@ func (c *DxLinkClient) filterOptions(options []string, days int, mktPrice float6
 	cut_date := today.AddDate(0, 0, days)
 	upper := mktPrice * (1 + pctRange/100)
 	lower := mktPrice * (1 - pctRange/100)
-	for _, option := range options {
-		opt, err := ParseOption(option)
+	for _, option := range rawOptions {
+		opt, err := options.ParseDxLinkOption(option)
 		if err != nil {
 			return err
 		}
@@ -374,31 +376,6 @@ func (c *DxLinkClient) processMessage(message []byte) {
 		//}
 		//c.handleDataMessage(message)
 		slog.Info("Unknown message type", "msg", string(message))
-	}
-}
-
-// searches the map of optionSubs for the date, and strike nearest the delta based on the rounding value
-func (c *DxLinkClient) StrikeFromDelta(
-	underlying string,
-	currentPrice float64,
-	leg strategy.Leg,
-) (string, error) {
-	// find exp date
-	exp := time.Now().AddDate(0, 0, leg.DTE)
-	if exp.Weekday() < 1 || exp.Weekday() > 5 {
-		exp = dt.NextWeekday(exp)
-	}
-	atmOption := OptionSymbol{
-		Underlying: underlying,
-		Date:       exp,
-		Strike:     currentPrice,
-		Type:       OptionType(leg.OptType),
-	}.String()
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	data, ok := c.optionSubs[atmOption]
-	if !ok {
-		return "", fmt.Errorf("unable to find ATM option in subscription data: %s", atmOption)
 	}
 }
 

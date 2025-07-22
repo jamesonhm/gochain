@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"strings"
+
+	"github.com/jamesonhm/gochain/internal/options"
 )
 
 const (
@@ -18,8 +20,8 @@ func (c *TastyAPI) GetEquityOptions(ctx context.Context, params *EquityOptionsPa
 	return res.Data.EquityOptions, err
 }
 
-func (c *TastyAPI) GetEquityOption(ctx context.Context, symbol EquityOptionsSymbology, active bool) (*EquityOption, error) {
-	occSym := symbol.Build()
+func (c *TastyAPI) GetEquityOption(ctx context.Context, symbol options.OptionSymbol, active bool) (*EquityOption, error) {
+	occSym := symbol.OCCString()
 	type activeQuery struct {
 		Active bool `url:"active"`
 	}

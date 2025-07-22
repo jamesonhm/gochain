@@ -9,7 +9,6 @@ type MsgType string
 type ChannelContract string
 type ChannelService string
 type FeedDataFormat string
-type OptionType string
 type JSONDoubleConst string
 
 const (
@@ -37,9 +36,6 @@ const (
 	// Feed Data Format
 	FullFormat    FeedDataFormat = "FULL"
 	CompactFormat FeedDataFormat = "COMPACT"
-	// Option type - Call or Put
-	PutOption  OptionType = "P"
-	CallOption OptionType = "C"
 )
 
 // MessageCallback is a function type for handling received messages
