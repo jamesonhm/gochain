@@ -182,9 +182,6 @@ func main() {
 		}
 	}
 
-	// register callback for setting up channels and feeds (called after Authorized)
-	// register calbacks for processing data (called at each msgType)
-
 	err = streamClient.Connect()
 	if err != nil {
 		fmt.Println(err)

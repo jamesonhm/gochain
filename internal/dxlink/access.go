@@ -7,85 +7,67 @@ import (
 
 	"github.com/jamesonhm/gochain/internal/dt"
 	"github.com/jamesonhm/gochain/internal/options"
-	"github.com/jamesonhm/gochain/internal/strategy"
 )
 
 // searches the map of optionSubs for the date, and strike nearest the delta based on the rounding value
 func (c *DxLinkClient) StrikeFromDelta(
 	underlying string,
 	currentPrice float64,
-	leg strategy.Leg,
+	dte int,
+	optType options.OptionType,
+	round int,
+	targetDelta float64,
 ) (string, error) {
 	// find exp date
-	exp := time.Now().AddDate(0, 0, leg.DTE)
+	exp := time.Now().AddDate(0, 0, dte)
 	if exp.Weekday() < 1 || exp.Weekday() > 5 {
 		exp = dt.NextWeekday(exp)
 	}
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	// TODO: change to func "roundNearest" (modulo round value then subtract)
-	s := math.Floor(currentPrice)
+	s := roundNearest(currentPrice, round)
 	opt := options.OptionSymbol{
 		Underlying: underlying,
 		Date:       exp,
 		Strike:     s,
-		OptionType: options.OptionType(leg.OptType),
-	}.DxLinkString()
-
-	data, ok := c.optionSubs[opt]
+		OptionType: optType,
+	}
+	data, ok := c.optionSubs[opt.DxLinkString()]
 	if !ok {
-		return "", fmt.Errorf("unable to find option in subscription data: %s", opt)
+		return "", fmt.Errorf("unable to find option in subscription data: %s", opt.DxLinkString())
 	}
 	delta := *data.Greek.Delta
-	dist := math.Abs(delta - leg.StrikeMethVal)
+	dist := math.Abs(delta - targetDelta)
 	// start a loop and increment to closest delta or delta = 0
-	if delta > leg.StrikeMethVal {
-		for s += float64(leg.Round); s < s*1.1; s += float64(leg.Round) {
-			opt = options.OptionSymbol{
-				Underlying: underlying,
-				Date:       exp,
-				Strike:     s,
-				OptionType: options.OptionType(leg.OptType),
-			}.DxLinkString()
-			data, ok = c.optionSubs[opt]
+	if delta > targetDelta {
+		for s += float64(round); s < s*1.1; s += float64(round) {
+			opt.IncrementStrike(float64(round))
+			data, ok = c.optionSubs[opt.DxLinkString()]
 			if !ok {
-				return "", fmt.Errorf("unable to find option in subscription data: %s", opt)
+				return "", fmt.Errorf("unable to find option in subscription data: %s", opt.DxLinkString())
 			}
 			delta = *data.Greek.Delta
-			if math.Abs(delta-leg.StrikeMethVal) > dist {
-				return options.OptionSymbol{
-					Underlying: underlying,
-					Date:       exp,
-					Strike:     s - float64(leg.Round),
-					OptionType: options.OptionType(leg.OptType),
-				}.DxLinkString(), nil
+			if math.Abs(delta-targetDelta) > dist {
+				opt.DecrementStrike(float64(round))
+				return opt.DxLinkString(), nil
 			}
-			dist = math.Abs(delta - leg.StrikeMethVal)
+			dist = math.Abs(delta - targetDelta)
 		}
 		return "", fmt.Errorf("no option found incrementing")
 	} else {
-		for s -= float64(leg.Round); s > s*0.9; s -= float64(leg.Round) {
-			opt = options.OptionSymbol{
-				Underlying: underlying,
-				Date:       exp,
-				Strike:     s,
-				OptionType: options.OptionType(leg.OptType),
-			}.DxLinkString()
-			data, ok = c.optionSubs[opt]
+		for s -= float64(round); s > s*0.9; s -= float64(round) {
+			opt.DecrementStrike(float64(round))
+			data, ok = c.optionSubs[opt.DxLinkString()]
 			if !ok {
-				return "", fmt.Errorf("unable to find option in subscription data: %s", opt)
+				return "", fmt.Errorf("unable to find option in subscription data: %s", opt.DxLinkString())
 			}
 			delta = *data.Greek.Delta
-			if math.Abs(delta-leg.StrikeMethVal) > dist {
-				return options.OptionSymbol{
-					Underlying: underlying,
-					Date:       exp,
-					Strike:     s + float64(leg.Round),
-					OptionType: options.OptionType(leg.OptType),
-				}.DxLinkString(), nil
+			if math.Abs(delta-targetDelta) > dist {
+				opt.IncrementStrike(float64(round))
+				return opt.DxLinkString(), nil
 			}
-			dist = math.Abs(delta - leg.StrikeMethVal)
+			dist = math.Abs(delta - targetDelta)
 		}
 		return "", fmt.Errorf("no option found decrementing")
 	}

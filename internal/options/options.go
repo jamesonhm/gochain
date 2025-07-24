@@ -89,3 +89,11 @@ func ParseDxLinkOption(option string) (*OptionSymbol, error) {
 	}
 	return &res, nil
 }
+
+func (o *OptionSymbol) IncrementStrike(amt float64) {
+	o.Strike += amt
+}
+
+func (o *OptionSymbol) DecrementStrike(amt float64) {
+	o.Strike -= amt
+}
