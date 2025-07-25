@@ -23,6 +23,7 @@ func (c *DxLinkClient) StrikeFromDelta(
 	if exp.Weekday() < 1 || exp.Weekday() > 5 {
 		exp = dt.NextWeekday(exp)
 	}
+	fmt.Printf("StrikeFromDelta: Exp Date: %s\n", exp)
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -33,21 +34,21 @@ func (c *DxLinkClient) StrikeFromDelta(
 		Strike:     s,
 		OptionType: optType,
 	}
-	data, ok := c.optionSubs[opt.DxLinkString()]
-	if !ok {
-		return "", fmt.Errorf("unable to find option in subscription data: %s", opt.DxLinkString())
+	delta, err := c.getOptDelta(opt.DxLinkString())
+	if err != nil {
+		return "", fmt.Errorf("unable to find INITIAL option in subscription data: %s, %w", opt.DxLinkString(), err)
 	}
-	delta := *data.Greek.Delta
+
 	dist := math.Abs(delta - targetDelta)
+	fmt.Printf("StrikeFromDelta: Initial values, option: %s, delta: %.6f, distance: %.6f\n", opt.DxLinkString(), delta, dist)
 	// start a loop and increment to closest delta or delta = 0
 	if delta > targetDelta {
 		for s += float64(round); s < s*1.1; s += float64(round) {
 			opt.IncrementStrike(float64(round))
-			data, ok = c.optionSubs[opt.DxLinkString()]
-			if !ok {
-				return "", fmt.Errorf("unable to find option in subscription data: %s", opt.DxLinkString())
+			delta, err := c.getOptDelta(opt.DxLinkString())
+			if err != nil {
+				return "", fmt.Errorf("unable to find option in subscription data: %s, %w", opt.DxLinkString(), err)
 			}
-			delta = *data.Greek.Delta
 			if math.Abs(delta-targetDelta) > dist {
 				opt.DecrementStrike(float64(round))
 				return opt.DxLinkString(), nil
@@ -58,11 +59,10 @@ func (c *DxLinkClient) StrikeFromDelta(
 	} else {
 		for s -= float64(round); s > s*0.9; s -= float64(round) {
 			opt.DecrementStrike(float64(round))
-			data, ok = c.optionSubs[opt.DxLinkString()]
-			if !ok {
-				return "", fmt.Errorf("unable to find option in subscription data: %s", opt.DxLinkString())
+			delta, err := c.getOptDelta(opt.DxLinkString())
+			if err != nil {
+				return "", fmt.Errorf("unable to find option in subscription data: %s, %w", opt.DxLinkString(), err)
 			}
-			delta = *data.Greek.Delta
 			if math.Abs(delta-targetDelta) > dist {
 				opt.IncrementStrike(float64(round))
 				return opt.DxLinkString(), nil
@@ -71,6 +71,21 @@ func (c *DxLinkClient) StrikeFromDelta(
 		}
 		return "", fmt.Errorf("no option found decrementing")
 	}
+}
+
+func (c *DxLinkClient) getOptDelta(opt string) (float64, error) {
+	optionDataPtr, ok := c.optionSubs[opt]
+	if !ok {
+		return 0, fmt.Errorf("unable to find option in subscription data: %s", opt)
+	}
+	if optionDataPtr == nil {
+		return 0, fmt.Errorf("optionData is a nil ptr")
+	} else if optionDataPtr.Greek.Delta == nil {
+		fmt.Printf("OptionDataPtr: %+v\n", optionDataPtr)
+		return 0, fmt.Errorf("optionData.Greek.Delta is a nil ptr")
+	}
+	delta := *optionDataPtr.Greek.Delta
+	return delta, nil
 }
 
 func roundNearest(price float64, round int) float64 {

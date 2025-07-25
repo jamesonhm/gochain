@@ -12,6 +12,7 @@ import (
 
 	"github.com/jamesonhm/gochain/internal/dxlink"
 	"github.com/jamesonhm/gochain/internal/monitor"
+	"github.com/jamesonhm/gochain/internal/options"
 	"github.com/jamesonhm/gochain/internal/tasty"
 	"github.com/jamesonhm/gochain/internal/yahoo"
 	"github.com/joho/godotenv"
@@ -196,12 +197,19 @@ func main() {
 	for _, strat := range strats {
 		monitor.AddStrategy(strat)
 	}
-	monitor.Run(ctx)
+	go monitor.Run(ctx)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func(wg *sync.WaitGroup) {
 		defer wg.Done()
+		time.Sleep(1 * time.Second)
+		fmt.Println("************* ^^^^^^^^^^^^^^^^^^^^^^ *********************** ^^^^^^^^^^^^^^^^^^^^^")
+		opt, err := streamClient.StrikeFromDelta("XSP", mktPrices["XSP"], 0, options.PutOption, 1, -20)
+		if err != nil {
+			logger.Error("Strike From Delta Error", "value", err)
+		}
+		logger.Info("Strike from delta Option found", "value", opt)
 		time.Sleep(10 * time.Second)
 		streamClient.Close()
 	}(&wg)

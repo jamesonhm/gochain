@@ -164,7 +164,12 @@ func (c *DxLinkClient) sendMessage(msg interface{}) error {
 		return fmt.Errorf("error marshaling message: %w", err)
 	}
 
-	slog.Info("CLIENT ->", "", msg)
+	n := 100
+	msgStr := fmt.Sprintf("%+v", msg)
+	if n > len(msgStr) {
+		n = len(msgStr)
+	}
+	slog.Info("CLIENT ->", "", msgStr[:n])
 	//fd, _ := json.MarshalIndent(msg, "", "  ")
 	//fmt.Printf("sent message: %s\n", string(fd))
 
@@ -332,7 +337,7 @@ func (c *DxLinkClient) processMessage(message []byte) {
 		switch resp.Channel {
 		case 1:
 			if len(resp.Data.Trades) > 0 {
-				slog.Info("SERVER <-", "symbol", resp.Data.Trades[0].Symbol, "trades", resp.Data.Trades)
+				slog.Info("SERVER <-", "trades rec'd", resp.Data.Trades[0], "trades", len(resp.Data.Trades))
 				for _, trade := range resp.Data.Trades {
 					if _, ok := c.underlyingSubs[trade.Symbol]; !ok {
 						c.underlyingSubs[trade.Symbol] = NewUnderlying()
@@ -342,13 +347,13 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			}
 		case 3:
 			if len(resp.Data.Quotes) > 0 {
-				slog.Info("SERVER <-", "symbol", resp.Data.Quotes[0].Symbol, "quotes", resp.Data.Quotes)
+				slog.Info("SERVER <-", "quotes rec'd", resp.Data.Quotes[0], "size", len(resp.Data.Quotes))
 				for _, quote := range resp.Data.Quotes {
 					c.optionSubs[quote.Symbol].Quote = quote
 				}
 			}
 			if len(resp.Data.Greeks) > 0 {
-				slog.Info("SERVER <-", "symbol", resp.Data.Greeks[0].Symbol, "greeks", resp.Data.Greeks)
+				slog.Info("SERVER <-", "greeks rec'd", resp.Data.Greeks[0], "size", len(resp.Data.Greeks))
 				for _, greek := range resp.Data.Greeks {
 					c.optionSubs[greek.Symbol].Greek = greek
 				}
