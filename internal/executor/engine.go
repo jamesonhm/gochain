@@ -64,11 +64,19 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) tasty.NewOrder {
 	//	Legs         []NewOrderLeg `json:"legs"`
 	//	Rules        NewOrderRules `json:"rules,omitempty"`
 	//}
+
+	//type NewOrderLeg struct {
+	//	InstrumentType InstrumentType `json:"instrument-type"`
+	//	Symbol         string         `json:"symbol"`
+	//	Quantity       float32        `json:"quantity,omitempty"`
+	//	Action         OrderAction    `json:"action"` (STO, BTO, STC, BTC, ...)
+	//}
 	return tasty.NewOrder{
 		TimeInForce: "Day",
+		OrderType:   "Limit",
 		// price = sum(legs_midpoint) +/- slippage
 		// price-effect = Credit if price > 0
-		OrderType: "Limit",
+		// legs:
 	}
 }
 

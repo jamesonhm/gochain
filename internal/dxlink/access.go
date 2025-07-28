@@ -17,7 +17,7 @@ func (c *DxLinkClient) StrikeFromDelta(
 	optType options.OptionType,
 	round int,
 	targetDelta float64,
-) (string, error) {
+) (*OptionData, error) {
 	// find exp date
 	exp := time.Now().AddDate(0, 0, dte)
 	if exp.Weekday() < 1 || exp.Weekday() > 5 {
@@ -36,7 +36,7 @@ func (c *DxLinkClient) StrikeFromDelta(
 	}
 	delta, err := c.getOptDelta(opt.DxLinkString())
 	if err != nil {
-		return "", fmt.Errorf("unable to find INITIAL option in subscription data: %s, %w", opt.DxLinkString(), err)
+		return nil, fmt.Errorf("unable to find INITIAL option in subscription data: %s, %w", opt.DxLinkString(), err)
 	}
 
 	dist := math.Abs(delta - targetDelta)
@@ -47,45 +47,63 @@ func (c *DxLinkClient) StrikeFromDelta(
 			opt.IncrementStrike(float64(round))
 			delta, err := c.getOptDelta(opt.DxLinkString())
 			if err != nil {
-				return "", fmt.Errorf("unable to find option in subscription data: %s, %w", opt.DxLinkString(), err)
+				return nil, fmt.Errorf("unable to find option in subscription data: %s, %w", opt.DxLinkString(), err)
 			}
 			if math.Abs(delta-targetDelta) > dist {
 				opt.DecrementStrike(float64(round))
-				return opt.DxLinkString(), nil
+				optDataPtr, err := c.getOptData(opt.DxLinkString())
+				if err != nil {
+					return nil, err
+				}
+				fmt.Printf("Opt Data Ptr: %+v\n", *optDataPtr)
+				return optDataPtr, nil
 			}
 			dist = math.Abs(delta - targetDelta)
 
 			fmt.Printf("StrikeFromDelta: option: %s, delta: %.6f, distance: %.6f\n", opt.DxLinkString(), delta, dist)
 		}
-		return "", fmt.Errorf("no option found incrementing")
+		return nil, fmt.Errorf("no option found incrementing")
 	} else {
 		for s -= float64(round); s > s*0.9; s -= float64(round) {
 			opt.DecrementStrike(float64(round))
 			delta, err := c.getOptDelta(opt.DxLinkString())
 			if err != nil {
-				return "", fmt.Errorf("unable to find option in subscription data: %s, %w", opt.DxLinkString(), err)
+				return nil, fmt.Errorf("unable to find option in subscription data: %s, %w", opt.DxLinkString(), err)
 			}
 			if math.Abs(delta-targetDelta) > dist {
 				opt.IncrementStrike(float64(round))
-				return opt.DxLinkString(), nil
+				optDataPtr, err := c.getOptData(opt.DxLinkString())
+				if err != nil {
+					return nil, err
+				}
+				fmt.Printf("Opt Data Ptr: %+v\n", optDataPtr)
+				return optDataPtr, nil
 			}
 			dist = math.Abs(delta - targetDelta)
 
 			fmt.Printf("StrikeFromDelta: option: %s, delta: %.6f, distance: %.6f\n", opt.DxLinkString(), delta, dist)
 		}
-		return "", fmt.Errorf("no option found decrementing")
+		return nil, fmt.Errorf("no option found decrementing")
 	}
 }
 
-func (c *DxLinkClient) getOptDelta(opt string) (float64, error) {
+func (c *DxLinkClient) getOptData(opt string) (*OptionData, error) {
 	optionDataPtr, ok := c.optionSubs[opt]
 	if !ok {
-		return 0, fmt.Errorf("unable to find option in subscription data: %s", opt)
+		return nil, fmt.Errorf("unable to find option in subscription data: %s", opt)
 	}
 	if optionDataPtr == nil {
-		return 0, fmt.Errorf("optionData is a nil ptr")
-	} else if optionDataPtr.Greek.Delta == nil {
-		fmt.Printf("OptionDataPtr: %+v\n", optionDataPtr)
+		return nil, fmt.Errorf("optionData is a nil ptr")
+	}
+	return optionDataPtr, nil
+}
+
+func (c *DxLinkClient) getOptDelta(opt string) (float64, error) {
+	optionDataPtr, err := c.getOptData(opt)
+	if err != nil {
+		return 0, err
+	}
+	if optionDataPtr.Greek.Delta == nil {
 		return 0, fmt.Errorf("optionData.Greek.Delta is a nil ptr")
 	}
 	delta := *optionDataPtr.Greek.Delta
