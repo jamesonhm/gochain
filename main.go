@@ -41,6 +41,18 @@ func main() {
 	}
 	fmt.Printf("VIX ON MOVE: %.2f\n", move)
 
+	//opt := options.OptionSymbol{
+	//	Underlying: "XSP",
+	//	Date:       time.Date(2025, 7, 29, 0, 0, 0, 0, time.Local),
+	//	Strike:     637.43,
+	//	OptionType: options.PutOption,
+	//}
+	//fmt.Printf("Initial option: %+v\n", opt.DxLinkString())
+	//for range 7 {
+	//	opt.IncrementStrike(1)
+	//	fmt.Printf("Incremented: %+v\n", opt.DxLinkString())
+	//}
+
 	strats := loadStrategies()
 
 	// SB USER
@@ -205,11 +217,12 @@ func main() {
 		defer wg.Done()
 		time.Sleep(1 * time.Second)
 		fmt.Println("************* ^^^^^^^^^^^^^^^^^^^^^^ *********************** ^^^^^^^^^^^^^^^^^^^^^")
-		opt, err := streamClient.StrikeFromDelta("XSP", mktPrices["XSP"], 0, options.PutOption, 1, -20)
+		opt, err := streamClient.StrikeFromDelta("XSP", mktPrices["XSP"], 1, options.PutOption, 1, -0.20)
 		if err != nil {
 			logger.Error("Strike From Delta Error", "value", err)
+		} else {
+			logger.Info("Strike from delta Option found", "value", opt)
 		}
-		logger.Info("Strike from delta Option found", "value", opt)
 		time.Sleep(10 * time.Second)
 		streamClient.Close()
 	}(&wg)

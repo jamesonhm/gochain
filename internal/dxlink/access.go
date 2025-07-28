@@ -54,6 +54,8 @@ func (c *DxLinkClient) StrikeFromDelta(
 				return opt.DxLinkString(), nil
 			}
 			dist = math.Abs(delta - targetDelta)
+
+			fmt.Printf("StrikeFromDelta: option: %s, delta: %.6f, distance: %.6f\n", opt.DxLinkString(), delta, dist)
 		}
 		return "", fmt.Errorf("no option found incrementing")
 	} else {
@@ -68,6 +70,8 @@ func (c *DxLinkClient) StrikeFromDelta(
 				return opt.DxLinkString(), nil
 			}
 			dist = math.Abs(delta - targetDelta)
+
+			fmt.Printf("StrikeFromDelta: option: %s, delta: %.6f, distance: %.6f\n", opt.DxLinkString(), delta, dist)
 		}
 		return "", fmt.Errorf("no option found decrementing")
 	}
