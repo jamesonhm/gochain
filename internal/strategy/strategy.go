@@ -117,3 +117,11 @@ func (s *Strategy) CheckEntryConditions(
 	}
 	return true
 }
+
+func (s *Strategy) ListDTEs() []int {
+	var dtes []int
+	for _, leg := range s.Legs {
+		dtes = append(dtes, leg.DTE)
+	}
+	return dtes
+}

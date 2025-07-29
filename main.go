@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
+	"slices"
 	"strconv"
 
 	"sync"
 	"time"
 
+	"github.com/jamesonhm/gochain/internal/dt"
 	"github.com/jamesonhm/gochain/internal/dxlink"
 	"github.com/jamesonhm/gochain/internal/monitor"
 	"github.com/jamesonhm/gochain/internal/options"
@@ -54,7 +57,6 @@ func main() {
 	//}
 
 	strats := loadStrategies()
-
 	// SB USER
 	//tastyClient := tasty.New(10*time.Second, 60*time.Second, 60, tasty.TastySandbox)
 	//login := tasty.LoginInfo{
@@ -186,10 +188,23 @@ func main() {
 		fmt.Printf("%+v\n", streamer)
 	}
 
+	dteDates := make(map[int]time.Time)
+	for _, strat := range strats {
+		dtes := strat.ListDTEs()
+		for _, dte := range dtes {
+			dteDates[dte] = dt.DTEToDate(dte)
+		}
+	}
+	fmt.Printf("DTE Dates: %+v\n", dteDates)
+	datesOnly := slices.Collect(maps.Values(dteDates))
+	fmt.Printf("DTE Dates Only: %+v\n", datesOnly)
+
 	streamClient := dxlink.New(ctx, streamer.DXLinkURL, streamer.Token)
 	for _, c := range chains {
 		fmt.Printf("%s - %s\n", c.ExpirationType, c.StreamerSymbols[0:10])
-		err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols, 5, mktPrices["XSP"], 9)
+		//err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols, 5, mktPrices["XSP"], 9)
+		//err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols, mktPrices["XSP"], 9, dxlink.FilterOptionsDays(5))
+		err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols, mktPrices["XSP"], 9, dxlink.FilterOptionsDates(datesOnly))
 		if err != nil {
 			fmt.Println(err)
 		}

@@ -45,3 +45,11 @@ func NextWeekday(d time.Time) time.Time {
 	}
 	return d.AddDate(0, 0, 1)
 }
+
+func DTEToDate(dte int) time.Time {
+	exp := time.Now().AddDate(0, 0, dte)
+	if exp.Weekday() < 1 || exp.Weekday() > 5 {
+		exp = NextWeekday(exp)
+	}
+	return Midnight(exp)
+}

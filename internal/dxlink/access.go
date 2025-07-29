@@ -3,7 +3,6 @@ package dxlink
 import (
 	"fmt"
 	"math"
-	"time"
 
 	"github.com/jamesonhm/gochain/internal/dt"
 	"github.com/jamesonhm/gochain/internal/options"
@@ -19,10 +18,7 @@ func (c *DxLinkClient) StrikeFromDelta(
 	targetDelta float64,
 ) (*OptionData, error) {
 	// find exp date
-	exp := time.Now().AddDate(0, 0, dte)
-	if exp.Weekday() < 1 || exp.Weekday() > 5 {
-		exp = dt.NextWeekday(exp)
-	}
+	exp := dt.DTEToDate(dte)
 	fmt.Printf("StrikeFromDelta: Exp Date: %s\n", exp)
 	c.mu.RLock()
 	defer c.mu.RUnlock()

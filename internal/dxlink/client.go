@@ -50,40 +50,77 @@ func (c *DxLinkClient) ResetData() {
 	clear(c.underlyingSubs)
 }
 
-func (c *DxLinkClient) UpdateOptionSubs(symbol string, options []string, days int, mktPrice float64, pctRange float64) error {
+func (c *DxLinkClient) UpdateOptionSubs(
+	symbol string,
+	options []string,
+	mktPrice float64,
+	pctRange float64,
+	filter filterFunc,
+) error {
 	c.underlyingSubs[symbol] = NewUnderlying()
-	err := c.filterOptions(options, days, mktPrice, pctRange)
-	if err != nil {
-		return err
+	//err := c.filterOptions(options, days, mktPrice, pctRange)
+	filtered := filter(options, mktPrice, pctRange)
+	for _, option := range filtered {
+		c.optionSubs[option] = &OptionData{}
 	}
 	return nil
 }
 
-func (c *DxLinkClient) filterOptions(rawOptions []string, days int, mktPrice float64, pctRange float64) error {
-	fmt.Printf("Length Options before filter: %d\n", len(rawOptions))
-	today, err := dt.EndOfDay(time.Now())
-	if err != nil {
-		return err
+type filterFunc func(rawOptions []string, mktPrice float64, pctRange float64) []string
+
+func FilterOptionsDays(days int) filterFunc {
+	return func(rawOptions []string, mktPrice float64, pctRange float64) []string {
+		fmt.Printf("Length Options before filter: %d\n", len(rawOptions))
+		today, _ := dt.EndOfDay(time.Now())
+
+		cut_date := today.AddDate(0, 0, days)
+		upper := mktPrice * (1 + pctRange/100)
+		lower := mktPrice * (1 - pctRange/100)
+		var filtered []string
+		for _, option := range rawOptions {
+			opt, err := options.ParseDxLinkOption(option)
+			if err != nil {
+				slog.Error("Error in FilterOptionDays", "unable to parse DxLinkOption", option)
+				continue
+			}
+			if opt.Date.After(cut_date) {
+				continue
+			}
+			if opt.Strike > upper || opt.Strike < lower {
+				continue
+			}
+			filtered = append(filtered, option)
+		}
+		fmt.Printf("Length Option subs after filter: %d\n", len(filtered))
+		return filtered
 	}
-	cut_date := today.AddDate(0, 0, days)
-	upper := mktPrice * (1 + pctRange/100)
-	lower := mktPrice * (1 - pctRange/100)
-	for _, option := range rawOptions {
-		opt, err := options.ParseDxLinkOption(option)
-		if err != nil {
-			return err
+}
+
+func FilterOptionsDates(dates []time.Time) filterFunc {
+	return func(rawOptions []string, mktPrice float64, pctRange float64) []string {
+		fmt.Printf("Length Options before filter: %d\n", len(rawOptions))
+		upper := mktPrice * (1 + pctRange/100)
+		lower := mktPrice * (1 - pctRange/100)
+		var filtered []string
+		for _, option := range rawOptions {
+			opt, err := options.ParseDxLinkOption(option)
+			if err != nil {
+				slog.Error("Error in FilterOptionDates", "unable to parse DxLinkOption", option)
+				continue
+			}
+			if opt.Strike > upper || opt.Strike < lower {
+				continue
+			}
+			for _, day := range dates {
+				fmt.Printf("***Parsed option: %+v\n", opt)
+				if opt.Date.Equal(day) {
+					filtered = append(filtered, option)
+				}
+			}
 		}
-		if opt.Date.After(cut_date) {
-			continue
-		}
-		if opt.Strike > upper || opt.Strike < lower {
-			continue
-		}
-		c.optionSubs[option] = &OptionData{}
-		//fmt.Printf("Added %s to subs\n", option)
+		fmt.Printf("Length Option subs after filter: %d\n", len(filtered))
+		return filtered
 	}
-	fmt.Printf("Length Option subs after filter: %d\n", len(c.optionSubs))
-	return nil
 }
 
 func (c *DxLinkClient) Connect() error {

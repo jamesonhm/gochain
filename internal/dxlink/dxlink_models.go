@@ -192,6 +192,24 @@ type OptionData struct {
 	Greek GreeksEvent
 }
 
+func NewOptionData() *OptionData {
+	return &OptionData{
+		Quote: QuoteEvent{
+			BidPrice: new(float64),
+			AskPrice: new(float64),
+		},
+		Greek: GreeksEvent{
+			Price:      new(float64),
+			Volatility: new(float64),
+			Delta:      new(float64),
+			Gamma:      new(float64),
+			Theta:      new(float64),
+			Rho:        new(float64),
+			Vega:       new(float64),
+		},
+	}
+}
+
 type UnderlyingData struct {
 	Trade TradeEvent
 	//Candles map[int64]CandleEvent
