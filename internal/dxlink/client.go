@@ -61,7 +61,8 @@ func (c *DxLinkClient) UpdateOptionSubs(
 	//err := c.filterOptions(options, days, mktPrice, pctRange)
 	filtered := filter(options, mktPrice, pctRange)
 	for _, option := range filtered {
-		c.optionSubs[option] = &OptionData{}
+		//c.optionSubs[option] = &OptionData{}
+		c.optionSubs[option] = NewOptionData()
 	}
 	return nil
 }
@@ -112,8 +113,7 @@ func FilterOptionsDates(dates []time.Time) filterFunc {
 				continue
 			}
 			for _, day := range dates {
-				fmt.Printf("***Parsed option: %+v\n", opt)
-				if opt.Date.Equal(day) {
+				if dt.YMDEqual(opt.Date, day) {
 					filtered = append(filtered, option)
 				}
 			}

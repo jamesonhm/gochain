@@ -90,7 +90,7 @@ func (e *Engine) startWorkers() {
 func (e *Engine) worker() {
 	defer e.wg.Done()
 
-	for order := range e.orderQueue {
-		resp, err := e.apiClient.SubmitOrderDryRun(e.ctx, acctNum, &order)
-	}
+	//for order := range e.orderQueue {
+	//resp, err := e.apiClient.SubmitOrderDryRun(e.ctx, acctNum, &order)
+	//}
 }

@@ -33,6 +33,8 @@ func WeekdaysBetween(start, end time.Time) int {
 func PreviousWeekday(d time.Time) time.Time {
 	if d.Weekday() == 1 {
 		return d.AddDate(0, 0, -3)
+	} else if d.Weekday() == 0 {
+		return d.AddDate(0, 0, -2)
 	}
 	return d.AddDate(0, 0, -1)
 }
@@ -52,4 +54,8 @@ func DTEToDate(dte int) time.Time {
 		exp = NextWeekday(exp)
 	}
 	return Midnight(exp)
+}
+
+func YMDEqual(d1 time.Time, d2 time.Time) bool {
+	return d1.Year() == d2.Year() && d1.Month() == d2.Month() && d1.Day() == d2.Day()
 }

@@ -232,7 +232,7 @@ func main() {
 		defer wg.Done()
 		time.Sleep(1 * time.Second)
 		fmt.Println("************* ^^^^^^^^^^^^^^^^^^^^^^ *********************** ^^^^^^^^^^^^^^^^^^^^^")
-		opt, err := streamClient.StrikeFromDelta("XSP", mktPrices["XSP"], 1, options.PutOption, 1, -0.20)
+		opt, err := streamClient.StrikeFromDelta("XSP", mktPrices["XSP"], 7, options.PutOption, 1, -0.20)
 		if err != nil {
 			logger.Error("Strike From Delta Error", "value", err)
 		} else {
