@@ -13,6 +13,7 @@ const (
 	AccountTradingStatusPath = "/accounts{account_number}/trading-status"
 	AccountPositionsPath     = "/accounts/{account_number}/positions"
 	AccountBalancesPath      = "/accounts/{account_number}/balances"
+	DoNotExercisesPath       = "/accounts/{account_number}/do-not-exercises"
 )
 
 func (c *TastyAPI) GetCustomer(ctx context.Context) (*CustomerResponse, error) {
@@ -59,4 +60,12 @@ func (c *TastyAPI) GetAccountBalances(ctx context.Context, acctNum string) (*Acc
 	path = strings.ReplaceAll(path, "{account_number}", acctNum)
 	err := c.request(ctx, http.MethodGet, auth, path, nil, nil, res)
 	return &res.AccountBalances, err
+}
+
+func (c *TastyAPI) PostDoNotExercise(ctx context.Context, acctNum string, payload *DoNotExerciseBody) (*DoNotExerciseResponse, error) {
+	res := &DoNotExerciseResponse{}
+	path := c.baseurl + DoNotExercisesPath
+	path = strings.ReplaceAll(path, "{account_number}", acctNum)
+	err := c.request(ctx, http.MethodPost, auth, path, nil, payload, res)
+	return res, err
 }

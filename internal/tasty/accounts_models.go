@@ -290,3 +290,16 @@ type AccountBalances struct {
 	EffectiveCryptocurrencyBuyingPower decimal.Decimal `json:"effective-cryptocurrency-buying-power"`
 	UpdatedAt                          time.Time       `json:"updated-at"`
 }
+
+type DoNotExerciseBody struct {
+	InstrumentType InstrumentType `json:"instrument-type"`
+	Symbol         string         `json:"symbol"`
+	Quantity       int            `json:"quantity,omitempty"`
+}
+
+type DoNotExerciseResponse struct {
+	AccountNumber  string         `json:"account-number"`
+	InstrumentType InstrumentType `json:"instrument-type"`
+	Symbol         string         `json:"symbol"`
+	Quantity       int            `json:"quantity,omitempty"`
+}
