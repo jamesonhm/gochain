@@ -48,6 +48,22 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) tasty.NewOrder {
 	// for each leg, calculate strike price
 	// create leg(s)
 	// create order struct
+	for _, leg := range s.Legs {
+		switch leg.StrikeMethod {
+		case strategy.Delta:
+			optData, err := e.optionProvider.OptionDataByDelta(
+				s.Underlying, 
+				currentPrice float64, 
+				leg.DTE, 
+				leg.OptType, 
+				leg.Round, 
+				leg.StrikeMethVal,
+			)
+			if err != nil {
+
+			}
+		case strategy.Offset:
+	}
 
 	//type NewOrder struct {
 	//	TimeInForce  TimeInForce   `json:"time-in-force"`

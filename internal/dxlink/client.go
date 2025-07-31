@@ -30,6 +30,9 @@ type DxLinkClient struct {
 	callbacks      map[string]MessageCallback
 	ctx            context.Context
 	cancel         context.CancelFunc
+	retries        int
+	delay          time.Duration
+	expBackoff     bool
 }
 
 func New(ctx context.Context, url string, token string) *DxLinkClient {
@@ -42,6 +45,9 @@ func New(ctx context.Context, url string, token string) *DxLinkClient {
 		ctx:            ctx,
 		cancel:         cancel,
 		token:          token,
+		retries:        3,
+		delay:          1 * time.Second,
+		expBackoff:     false,
 	}
 }
 

@@ -118,6 +118,7 @@ func main() {
 	//}
 
 	// Get curr market price for each tracked symbol
+	// TODO: use dxlink streaming for current mkt...
 	mktPrices := make(map[string]float64)
 	if tastyClient.Env == tasty.TastyProd {
 		mktParams := tasty.MarketDataParams{
@@ -232,7 +233,7 @@ func main() {
 		defer wg.Done()
 		time.Sleep(1 * time.Second)
 		fmt.Println("************* ^^^^^^^^^^^^^^^^^^^^^^ *********************** ^^^^^^^^^^^^^^^^^^^^^")
-		opt, err := streamClient.StrikeFromDelta("XSP", mktPrices["XSP"], 7, options.PutOption, 1, -0.20)
+		opt, err := streamClient.OptionDataByDelta("XSP", 7, options.PutOption, 1, -0.20)
 		if err != nil {
 			logger.Error("Strike From Delta Error", "value", err)
 		} else {

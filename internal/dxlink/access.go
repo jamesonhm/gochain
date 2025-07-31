@@ -3,6 +3,7 @@ package dxlink
 import (
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/jamesonhm/gochain/internal/dt"
 	"github.com/jamesonhm/gochain/internal/options"
@@ -36,7 +37,6 @@ func (c *DxLinkClient) OptionDataByOffset(
 // searches the map of optionSubs for the date, and strike nearest the delta based on the rounding value
 func (c *DxLinkClient) OptionDataByDelta(
 	underlying string,
-	currentPrice float64,
 	dte int,
 	optType options.OptionType,
 	round int,
@@ -47,7 +47,10 @@ func (c *DxLinkClient) OptionDataByDelta(
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	s := roundNearest(currentPrice, round)
+	atm := c.getUnderlyingData
+	if *atm == 0.0 || atm == nil {
+	}
+	s := roundNearest(*atm, round)
 	opt := options.OptionSymbol{
 		Underlying: underlying,
 		Date:       exp,
@@ -107,15 +110,50 @@ func (c *DxLinkClient) OptionDataByDelta(
 	}
 }
 
+func (c *DxLinkClient) getUnderlyingData(sym string) (*UnderlyingData, error) {
+	delay := c.delay
+	for i := 0; i < c.retries; i++ {
+		if underlyingPtr, ok := c.underlyingSubs[sym]; ok {
+			if underlyingPtr != nil {
+				return underlyingPtr, nil
+			}
+		}
+		fmt.Printf("Retrying getUnderlyingData, attempt %d, delay: %s\n", i+1, delay.String())
+		time.Sleep(delay)
+		if c.expBackoff {
+			delay *= 2
+		}
+	}
+	return nil, fmt.Errorf("unable to find underlying in subscription data or is nil: %s", sym)
+}
+func (c *DxLinkClient) getUnderlyingPrice(sym string) (float64, error) {
+	data, err := c.getUnderlyingData(sym)
+	if err != nil {
+		return 0.0, err
+	}
+	if data.Trade.Price == nil {
+		return 0, fmt.Errorf("underlyingData.Trade.Price is a nil ptr")
+	}
+	price := *data.Trade.Price
+	return price, nil
+
+}
+
 func (c *DxLinkClient) getOptData(opt string) (*OptionData, error) {
-	optionDataPtr, ok := c.optionSubs[opt]
-	if !ok {
-		return nil, fmt.Errorf("unable to find option in subscription data: %s", opt)
+	delay := c.delay
+	for i := 0; i < c.retries; i++ {
+		if optionDataPtr, ok := c.optionSubs[opt]; ok {
+			if optionDataPtr != nil {
+				return optionDataPtr, nil
+			}
+		}
+		fmt.Printf("Retrying getOptData, attempt %d, delay: %s\n", i+1, delay.String())
+		time.Sleep(delay)
+		if c.expBackoff {
+			delay *= 2
+		}
 	}
-	if optionDataPtr == nil {
-		return nil, fmt.Errorf("optionData is a nil ptr")
-	}
-	return optionDataPtr, nil
+	return nil, fmt.Errorf("unable to find option in subscription data or is nil: %s", opt)
 }
 
 func (c *DxLinkClient) getOptDelta(opt string) (float64, error) {

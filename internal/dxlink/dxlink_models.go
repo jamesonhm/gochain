@@ -218,7 +218,9 @@ type UnderlyingData struct {
 
 func NewUnderlying() *UnderlyingData {
 	return &UnderlyingData{
-		Trade: TradeEvent{},
+		Trade: TradeEvent{
+			Price: new(float64),
+		},
 		//Candles: make(map[int64]CandleEvent),
 	}
 }
