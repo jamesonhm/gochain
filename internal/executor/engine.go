@@ -2,9 +2,11 @@ package executor
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/jamesonhm/gochain/internal/dxlink"
+	"github.com/jamesonhm/gochain/internal/options"
 	"github.com/jamesonhm/gochain/internal/strategy"
 	"github.com/jamesonhm/gochain/internal/tasty"
 )
@@ -40,29 +42,54 @@ func NewEngine(
 // called by monitor engine when conditions are met
 // TODO: submit to open vs submit to close...
 func (e *Engine) SubmitOrder(s strategy.Strategy) {
-	order := e.orderFromStrategy(s)
+	order, err := e.orderFromStrategy(s)
+	if err != nil {
+
+	}
 	e.orderQueue <- order
 }
 
-func (e *Engine) orderFromStrategy(s strategy.Strategy) tasty.NewOrder {
+func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) {
 	// for each leg, calculate strike price
 	// create leg(s)
 	// create order struct
+	var price float64
+	orderLegs := make([]tasty.NewOrderLeg, 0)
 	for _, leg := range s.Legs {
+		var action tasty.OrderAction
+		if leg.Side == strategy.Buy {
+			action = tasty.BTO
+		} else {
+			action = tasty.STO
+		}
 		switch leg.StrikeMethod {
 		case strategy.Delta:
 			optData, err := e.optionProvider.OptionDataByDelta(
-				s.Underlying, 
-				currentPrice float64, 
-				leg.DTE, 
-				leg.OptType, 
-				leg.Round, 
+				s.Underlying,
+				leg.DTE,
+				options.OptionType(leg.OptType),
+				leg.Round,
 				leg.StrikeMethVal,
 			)
 			if err != nil {
-
+				return tasty.NewOrder{}, fmt.Errorf("orderFromStrategy: Error getting option data: %w", err)
 			}
+			optSymbol, err := options.ParseDxLinkOption(optData.Greek.Symbol)
+			if err != nil {
+				return tasty.NewOrder{},
+					fmt.Errorf("orderFromStrategy: Error parsing optData.Quote.Symbol: %s, %w", optData.Quote.Symbol, err)
+			}
+			midPrice := (*optData.Quote.AskPrice + *optData.Quote.BidPrice) / 2
+			price += midPrice
+			orderLegs = append(orderLegs, tasty.NewOrderLeg{
+				InstrumentType: tasty.EquityOptionIT,
+				Symbol:         optSymbol.OCCString(),
+				Quantity:       float32(leg.Quantity),
+				Action:         action,
+			})
 		case strategy.Offset:
+
+		}
 	}
 
 	//type NewOrder struct {

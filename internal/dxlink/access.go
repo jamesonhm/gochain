@@ -16,10 +16,10 @@ func (c *DxLinkClient) OptionDataByOffset(
 	offsetFrom float64,
 	offsetBy int,
 ) (*OptionData, error) {
-	exp := dt.DTEToDate(dte)
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
+	exp := dt.DTEToDate(dte)
 	s := float64(int(offsetFrom) + offsetBy)
 	opt := options.OptionSymbol{
 		Underlying: underlying,
@@ -42,15 +42,16 @@ func (c *DxLinkClient) OptionDataByDelta(
 	round int,
 	targetDelta float64,
 ) (*OptionData, error) {
-	// find exp date
-	exp := dt.DTEToDate(dte)
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	atm := c.getUnderlyingData
-	if *atm == 0.0 || atm == nil {
+	// find exp date
+	exp := dt.DTEToDate(dte)
+	atm, err := c.getUnderlyingPrice(underlying)
+	if err != nil {
+		return nil, fmt.Errorf("OptionDataByDelta: unable to get underlying price for '%s'\n", underlying)
 	}
-	s := roundNearest(*atm, round)
+	s := roundNearest(atm, round)
 	opt := options.OptionSymbol{
 		Underlying: underlying,
 		Date:       exp,
@@ -141,16 +142,27 @@ func (c *DxLinkClient) getUnderlyingPrice(sym string) (float64, error) {
 
 func (c *DxLinkClient) getOptData(opt string) (*OptionData, error) {
 	delay := c.delay
-	for i := 0; i < c.retries; i++ {
-		if optionDataPtr, ok := c.optionSubs[opt]; ok {
-			if optionDataPtr != nil {
-				return optionDataPtr, nil
-			}
-		}
+	retry := func(i int, delay time.Duration) time.Duration {
 		fmt.Printf("Retrying getOptData, attempt %d, delay: %s\n", i+1, delay.String())
 		time.Sleep(delay)
 		if c.expBackoff {
 			delay *= 2
+		}
+		return delay
+	}
+	for i := 0; i < c.retries; i++ {
+		if optionDataPtr, ok := c.optionSubs[opt]; !ok {
+			delay = retry(i, delay)
+		} else if optionDataPtr == nil {
+			delay = retry(i, delay)
+		} else if optionDataPtr.Greek.Delta == nil ||
+			optionDataPtr.Quote.AskPrice == nil ||
+			*optionDataPtr.Quote.AskPrice == 0.0 ||
+			optionDataPtr.Quote.BidPrice == nil ||
+			*optionDataPtr.Quote.BidPrice == 0.0 {
+			delay = retry(i, delay)
+		} else {
+			return optionDataPtr, nil
 		}
 	}
 	return nil, fmt.Errorf("unable to find option in subscription data or is nil: %s", opt)
