@@ -3,6 +3,7 @@ package options
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 	"unicode"
 )
@@ -83,6 +84,37 @@ func ParseDxLinkOption(option string) (*OptionSymbol, error) {
 
 	res := OptionSymbol{
 		Underlying: option[1:split],
+		Date:       date,
+		OptionType: opt_type,
+		Strike:     strike,
+	}
+	return &res, nil
+}
+
+func ParseOCCOption(option string) (*OptionSymbol, error) {
+	fields := strings.Fields(option)
+	if len(fields) != 2 {
+		return nil, fmt.Errorf("unrecognized option format, len(fields) != 2: %s", option)
+	}
+	symbol := fields[0]
+	opt_date := fields[1][0:6]
+	date, err := time.Parse("060102", opt_date)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse date: %s, err: %w", opt_date, err)
+	}
+	opt_types := fields[1][6:7]
+	if opt_types != "P" && opt_types != "C" {
+		return nil, fmt.Errorf("unable to parse type: %s, should be `P` or `C`", opt_types)
+	}
+	opt_type := OptionType(opt_types)
+	strike_int, err := strconv.ParseInt(fields[1][7:], 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse strike as int: %s, err: %w", fields[1][7:], err)
+	}
+	strike := float64(strike_int) / 1000
+
+	res := OptionSymbol{
+		Underlying: symbol,
 		Date:       date,
 		OptionType: opt_type,
 		Strike:     strike,

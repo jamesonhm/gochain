@@ -3,6 +3,7 @@ package executor
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"sync"
 
 	"github.com/jamesonhm/gochain/internal/dxlink"
@@ -44,7 +45,8 @@ func NewEngine(
 func (e *Engine) SubmitOrder(s strategy.Strategy) {
 	order, err := e.orderFromStrategy(s)
 	if err != nil {
-
+		slog.Error("Unable to create order from strategy: %w", err)
+		return
 	}
 	e.orderQueue <- order
 }
@@ -55,7 +57,7 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 	// create order struct
 	var price float64
 	orderLegs := make([]tasty.NewOrderLeg, 0)
-	for _, leg := range s.Legs {
+	for i, leg := range s.Legs {
 		var action tasty.OrderAction
 		if leg.Side == strategy.Buy {
 			action = tasty.BTO
@@ -88,6 +90,10 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 				Action:         action,
 			})
 		case strategy.Offset:
+			if i == 0 {
+				return tasty.NewOrder{}, fmt.Errorf("Strike Method `Offset` cannot be the first leg")
+			}
+			prevSymbol := orderLegs[i-1].Symbol
 
 		}
 	}
