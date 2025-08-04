@@ -94,7 +94,23 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 				return tasty.NewOrder{}, fmt.Errorf("Strike Method `Offset` cannot be the first leg")
 			}
 			prevSymbol := orderLegs[i-1].Symbol
-
+			baseOpt, err := options.ParseOCCOption(prevSymbol)
+			if err != nil {
+				return tasty.NewOrder{}, fmt.Errorf("Unable to parse OCC Option: %s, %w", prevSymbol, err)
+			}
+			baseOpt.IncrementStrike(leg.StrikeMethVal)
+			optData, err := e.optionProvider.GetOptData(baseOpt.DxLinkString())
+			if err != nil {
+				return tasty.NewOrder{}, fmt.Errorf("Unable to get Opt Data with symbol: %s, %w", baseOpt.DxLinkString(), err)
+			}
+			midPrice := (*optData.Quote.AskPrice + *optData.Quote.BidPrice) / 2
+			price += midPrice
+			orderLegs = append(orderLegs, tasty.NewOrderLeg{
+				InstrumentType: tasty.EquityOptionIT,
+				Symbol:         baseOpt.OCCString(),
+				Quantity:       float32(leg.Quantity),
+				Action:         action,
+			})
 		}
 	}
 

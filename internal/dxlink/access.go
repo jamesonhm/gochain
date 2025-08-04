@@ -27,7 +27,7 @@ func (c *DxLinkClient) OptionDataByOffset(
 		Strike:     s,
 		OptionType: optType,
 	}
-	data, err := c.getOptData(opt.DxLinkString())
+	data, err := c.GetOptData(opt.DxLinkString())
 	if err != nil {
 		return nil, fmt.Errorf("OptionDataByOffset: unable to find INITIAL option in subscription data: %s, %w", opt.DxLinkString(), err)
 	}
@@ -75,7 +75,7 @@ func (c *DxLinkClient) OptionDataByDelta(
 			}
 			if math.Abs(delta-targetDelta) > dist {
 				opt.DecrementStrike(float64(round))
-				optDataPtr, err := c.getOptData(opt.DxLinkString())
+				optDataPtr, err := c.GetOptData(opt.DxLinkString())
 				if err != nil {
 					return nil, err
 				}
@@ -96,7 +96,7 @@ func (c *DxLinkClient) OptionDataByDelta(
 			}
 			if math.Abs(delta-targetDelta) > dist {
 				opt.IncrementStrike(float64(round))
-				optDataPtr, err := c.getOptData(opt.DxLinkString())
+				optDataPtr, err := c.GetOptData(opt.DxLinkString())
 				if err != nil {
 					return nil, err
 				}
@@ -140,7 +140,7 @@ func (c *DxLinkClient) getUnderlyingPrice(sym string) (float64, error) {
 
 }
 
-func (c *DxLinkClient) getOptData(opt string) (*OptionData, error) {
+func (c *DxLinkClient) GetOptData(opt string) (*OptionData, error) {
 	delay := c.delay
 	retry := func(i int, delay time.Duration) time.Duration {
 		fmt.Printf("Retrying getOptData, attempt %d, delay: %s\n", i+1, delay.String())
@@ -169,7 +169,7 @@ func (c *DxLinkClient) getOptData(opt string) (*OptionData, error) {
 }
 
 func (c *DxLinkClient) getOptDelta(opt string) (float64, error) {
-	optionDataPtr, err := c.getOptData(opt)
+	optionDataPtr, err := c.GetOptData(opt)
 	if err != nil {
 		return 0, err
 	}
