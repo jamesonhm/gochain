@@ -56,14 +56,15 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 	// create leg(s)
 	// create order struct
 	var price float64
+	var effect tasty.PriceEffect
+
 	orderLegs := make([]tasty.NewOrderLeg, 0)
 	for i, leg := range s.Legs {
 		var action tasty.OrderAction
-		if leg.Side == strategy.Buy {
-			action = tasty.BTO
-		} else {
-			action = tasty.STO
-		}
+		var midPrice float64
+		var optSymbol *options.OptionSymbol
+		var err error
+
 		switch leg.StrikeMethod {
 		case strategy.Delta:
 			optData, err := e.optionProvider.OptionDataByDelta(
@@ -74,44 +75,45 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 				leg.StrikeMethVal,
 			)
 			if err != nil {
-				return tasty.NewOrder{}, fmt.Errorf("orderFromStrategy: Error getting option data: %w", err)
+				return tasty.NewOrder{}, fmt.Errorf("Error getting option data: %w", err)
 			}
-			optSymbol, err := options.ParseDxLinkOption(optData.Greek.Symbol)
+			optSymbol, err = options.ParseDxLinkOption(optData.Greek.Symbol)
 			if err != nil {
 				return tasty.NewOrder{},
-					fmt.Errorf("orderFromStrategy: Error parsing optData.Quote.Symbol: %s, %w", optData.Quote.Symbol, err)
+					fmt.Errorf("Error parsing optData.Quote.Symbol: %s, %w", optData.Quote.Symbol, err)
 			}
-			midPrice := (*optData.Quote.AskPrice + *optData.Quote.BidPrice) / 2
-			price += midPrice
-			orderLegs = append(orderLegs, tasty.NewOrderLeg{
-				InstrumentType: tasty.EquityOptionIT,
-				Symbol:         optSymbol.OCCString(),
-				Quantity:       float32(leg.Quantity),
-				Action:         action,
-			})
+			midPrice = (*optData.Quote.AskPrice + *optData.Quote.BidPrice) / 2
 		case strategy.Offset:
 			if i == 0 {
 				return tasty.NewOrder{}, fmt.Errorf("Strike Method `Offset` cannot be the first leg")
 			}
 			prevSymbol := orderLegs[i-1].Symbol
-			baseOpt, err := options.ParseOCCOption(prevSymbol)
+			optSymbol, err = options.ParseOCCOption(prevSymbol)
 			if err != nil {
 				return tasty.NewOrder{}, fmt.Errorf("Unable to parse OCC Option: %s, %w", prevSymbol, err)
 			}
-			baseOpt.IncrementStrike(leg.StrikeMethVal)
-			optData, err := e.optionProvider.GetOptData(baseOpt.DxLinkString())
+			optSymbol.IncrementStrike(leg.StrikeMethVal)
+			optData, err := e.optionProvider.GetOptData(optSymbol.DxLinkString())
 			if err != nil {
-				return tasty.NewOrder{}, fmt.Errorf("Unable to get Opt Data with symbol: %s, %w", baseOpt.DxLinkString(), err)
+				return tasty.NewOrder{}, fmt.Errorf("Unable to get Opt Data with symbol: %s, %w", optSymbol.DxLinkString(), err)
 			}
-			midPrice := (*optData.Quote.AskPrice + *optData.Quote.BidPrice) / 2
-			price += midPrice
-			orderLegs = append(orderLegs, tasty.NewOrderLeg{
-				InstrumentType: tasty.EquityOptionIT,
-				Symbol:         baseOpt.OCCString(),
-				Quantity:       float32(leg.Quantity),
-				Action:         action,
-			})
+			midPrice = (*optData.Quote.AskPrice + *optData.Quote.BidPrice) / 2
 		}
+
+		if leg.Side == strategy.Buy {
+			action = tasty.BTO
+			price -= midPrice
+		} else {
+			action = tasty.STO
+			price += midPrice
+		}
+
+		orderLegs = append(orderLegs, tasty.NewOrderLeg{
+			InstrumentType: tasty.EquityOptionIT,
+			Symbol:         optSymbol.OCCString(),
+			Quantity:       float32(leg.Quantity),
+			Action:         action,
+		})
 	}
 
 	//type NewOrder struct {
@@ -136,13 +138,19 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 	//	Quantity       float32        `json:"quantity,omitempty"`
 	//	Action         OrderAction    `json:"action"` (STO, BTO, STC, BTC, ...)
 	//}
+	if price > 0.0 {
+		effect = tasty.Credit
+	} else {
+		effect = tasty.Debit
+	}
+	// TODO: add slippage to price
 	return tasty.NewOrder{
 		TimeInForce: "Day",
 		OrderType:   "Limit",
-		// price = sum(legs_midpoint) +/- slippage
-		// price-effect = Credit if price > 0
+		Price:       price,
+		PriceEffect: effect,
 		// legs:
-	}
+	}, nil
 }
 
 func (e *Engine) startWorkers() {
