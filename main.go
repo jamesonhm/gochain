@@ -187,7 +187,7 @@ func main() {
 	for _, strat := range strats {
 		monitor.AddStrategy(strat)
 	}
-	monitor.Run(ctx)
+	go monitor.Run(ctx)
 
 	var wg sync.WaitGroup
 	wg.Add(1)

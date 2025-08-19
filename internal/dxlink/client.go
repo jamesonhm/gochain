@@ -173,6 +173,64 @@ func (c *DxLinkClient) Connect() error {
 	return nil
 }
 
+func (c *DxLinkClient) reconnect() {
+	if !c.connected {
+		return
+	}
+	// Close existing conn if any
+	if c.conn != nil {
+		c.conn.Close()
+		c.conn = nil
+	}
+	c.connected = false
+
+	// cancel the message handler
+	c.cancel()
+
+	// Try reconnect with backoff
+	for retry := 0; retry < c.retries; retry++ {
+		slog.Warn("Attempting to reconnect", "try", retry+1, "of max", c.retries)
+
+		backoff := time.Duration(1<<uint(retry)) * time.Second
+		time.Sleep(backoff)
+
+		u, err := url.Parse(c.url)
+		if err != nil {
+			slog.Error("invalid URL during reconnect", "error", err)
+			continue
+		}
+
+		conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+		if err != nil {
+			slog.Error("dial error during reconnect", "url", u.String(), "err", err)
+			continue
+		}
+
+		c.conn = conn
+		c.connected = true
+
+		// Start message handler
+		go c.handleMessages()
+
+		setupMsg := SetupMsg{
+			Type:                   "SETUP",
+			Channel:                0,
+			KeepAliveTimeout:       60,
+			AcceptKeepAliveTimeout: 60,
+			Version:                "0.1-golang",
+		}
+
+		err = c.sendMessage(setupMsg)
+		if err != nil {
+			c.connected = false
+			c.conn.Close()
+			slog.Error("failed to send setup message during reconnect", "err", err)
+			continue
+		}
+	}
+	slog.Error("failed to reconnect")
+}
+
 func (c *DxLinkClient) Close() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -480,42 +538,6 @@ func (c *DxLinkClient) optionFeedIter() iter.Seq[FeedSubscriptionMsg] {
 				return
 			}
 		}
-	}
-}
-
-func (c *DxLinkClient) reconnect() {
-	if !c.connected {
-		return
-	}
-	// Close existing conn if any
-	if c.conn != nil {
-		c.conn.Close()
-		c.conn = nil
-	}
-	c.connected = false
-
-	// Try reconnect with backoff
-	for retry := 0; retry < c.retries; retry++ {
-		slog.Warn("Attempting to reconnect", "try", retry+1, "of max", c.retries)
-
-		backoff := time.Duration(1<<uint(retry)) * time.Second
-		time.Sleep(backoff)
-
-		u, err := url.Parse(c.url)
-		if err != nil {
-			slog.Info("invalid URL during reconnect", "error", err)
-			continue
-		}
-
-		conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-		if err != nil {
-			slog.Info("dial error during reconnect", "url", u.String(), "err", err)
-			continue
-		}
-
-		c.conn = conn
-		c.connected = true
-
 	}
 }
 

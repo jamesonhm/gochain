@@ -4,7 +4,7 @@
     "legs": [
         {
             "option-type": "P",
-            "option-side": "buy",
+            "option-side": "sell",
             "quantity": 1,
             "days-to-expiration": 7,
             "strike-selection-method": "delta",
@@ -13,7 +13,7 @@
         },
         {
             "option-type": "P",
-            "option-side": "sell",
+            "option-side": "buy",
             "quantity": 1,
             "days-to-expiration": 7,
             "strike-selection-method": "relative",

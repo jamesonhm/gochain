@@ -75,7 +75,6 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 			fmt.Printf("opt type: %s\n", options.OptionType(leg.OptType))
 			fmt.Printf("round: %d\n", leg.Round)
 			fmt.Printf("strike meth val: %f\n", leg.StrikeMethVal)
-			fmt.Printf("opt provider: %+v\n", e.optionProvider)
 			optData, err := e.optionProvider.OptionDataByDelta(
 				s.Underlying,
 				leg.DTE,
@@ -83,7 +82,6 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 				leg.Round,
 				leg.StrikeMethVal,
 			)
-			fmt.Printf("optData: %+v\n", optData)
 			if err != nil {
 				return tasty.NewOrder{}, fmt.Errorf("Error getting option data: %w", err)
 			}
@@ -93,7 +91,8 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 					fmt.Errorf("Error parsing optData.Quote.Symbol: %s, %w", optData.Quote.Symbol, err)
 			}
 			midPrice = (*optData.Quote.AskPrice + *optData.Quote.BidPrice) / 2
-		case strategy.Offset:
+			fmt.Printf("mid price for leg %d: %.2f\n", i+1, midPrice)
+		case strategy.Relative:
 			if i == 0 {
 				return tasty.NewOrder{}, fmt.Errorf("Strike Method `Offset` cannot be the first leg")
 			}
@@ -108,6 +107,7 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 				return tasty.NewOrder{}, fmt.Errorf("Unable to get Opt Data with symbol: %s, %w", optSymbol.DxLinkString(), err)
 			}
 			midPrice = (*optData.Quote.AskPrice + *optData.Quote.BidPrice) / 2
+			fmt.Printf("mid price for leg %d: %.2f\n", i+1, midPrice)
 		}
 
 		if leg.Side == strategy.Buy {
@@ -117,7 +117,12 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 			action = tasty.STO
 			price += midPrice
 		}
+		fmt.Printf("updated Price: %.2f\n", price)
 
+		if optSymbol == nil {
+			return tasty.NewOrder{}, fmt.Errorf("optSymbol is nil for leg %d with strikeMethod %v", i, leg.StrikeMethod)
+		}
+		fmt.Printf("optSymbol for order leg: %s\n", optSymbol.OCCString())
 		orderLegs = append(orderLegs, tasty.NewOrderLeg{
 			InstrumentType: tasty.EquityOptionIT,
 			Symbol:         optSymbol.OCCString(),
