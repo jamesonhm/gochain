@@ -6,17 +6,18 @@ import (
 	"time"
 
 	"github.com/jamesonhm/gochain/internal/dxlink"
+	"github.com/jamesonhm/gochain/internal/executor"
 	"github.com/jamesonhm/gochain/internal/strategy"
 	"github.com/jamesonhm/gochain/internal/tasty"
 	"github.com/jamesonhm/gochain/internal/yahoo"
 )
 
 type Engine struct {
-	portfolio  *tasty.TastyAPI
-	options    *dxlink.DxLinkClient
-	candles    *yahoo.YahooAPI
-	strategies []strategy.Strategy
-	//executor *executor.Engine
+	portfolio    *tasty.TastyAPI
+	options      *dxlink.DxLinkClient
+	candles      *yahoo.YahooAPI
+	strategies   []strategy.Strategy
+	executor     *executor.Engine
 	scanInterval time.Duration
 }
 
@@ -24,12 +25,14 @@ func NewEngine(
 	portfolio *tasty.TastyAPI,
 	options *dxlink.DxLinkClient,
 	candles *yahoo.YahooAPI,
+	executor *executor.Engine,
 	scanInterval time.Duration,
 ) *Engine {
 	return &Engine{
 		portfolio:    portfolio,
 		options:      options,
 		candles:      candles,
+		executor:     executor,
 		scanInterval: scanInterval,
 	}
 }
@@ -56,6 +59,7 @@ func (e *Engine) checkAllStrategies(ctx context.Context) {
 	for _, s := range e.strategies {
 		if s.CheckEntryConditions(e.portfolio, e.candles, e.options) {
 			slog.LogAttrs(ctx, slog.LevelInfo, "Entry Conditions met", slog.String("strat name", s.Name))
+			e.executor.SubmitOrder(s)
 		}
 	}
 }

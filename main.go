@@ -14,6 +14,7 @@ import (
 
 	"github.com/jamesonhm/gochain/internal/dt"
 	"github.com/jamesonhm/gochain/internal/dxlink"
+	"github.com/jamesonhm/gochain/internal/executor"
 	"github.com/jamesonhm/gochain/internal/monitor"
 	"github.com/jamesonhm/gochain/internal/options"
 	"github.com/jamesonhm/gochain/internal/tasty"
@@ -44,41 +45,27 @@ func main() {
 	}
 	fmt.Printf("VIX ON MOVE: %.2f\n", move)
 
-	//opt := options.OptionSymbol{
-	//	Underlying: "XSP",
-	//	Date:       time.Date(2025, 7, 29, 0, 0, 0, 0, time.Local),
-	//	Strike:     637.43,
-	//	OptionType: options.PutOption,
-	//}
-	//fmt.Printf("Initial option: %+v\n", opt.DxLinkString())
-	//for range 7 {
-	//	opt.IncrementStrike(1)
-	//	fmt.Printf("Incremented: %+v\n", opt.DxLinkString())
-	//}
-
 	strats := loadStrategies()
+
 	// SB USER
-	//tastyClient := tasty.New(10*time.Second, 60*time.Second, 60, tasty.TastySandbox)
-	//login := tasty.LoginInfo{
-	//	Login:      mustEnv("TASTY_USER"),
-	//	Password:   mustEnv("SB_PASSWORD"),
-	//	RememberMe: true,
-	//}
-	// PROD USER
-	tastyClient := tasty.New(10*time.Second, 60*time.Second, 60, tasty.TastyProd)
+	tastyClient := tasty.New(10*time.Second, 60*time.Second, 60, tasty.TastySandbox)
 	login := tasty.LoginInfo{
 		Login:      mustEnv("TASTY_USER"),
-		Password:   mustEnv("PW"),
+		Password:   mustEnv("SB_PASSWORD"),
 		RememberMe: true,
 	}
+	// PROD USER
+	//tastyClient := tasty.New(10*time.Second, 60*time.Second, 60, tasty.TastyProd)
+	//login := tasty.LoginInfo{
+	//	Login:      mustEnv("TASTY_USER"),
+	//	Password:   mustEnv("PW"),
+	//	RememberMe: true,
+	//}
 	err = tastyClient.CreateSession(ctx, login)
 	if err != nil {
 		logger.LogAttrs(ctx, slog.LevelError, "Tasty Session", slog.String("error creating session", err.Error()))
 	}
 	logger.Info("Tasty Session", "tasty user", tastyClient.GetUser())
-
-	//customer, err := tastyClient.GetCustomer(ctx)
-	//fmt.Println(customer)
 
 	accts, err := tastyClient.GetAccounts(ctx)
 	if err != nil {
@@ -154,34 +141,6 @@ func main() {
 		}
 	}
 
-	//act := true
-	//syms := []string{"XSP 250430P00529000"}
-	//eoSymbol := tasty.EquityOptionsSymbology{
-	//	Symbol:     "XSP",
-	//	OptionType: tasty.Call,
-	//	Strike:     550,
-	//	Expiration: time.Date(2025, 04, 25, 0, 0, 0, 0, time.UTC),
-	//}
-	//eqOpParams := tasty.EquityOptionsParams{
-	//	Symbols: []string{eoSymbol.Build()},
-	//}
-	//eqOpts, err := tastyClient.GetEquityOptions(ctx, &eqOpParams)
-	//if err != nil {
-	//	fmt.Println(err)
-	//} else {
-	//	fmt.Printf("%+v\n", eqOpts)
-	//}
-
-	//eqOpSym := tasty.EquityOptionSymbol{
-	//	Active: &act,
-	//}
-	//eqOpt, err := tastyClient.GetEquityOption(ctx, sym, &eqOpSym)
-	//if err != nil {
-	//	fmt.Println(err)
-	//} else {
-	//	fmt.Printf("%+v\n", eqOpt)
-	//}
-
 	streamer, err := tastyClient.GetQuoteStreamerToken(ctx)
 	if err != nil {
 		fmt.Println(err)
@@ -216,16 +175,19 @@ func main() {
 		fmt.Println(err)
 	}
 
+	executor := executor.NewEngine(tastyClient, streamClient, 1, ctx)
+
 	monitor := monitor.NewEngine(
 		tastyClient,
 		streamClient,
 		yahooClient,
+		executor,
 		5*time.Second,
 	)
 	for _, strat := range strats {
 		monitor.AddStrategy(strat)
 	}
-	go monitor.Run(ctx)
+	monitor.Run(ctx)
 
 	var wg sync.WaitGroup
 	wg.Add(1)

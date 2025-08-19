@@ -43,12 +43,14 @@ func NewEngine(
 // called by monitor engine when conditions are met
 // TODO: submit to open vs submit to close...
 func (e *Engine) SubmitOrder(s strategy.Strategy) {
+	fmt.Printf("strat to submit: %+v\n", s)
 	order, err := e.orderFromStrategy(s)
 	if err != nil {
-		slog.Error("Unable to create order from strategy: %w", err)
+		slog.Error("Unable to create order from strategy:", "error", err)
 		return
 	}
-	e.orderQueue <- order
+	fmt.Printf("This is where the order goes into the queue: %+v\n", order)
+	// e.orderQueue <- order
 }
 
 func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) {
@@ -67,6 +69,13 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 
 		switch leg.StrikeMethod {
 		case strategy.Delta:
+			fmt.Printf("got strike method delta\n")
+			fmt.Printf("under: %s\n", s.Underlying)
+			fmt.Printf("dte: %d\n", leg.DTE)
+			fmt.Printf("opt type: %s\n", options.OptionType(leg.OptType))
+			fmt.Printf("round: %d\n", leg.Round)
+			fmt.Printf("strike meth val: %f\n", leg.StrikeMethVal)
+			fmt.Printf("opt provider: %+v\n", e.optionProvider)
 			optData, err := e.optionProvider.OptionDataByDelta(
 				s.Underlying,
 				leg.DTE,
@@ -74,6 +83,7 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 				leg.Round,
 				leg.StrikeMethVal,
 			)
+			fmt.Printf("optData: %+v\n", optData)
 			if err != nil {
 				return tasty.NewOrder{}, fmt.Errorf("Error getting option data: %w", err)
 			}
@@ -111,7 +121,7 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 		orderLegs = append(orderLegs, tasty.NewOrderLeg{
 			InstrumentType: tasty.EquityOptionIT,
 			Symbol:         optSymbol.OCCString(),
-			Quantity:       float32(leg.Quantity),
+			Quantity:       float64(leg.Quantity),
 			Action:         action,
 		})
 	}
@@ -149,7 +159,7 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 		OrderType:   "Limit",
 		Price:       price,
 		PriceEffect: effect,
-		// legs:
+		Legs:        orderLegs,
 	}, nil
 }
 

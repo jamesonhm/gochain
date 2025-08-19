@@ -42,6 +42,7 @@ func (c *DxLinkClient) OptionDataByDelta(
 	round int,
 	targetDelta float64,
 ) (*OptionData, error) {
+	fmt.Println("got to Option data by delta")
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -58,6 +59,7 @@ func (c *DxLinkClient) OptionDataByDelta(
 		Strike:     s,
 		OptionType: optType,
 	}
+	fmt.Printf("OptionDataByDelta: option after rounding: %s\n", opt.DxLinkString())
 	delta, err := c.getOptDelta(opt.DxLinkString())
 	if err != nil {
 		return nil, fmt.Errorf("OptionDataByDelta: unable to find INITIAL option in subscription data: %s, %w", opt.DxLinkString(), err)
@@ -112,6 +114,8 @@ func (c *DxLinkClient) OptionDataByDelta(
 }
 
 func (c *DxLinkClient) getUnderlyingData(sym string) (*UnderlyingData, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	delay := c.delay
 	for i := 0; i < c.retries; i++ {
 		if underlyingPtr, ok := c.underlyingSubs[sym]; ok {
@@ -141,6 +145,8 @@ func (c *DxLinkClient) getUnderlyingPrice(sym string) (float64, error) {
 }
 
 func (c *DxLinkClient) GetOptData(opt string) (*OptionData, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	delay := c.delay
 	retry := func(i int, delay time.Duration) time.Duration {
 		fmt.Printf("Retrying getOptData, attempt %d, delay: %s\n", i+1, delay.String())

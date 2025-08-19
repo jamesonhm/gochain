@@ -63,6 +63,9 @@ func (c *DxLinkClient) UpdateOptionSubs(
 	pctRange float64,
 	filter filterFunc,
 ) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	c.underlyingSubs[symbol] = NewUnderlying()
 	//err := c.filterOptions(options, days, mktPrice, pctRange)
 	filtered := filter(options, mktPrice, pctRange)
@@ -144,7 +147,7 @@ func (c *DxLinkClient) Connect() error {
 
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		return fmt.Errorf("dial error: %w", err)
+		return fmt.Errorf("dial error for url: %s : %w", u.String(), err)
 	}
 	c.conn = conn
 	c.connected = true
@@ -477,6 +480,42 @@ func (c *DxLinkClient) optionFeedIter() iter.Seq[FeedSubscriptionMsg] {
 				return
 			}
 		}
+	}
+}
+
+func (c *DxLinkClient) reconnect() {
+	if !c.connected {
+		return
+	}
+	// Close existing conn if any
+	if c.conn != nil {
+		c.conn.Close()
+		c.conn = nil
+	}
+	c.connected = false
+
+	// Try reconnect with backoff
+	for retry := 0; retry < c.retries; retry++ {
+		slog.Warn("Attempting to reconnect", "try", retry+1, "of max", c.retries)
+
+		backoff := time.Duration(1<<uint(retry)) * time.Second
+		time.Sleep(backoff)
+
+		u, err := url.Parse(c.url)
+		if err != nil {
+			slog.Info("invalid URL during reconnect", "error", err)
+			continue
+		}
+
+		conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+		if err != nil {
+			slog.Info("dial error during reconnect", "url", u.String(), "err", err)
+			continue
+		}
+
+		c.conn = conn
+		c.connected = true
+
 	}
 }
 

@@ -52,8 +52,8 @@ type Order struct {
 type OrderLeg struct {
 	InstrumentType    InstrumentType `json:"instrument-type"`
 	Symbol            string         `json:"symbol"`
-	Quantity          float32        `json:"quantity"`
-	RemainingQuantity float32        `json:"remaining-quantity"`
+	Quantity          float64        `json:"quantity"`
+	RemainingQuantity float64        `json:"remaining-quantity"`
 	Action            OrderAction    `json:"action"`
 	Fills             []OrderFill    `json:"fills"`
 }
@@ -62,7 +62,7 @@ type OrderFill struct {
 	ExtGroupFillID   string          `json:"ext-group-fill-id"`
 	ExtExecID        string          `json:"ext-exec-id"`
 	FillID           string          `json:"fill-id"`
-	Quantity         float32         `json:"quantity"`
+	Quantity         float64         `json:"quantity"`
 	FillPrice        decimal.Decimal `json:"fill-price"`
 	FilledAt         time.Time       `json:"filled-at"`
 	DestinationVenue string          `json:"destination-venue"`
@@ -93,7 +93,7 @@ type OrderCondition struct {
 type OrderPriceComponent struct {
 	Symbol            string         `json:"symbol"`
 	InstrumentType    InstrumentType `json:"instrument-type"`
-	Quantity          float32        `json:"quantity"`
+	Quantity          float64        `json:"quantity"`
 	QuantityDirection Direction      `json:"quantity-direction"`
 }
 
@@ -101,10 +101,10 @@ type NewOrder struct {
 	TimeInForce  TimeInForce   `json:"time-in-force"`
 	GtcDate      string        `json:"gtc-date"`
 	OrderType    OrderType     `json:"order-type"`
-	StopTrigger  float32       `json:"stop-trigger,omitempty"`
-	Price        float32       `json:"price,omitempty"`
+	StopTrigger  float64       `json:"stop-trigger,omitempty"`
+	Price        float64       `json:"price,omitempty"`
 	PriceEffect  PriceEffect   `json:"price-effect,omitempty"`
-	Value        float32       `json:"value,omitempty"`
+	Value        float64       `json:"value,omitempty"`
 	ValueEffect  PriceEffect   `json:"value-effect,omitempty"`
 	Source       string        `json:"source,omitempty"`
 	PartitionKey string        `json:"partition-key,omitempty"`
@@ -116,7 +116,7 @@ type NewOrder struct {
 type NewOrderLeg struct {
 	InstrumentType InstrumentType `json:"instrument-type"`
 	Symbol         string         `json:"symbol"`
-	Quantity       float32        `json:"quantity,omitempty"`
+	Quantity       float64        `json:"quantity,omitempty"`
 	Action         OrderAction    `json:"action"`
 }
 
