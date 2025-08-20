@@ -74,6 +74,13 @@ func main() {
 		fmt.Printf("Got Accounts, Day Trader?: %t\n", accts[0].Account.DayTraderStatus)
 	}
 
+	holiday, err := tastyClient.GetMarketHolidays(ctx)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("Got Holidays: %+v\n", holiday)
+	}
+
 	//acctNum := accts[0].Account.AccountNumber
 
 	//acct, err := tastyClient.GetAccount(ctx, acctNum)
@@ -125,7 +132,7 @@ func main() {
 			}
 		}
 	} else {
-		mktPrices["XSP"] = 623.37
+		mktPrices["XSP"] = 641.37
 	}
 	fmt.Printf("Last Market Prices: %+v\n", mktPrices)
 
