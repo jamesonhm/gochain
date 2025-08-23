@@ -5,16 +5,17 @@ import (
 	"time"
 )
 
+func TZNY() *time.Location {
+	nytz, _ := time.LoadLocation("America/New_York")
+	return nytz
+}
+
 func Midnight(d time.Time) time.Time {
-	return time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, d.Location())
+	return time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, TZNY())
 }
 
 func EndOfDay(date time.Time) (*time.Time, error) {
-	nytz, err := time.LoadLocation("America/New_York")
-	if err != nil {
-		return nil, err
-	}
-	end := time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 59, 0, nytz)
+	end := time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 59, 0, TZNY())
 	return &end, nil
 }
 
@@ -49,7 +50,7 @@ func NextWeekday(d time.Time) time.Time {
 }
 
 func DTEToDate(dte int) time.Time {
-	exp := time.Now().AddDate(0, 0, dte)
+	exp := time.Now().In(TZNY()).AddDate(0, 0, dte)
 	if exp.Weekday() < 1 || exp.Weekday() > 5 {
 		exp = NextWeekday(exp)
 	}

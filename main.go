@@ -112,7 +112,7 @@ func main() {
 	//}
 
 	// Get curr market price for each tracked symbol
-	// TODO: use dxlink streaming for current mkt...
+	// To be used in filtering subscribed option symbols
 	mktPrices := make(map[string]float64)
 	if tastyClient.Env == tasty.TastyProd {
 		mktParams := tasty.MarketDataParams{
