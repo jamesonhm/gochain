@@ -16,7 +16,8 @@ import (
 	"github.com/jamesonhm/gochain/internal/dxlink"
 	"github.com/jamesonhm/gochain/internal/executor"
 	"github.com/jamesonhm/gochain/internal/monitor"
-	"github.com/jamesonhm/gochain/internal/options"
+	//"github.com/jamesonhm/gochain/internal/options"
+	"github.com/jamesonhm/gochain/internal/strategy"
 	"github.com/jamesonhm/gochain/internal/tasty"
 	"github.com/jamesonhm/gochain/internal/yahoo"
 	"github.com/joho/godotenv"
@@ -46,6 +47,8 @@ func main() {
 	fmt.Printf("VIX ON MOVE: %.2f\n", move)
 
 	strats := loadStrategies()
+	stratStates := strategy.NewStratStates("teststates.json")
+	stratStates.PPrint()
 
 	// SB USER
 	tastyClient := tasty.New(10*time.Second, 60*time.Second, 60, tasty.TastySandbox)
@@ -200,14 +203,6 @@ func main() {
 	wg.Add(1)
 	go func(wg *sync.WaitGroup) {
 		defer wg.Done()
-		time.Sleep(1 * time.Second)
-		fmt.Println("************* ^^^^^^^^^^^^^^^^^^^^^^ *********************** ^^^^^^^^^^^^^^^^^^^^^")
-		opt, err := streamClient.OptionDataByDelta("XSP", 7, options.PutOption, 1, -0.20)
-		if err != nil {
-			logger.Error("Strike From Delta Error", "value", err)
-		} else {
-			logger.Info("Strike from delta Option found", "value", opt)
-		}
 		time.Sleep(10 * time.Second)
 		streamClient.Close()
 	}(&wg)
