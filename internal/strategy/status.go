@@ -47,14 +47,39 @@ func NewStratStates(fname string) *StratStates {
 
 }
 
+func newStratState(ts time.Time) stratState {
+	return stratState{
+		lastSubmitted: ts,
+		orderDetails:  make([]orderDetail, 0),
+	}
+}
+
 func (ss *StratStates) PPrint() {
 	bytes, _ := json.MarshalIndent(ss.states, "", "\t")
 	fmt.Println(string(bytes))
 }
 
-func (ss *StratStates) Submit(stratname string) {}
+func (ss *StratStates) Submit(stratname string, ts time.Time) {
+	ss.mu.Lock()
+	defer ss.mu.Unlock()
+
+	if state, ok := ss.states[stratname]; !ok {
+		ss.states[stratname] = newStratState(ts)
+	} else {
+		state.lastSubmitted = ts
+		ss.states[stratname] = state
+	}
+	// TODO: write back to file
+}
 
 func (ss *StratStates) StatusByName(stratname string) *stratState {
+	ss.mu.RLock()
+	defer ss.mu.Unlock()
+
+	if state, ok := ss.states[stratname]; ok {
+		return &state
+	}
+	// TODO: Complete this
 	return nil
 }
 
