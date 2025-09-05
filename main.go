@@ -17,7 +17,7 @@ import (
 	"github.com/jamesonhm/gochain/internal/executor"
 	"github.com/jamesonhm/gochain/internal/monitor"
 	//"github.com/jamesonhm/gochain/internal/options"
-	"github.com/jamesonhm/gochain/internal/strategy"
+	//"github.com/jamesonhm/gochain/internal/strategy"
 	"github.com/jamesonhm/gochain/internal/tasty"
 	"github.com/jamesonhm/gochain/internal/yahoo"
 	"github.com/joho/godotenv"
@@ -47,8 +47,8 @@ func main() {
 	fmt.Printf("VIX ON MOVE: %.2f\n", move)
 
 	strats := loadStrategies()
-	stratStates := strategy.NewStratStates("teststates.json")
-	stratStates.PPrint()
+	//stratStates := strategy.NewStratStates("teststates.json")
+	//stratStates.PPrint()
 
 	// SB USER
 	tastyClient := tasty.New(10*time.Second, 60*time.Second, 60, tasty.TastySandbox)

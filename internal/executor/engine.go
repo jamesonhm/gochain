@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"time"
 
 	"github.com/jamesonhm/gochain/internal/dxlink"
 	"github.com/jamesonhm/gochain/internal/options"
@@ -27,6 +28,7 @@ func NewEngine(
 	workerCount int,
 	ctx context.Context,
 ) *Engine {
+
 	e := &Engine{
 		apiClient:      apiClient,
 		optionProvider: optionProvider,
@@ -43,7 +45,6 @@ func NewEngine(
 // called by monitor engine when conditions are met
 // TODO: submit to open vs submit to close...
 func (e *Engine) SubmitOrder(s strategy.Strategy) {
-	fmt.Printf("strat to submit: %+v\n", s)
 	order, err := e.orderFromStrategy(s)
 	if err != nil {
 		slog.Error("Unable to create order from strategy:", "error", err)
@@ -59,6 +60,13 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 	// create order struct
 	var price float64
 	var effect tasty.PriceEffect
+	var holidays []time.Time
+	var err error
+	holidays, err = e.apiClient.GetMarketHolidaysDT(e.ctx)
+	if err != nil {
+		slog.Error("(orderFromStrategy) Unable to get market holidays:", "error", err)
+		holidays = []time.Time{}
+	}
 
 	orderLegs := make([]tasty.NewOrderLeg, 0)
 	for i, leg := range s.Legs {
@@ -81,6 +89,7 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 				options.OptionType(leg.OptType),
 				leg.Round,
 				leg.StrikeMethVal,
+				holidays,
 			)
 			if err != nil {
 				return tasty.NewOrder{}, fmt.Errorf("Error getting option data: %w", err)

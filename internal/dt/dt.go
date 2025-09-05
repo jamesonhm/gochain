@@ -57,6 +57,26 @@ func DTEToDate(dte int) time.Time {
 	return Midnight(exp)
 }
 
+func DTEToDateHolidays(start time.Time, dte int, holidays []time.Time) time.Time {
+	exp := start.In(TZNY()).AddDate(0, 0, dte)
+	for {
+		if exp.Weekday() == 0 || exp.Weekday() == 6 || inls(exp, holidays) {
+			exp = NextWeekday(exp)
+		} else {
+			return Midnight(exp)
+		}
+	}
+}
+
+func inls(v time.Time, ls []time.Time) bool {
+	for _, h := range ls {
+		if YMDEqual(v, h) {
+			return true
+		}
+	}
+	return false
+}
+
 func YMDEqual(d1 time.Time, d2 time.Time) bool {
 	return d1.Year() == d2.Year() && d1.Month() == d2.Month() && d1.Day() == d2.Day()
 }

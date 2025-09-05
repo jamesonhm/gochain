@@ -15,11 +15,12 @@ func (c *DxLinkClient) OptionDataByOffset(
 	optType options.OptionType,
 	offsetFrom float64,
 	offsetBy int,
+	holidays []time.Time,
 ) (*OptionData, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	exp := dt.DTEToDate(dte)
+	exp := dt.DTEToDateHolidays(time.Now(), dte, holidays)
 	s := float64(int(offsetFrom) + offsetBy)
 	opt := options.OptionSymbol{
 		Underlying: underlying,
@@ -41,13 +42,14 @@ func (c *DxLinkClient) OptionDataByDelta(
 	optType options.OptionType,
 	round int,
 	targetDelta float64,
+	holidays []time.Time,
 ) (*OptionData, error) {
 	fmt.Println("got to Option data by delta")
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
 	// find exp date
-	exp := dt.DTEToDate(dte)
+	exp := dt.DTEToDateHolidays(time.Now(), dte, holidays)
 	atm, err := c.getUnderlyingPrice(underlying)
 	if err != nil {
 		return nil, fmt.Errorf("OptionDataByDelta: unable to get underlying price for '%s'\n", underlying)

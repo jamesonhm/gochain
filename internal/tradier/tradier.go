@@ -4,12 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"time"
 
+	//"github.com/google/go-querystring/query"
 	"github.com/jamesonhm/gochain/internal/rate"
-	"github.com/jamesonhm/gochain/internal/uri"
 )
 
 const (
@@ -19,11 +18,11 @@ const (
 )
 
 type Client struct {
-	baseurl    string
-	apiKey     string
-	httpC      http.Client
-	uriBuilder *uri.URIBuilder
-	limiter    *rate.Limiter
+	baseurl string
+	apiKey  string
+	httpC   http.Client
+	//uriBuilder *uri.URIBuilder
+	limiter *rate.Limiter
 }
 
 func New(apiKey string, timeout time.Duration, rate_period time.Duration, rate_count int) Client {
@@ -33,20 +32,20 @@ func New(apiKey string, timeout time.Duration, rate_period time.Duration, rate_c
 		httpC: http.Client{
 			Timeout: timeout,
 		},
-		uriBuilder: uri.New(),
-		limiter:    rate.New(rate_period, rate_count),
+		//uriBuilder: uri.New(),
+		limiter: rate.New(rate_period, rate_count),
 	}
 }
 
 // Call makes API call based on path and params
-func (c *Client) Call(ctx context.Context, path string, params, response any) error {
-	uri := c.uriBuilder.EncodeParams(path, params)
-	//if err != nil {
-	//	return err
-	//}
-	slog.LogAttrs(ctx, slog.LevelInfo, "Tradier Call", slog.String("URI", uri))
-	return c.CallURL(ctx, uri, response)
-}
+//func (c *Client) Call(ctx context.Context, path string, params, response any) error {
+//uri := c.uriBuilder.EncodeParams(path, params)
+//if err != nil {
+//	return err
+//}
+//slog.LogAttrs(ctx, slog.LevelInfo, "Tradier Call", slog.String("URI", uri))
+//return c.CallURL(ctx, uri, response)
+//}
 
 func (c *Client) CallURL(ctx context.Context, uri string, response any) error {
 	err := c.limiter.Wait(ctx)

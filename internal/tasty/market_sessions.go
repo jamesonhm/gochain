@@ -21,12 +21,19 @@ func (c *TastyAPI) GetMarketHolidays(ctx context.Context) ([]HolidayDate, error)
 	holidays := res.Data.MarketHolidays
 	half_days := res.Data.MarketHalfDays
 	holidays = append(holidays, half_days...)
-	//var t_holiday []time.Time
-	//for _, h := range holidays {
-	//	t_holiday = append(t_holiday, time.Time(h))
-	//}
-	//return t_holiday, nil
 	return holidays, nil
+}
+
+func (c *TastyAPI) GetMarketHolidaysDT(ctx context.Context) ([]time.Time, error) {
+	holidays, err := c.GetMarketHolidays(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var ts []time.Time
+	for _, h := range holidays {
+		ts = append(ts, time.Time(h))
+	}
+	return ts, nil
 }
 
 type MarketHolidayResponse struct {

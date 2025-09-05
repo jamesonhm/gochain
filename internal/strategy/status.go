@@ -74,7 +74,7 @@ func (ss *StratStates) Submit(stratname string, ts time.Time) {
 
 func (ss *StratStates) StatusByName(stratname string) *stratState {
 	ss.mu.RLock()
-	defer ss.mu.Unlock()
+	defer ss.mu.RUnlock()
 
 	if state, ok := ss.states[stratname]; ok {
 		return &state
