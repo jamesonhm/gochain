@@ -25,7 +25,7 @@ import (
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
+	//slog.SetDefault(logger)
 
 	// defer functions are processed LIFO, context cancel must run before scheduler shutdown
 	ctx, cancel := context.WithCancel(context.Background())
@@ -75,13 +75,6 @@ func main() {
 		fmt.Println(err)
 	} else {
 		fmt.Printf("Got Accounts, Day Trader?: %t\n", accts[0].Account.DayTraderStatus)
-	}
-
-	holiday, err := tastyClient.GetMarketHolidays(ctx)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Printf("Got Holidays: %+v\n", holiday)
 	}
 
 	//acctNum := accts[0].Account.AccountNumber
@@ -135,7 +128,7 @@ func main() {
 			}
 		}
 	} else {
-		mktPrices["XSP"] = 641.37
+		mktPrices["XSP"] = 648.37
 	}
 	fmt.Printf("Last Market Prices: %+v\n", mktPrices)
 
@@ -171,7 +164,7 @@ func main() {
 
 	streamClient := dxlink.New(ctx, streamer.DXLinkURL, streamer.Token)
 	for _, c := range chains {
-		fmt.Printf("%s - %s\n", c.ExpirationType, c.StreamerSymbols[0:10])
+		//fmt.Printf("%s - %s\n", c.ExpirationType, c.StreamerSymbols[0:10])
 		//err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols, 5, mktPrices["XSP"], 9)
 		//err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols, mktPrices["XSP"], 9, dxlink.FilterOptionsDays(5))
 		err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols, mktPrices["XSP"], 9, dxlink.FilterOptionsDates(datesOnly))

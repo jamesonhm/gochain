@@ -33,10 +33,12 @@ type DxLinkClient struct {
 	retries        int
 	delay          time.Duration
 	expBackoff     bool
+	dxlog          *slog.Logger
 }
 
 func New(ctx context.Context, url string, token string) *DxLinkClient {
 	ctx, cancel := context.WithCancel(ctx)
+	dxlog := slog.Default()
 	return &DxLinkClient{
 		url:            url,
 		optionSubs:     make(map[string]*OptionData),
@@ -48,6 +50,7 @@ func New(ctx context.Context, url string, token string) *DxLinkClient {
 		retries:        3,
 		delay:          1 * time.Second,
 		expBackoff:     false,
+		dxlog:          dxlog,
 	}
 }
 
@@ -273,7 +276,7 @@ func (c *DxLinkClient) sendMessage(msg interface{}) error {
 	if n > len(msgStr) {
 		n = len(msgStr)
 	}
-	slog.Info("CLIENT ->", "", msgStr[:n])
+	c.dxlog.Info("CLIENT ->", "", msgStr[:n])
 	//fd, _ := json.MarshalIndent(msg, "", "  ")
 	//fmt.Printf("sent message: %s\n", string(fd))
 
@@ -330,7 +333,7 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			slog.Error("unable to unmarshal setup msg")
 			return
 		}
-		slog.Info("SERVER <-", "", resp)
+		c.dxlog.Info("SERVER <-", "", resp)
 	case string(AuthState):
 		resp := AuthStateMsg{}
 		err := json.Unmarshal(message, &resp)
@@ -338,7 +341,7 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			slog.Error("unable to unmarshal auth state msg")
 			return
 		}
-		slog.Info("SERVER <-", "", resp)
+		c.dxlog.Info("SERVER <-", "", resp)
 		if resp.State == "UNAUTHORIZED" {
 			authMsg := AuthMsg{
 				Type:    Auth,
@@ -376,7 +379,7 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			slog.Error("unable to unmarshal channel open msg")
 			return
 		}
-		slog.Info("SERVER <-", "", resp)
+		c.dxlog.Info("SERVER <-", "", resp)
 		// TODO: add eventTime to quote for age validation
 		var feedSetup FeedSetupMsg
 		if resp.Channel == 1 {
@@ -414,7 +417,7 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			fmt.Printf("%s\n\n", string(message))
 			return
 		}
-		slog.Info("SERVER <-", "", resp)
+		c.dxlog.Info("SERVER <-", "", resp)
 		var feedSub FeedSubscriptionMsg
 		if resp.Channel == 1 {
 			feedSub = c.underlyingFeedSub()
@@ -441,7 +444,7 @@ func (c *DxLinkClient) processMessage(message []byte) {
 		switch resp.Channel {
 		case 1:
 			if len(resp.Data.Trades) > 0 {
-				slog.Info("SERVER <-", "trades rec'd", resp.Data.Trades[0], "trades", len(resp.Data.Trades))
+				c.dxlog.Info("SERVER <-", "trades rec'd", resp.Data.Trades[0], "trades", len(resp.Data.Trades))
 				for _, trade := range resp.Data.Trades {
 					if _, ok := c.underlyingSubs[trade.Symbol]; !ok {
 						c.underlyingSubs[trade.Symbol] = NewUnderlying()
@@ -451,13 +454,13 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			}
 		case 3:
 			if len(resp.Data.Quotes) > 0 {
-				slog.Info("SERVER <-", "quotes rec'd", resp.Data.Quotes[0], "size", len(resp.Data.Quotes))
+				c.dxlog.Info("SERVER <-", "quotes rec'd", resp.Data.Quotes[0], "size", len(resp.Data.Quotes))
 				for _, quote := range resp.Data.Quotes {
 					c.optionSubs[quote.Symbol].Quote = quote
 				}
 			}
 			if len(resp.Data.Greeks) > 0 {
-				slog.Info("SERVER <-", "greeks rec'd", resp.Data.Greeks[0], "size", len(resp.Data.Greeks))
+				c.dxlog.Info("SERVER <-", "greeks rec'd", resp.Data.Greeks[0], "size", len(resp.Data.Greeks))
 				for _, greek := range resp.Data.Greeks {
 					c.optionSubs[greek.Symbol].Greek = greek
 				}
@@ -470,7 +473,7 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			slog.Error("unable to unmarshal error msg", "err", err)
 			return
 		}
-		slog.Info("SERVER <-", "", resp)
+		c.dxlog.Info("SERVER <-", "", resp)
 	default:
 		//c.mu.Lock()
 		//callback, exists := c.callbacks[msgType]

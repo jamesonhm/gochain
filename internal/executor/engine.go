@@ -77,12 +77,13 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 
 		switch leg.StrikeMethod {
 		case strategy.Delta:
-			fmt.Printf("got strike method delta\n")
-			fmt.Printf("under: %s\n", s.Underlying)
-			fmt.Printf("dte: %d\n", leg.DTE)
-			fmt.Printf("opt type: %s\n", options.OptionType(leg.OptType))
-			fmt.Printf("round: %d\n", leg.Round)
-			fmt.Printf("strike meth val: %f\n", leg.StrikeMethVal)
+			slog.Debug("(orderFromStrategy) Leg delta",
+				"underlying", s.Underlying,
+				"dte:", leg.DTE,
+				"opt type:", options.OptionType(leg.OptType),
+				"round:", leg.Round,
+				"strike meth val:", leg.StrikeMethVal,
+			)
 			optData, err := e.optionProvider.OptionDataByDelta(
 				s.Underlying,
 				leg.DTE,
@@ -97,13 +98,13 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 			optSymbol, err = options.ParseDxLinkOption(optData.Greek.Symbol)
 			if err != nil {
 				return tasty.NewOrder{},
-					fmt.Errorf("Error parsing optData.Quote.Symbol: %s, %w", optData.Quote.Symbol, err)
+					fmt.Errorf("Error parsing optData.Greek.Symbol: %s, %w", optData.Greek.Symbol, err)
 			}
 			midPrice = (*optData.Quote.AskPrice + *optData.Quote.BidPrice) / 2
 			fmt.Printf("mid price for leg %d: %.2f\n", i+1, midPrice)
 		case strategy.Relative:
 			if i == 0 {
-				return tasty.NewOrder{}, fmt.Errorf("Strike Method `Offset` cannot be the first leg")
+				return tasty.NewOrder{}, fmt.Errorf("Strike Method `Relative` cannot be the first leg")
 			}
 			prevSymbol := orderLegs[i-1].Symbol
 			optSymbol, err = options.ParseOCCOption(prevSymbol)

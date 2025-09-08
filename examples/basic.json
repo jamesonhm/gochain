@@ -6,7 +6,7 @@
             "option-type": "P",
             "option-side": "sell",
             "quantity": 1,
-            "days-to-expiration": 7,
+            "days-to-expiration": 4,
             "strike-selection-method": "delta",
             "strike-selection-value": -0.30,
             "round-nearest": 5
@@ -15,7 +15,7 @@
             "option-type": "P",
             "option-side": "buy",
             "quantity": 1,
-            "days-to-expiration": 7,
+            "days-to-expiration": 4,
             "strike-selection-method": "relative",
             "strike-selection-value": -5,
             "round-nearest": 0
