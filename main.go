@@ -17,7 +17,7 @@ import (
 	"github.com/jamesonhm/gochain/internal/executor"
 	"github.com/jamesonhm/gochain/internal/monitor"
 	//"github.com/jamesonhm/gochain/internal/options"
-	//"github.com/jamesonhm/gochain/internal/strategy"
+	"github.com/jamesonhm/gochain/internal/strategy"
 	"github.com/jamesonhm/gochain/internal/tasty"
 	"github.com/jamesonhm/gochain/internal/yahoo"
 	"github.com/joho/godotenv"
@@ -47,8 +47,8 @@ func main() {
 	fmt.Printf("VIX ON MOVE: %.2f\n", move)
 
 	strats := loadStrategies()
-	//stratStates := strategy.NewStratStates("teststates.json")
-	//stratStates.PPrint()
+	stratStates := strategy.NewStratStates("teststates.json")
+	stratStates.PPrint()
 
 	// SB USER
 	tastyClient := tasty.New(10*time.Second, 60*time.Second, 60, tasty.TastySandbox)
@@ -77,7 +77,7 @@ func main() {
 		fmt.Printf("Got Accounts, Day Trader?: %t\n", accts[0].Account.DayTraderStatus)
 	}
 
-	//acctNum := accts[0].Account.AccountNumber
+	acctNum := accts[0].Account.AccountNumber
 
 	//acct, err := tastyClient.GetAccount(ctx, acctNum)
 	//if err != nil {
@@ -165,8 +165,6 @@ func main() {
 	streamClient := dxlink.New(ctx, streamer.DXLinkURL, streamer.Token)
 	for _, c := range chains {
 		//fmt.Printf("%s - %s\n", c.ExpirationType, c.StreamerSymbols[0:10])
-		//err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols, 5, mktPrices["XSP"], 9)
-		//err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols, mktPrices["XSP"], 9, dxlink.FilterOptionsDays(5))
 		err = streamClient.UpdateOptionSubs("XSP", c.StreamerSymbols, mktPrices["XSP"], 9, dxlink.FilterOptionsDates(datesOnly))
 		if err != nil {
 			fmt.Println(err)
@@ -178,7 +176,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	executor := executor.NewEngine(tastyClient, streamClient, 1, ctx)
+	executor := executor.NewEngine(tastyClient, acctNum, streamClient, 1, ctx)
 
 	monitor := monitor.NewEngine(
 		tastyClient,

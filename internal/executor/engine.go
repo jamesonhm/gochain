@@ -2,11 +2,13 @@ package executor
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"sync"
 	"time"
 
+	"github.com/jamesonhm/gochain/internal/dt"
 	"github.com/jamesonhm/gochain/internal/dxlink"
 	"github.com/jamesonhm/gochain/internal/options"
 	"github.com/jamesonhm/gochain/internal/strategy"
@@ -15,7 +17,9 @@ import (
 
 type Engine struct {
 	apiClient      *tasty.TastyAPI
+	acctNum        string
 	optionProvider *dxlink.DxLinkClient
+	stratStates    *strategy.StratStates
 	orderQueue     chan tasty.NewOrder
 	wg             sync.WaitGroup
 	workerCount    int
@@ -24,14 +28,18 @@ type Engine struct {
 
 func NewEngine(
 	apiClient *tasty.TastyAPI,
+	acctNum string,
 	optionProvider *dxlink.DxLinkClient,
+	stratStates *strategy.StratStates,
 	workerCount int,
 	ctx context.Context,
 ) *Engine {
 
 	e := &Engine{
 		apiClient:      apiClient,
+		acctNum:        acctNum,
 		optionProvider: optionProvider,
+		stratStates:    stratStates,
 		orderQueue:     make(chan tasty.NewOrder, 10),
 		workerCount:    workerCount,
 		ctx:            ctx,
@@ -51,6 +59,8 @@ func (e *Engine) SubmitOrder(s strategy.Strategy) {
 		return
 	}
 	fmt.Printf("This is where the order goes into the queue: %+v\n", order)
+	e.stratStates.Submit(s.Name, time.Now().In(dt.TZNY()))
+	e.stratStates.PPrint()
 	// e.orderQueue <- order
 }
 
@@ -188,7 +198,17 @@ func (e *Engine) startWorkers() {
 func (e *Engine) worker() {
 	defer e.wg.Done()
 
-	//for order := range e.orderQueue {
-	//resp, err := e.apiClient.SubmitOrderDryRun(e.ctx, acctNum, &order)
-	//}
+	for order := range e.orderQueue {
+		resp, err := e.apiClient.SubmitOrderDryRun(e.ctx, e.acctNum, &order)
+		if err != nil {
+			slog.Error("(executor.worker) unable to submit order dry run", "order", order, "error", err)
+			continue
+		}
+		respbyt, err := json.MarshalIndent(resp, "", "\t")
+		if err != nil {
+			slog.Error("(executor.worker) unable to marshal dry run response", "error", err)
+		} else {
+			fmt.Println(string(respbyt))
+		}
+	}
 }

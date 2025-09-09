@@ -18,6 +18,7 @@ type Engine struct {
 	candles      *yahoo.YahooAPI
 	strategies   []strategy.Strategy
 	executor     *executor.Engine
+	stratStates  *strategy.StratStates
 	scanInterval time.Duration
 }
 
@@ -26,6 +27,7 @@ func NewEngine(
 	options *dxlink.DxLinkClient,
 	candles *yahoo.YahooAPI,
 	executor *executor.Engine,
+	stratStates *strategy.StratStates,
 	scanInterval time.Duration,
 ) *Engine {
 	return &Engine{
@@ -33,6 +35,7 @@ func NewEngine(
 		options:      options,
 		candles:      candles,
 		executor:     executor,
+		stratStates:  stratStates,
 		scanInterval: scanInterval,
 	}
 }
@@ -57,6 +60,9 @@ func (e *Engine) Run(ctx context.Context) {
 
 func (e *Engine) checkAllStrategies(ctx context.Context) {
 	for _, s := range e.strategies {
+		if subTime, err := e.stratStates.LastSubmitted(s.Name); err != nil {
+			if subTime
+		}
 		if s.CheckEntryConditions(e.portfolio, e.candles, e.options) {
 			slog.LogAttrs(ctx, slog.LevelInfo, "Entry Conditions met", slog.String("strat name", s.Name))
 			e.executor.SubmitOrder(s)

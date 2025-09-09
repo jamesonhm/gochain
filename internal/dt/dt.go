@@ -1,6 +1,7 @@
 package dt
 
 import (
+	"fmt"
 	"math"
 	"time"
 )
@@ -79,4 +80,15 @@ func inls(v time.Time, ls []time.Time) bool {
 
 func YMDEqual(d1 time.Time, d2 time.Time) bool {
 	return d1.Year() == d2.Year() && d1.Month() == d2.Month() && d1.Day() == d2.Day()
+}
+
+// parses a string representing an hour and minute in 24hr format to a time.Time with todays date
+func ParseTimeAsToday(timestr string) time.Time {
+	daystr := time.Now().In(TZNY()).Format(time.DateOnly)
+	dtstr := fmt.Sprintf("%s %s", daystr, timestr)
+	t, err := time.ParseInLocation(time.DateTime, dtstr, TZNY())
+	if err != nil {
+
+	}
+	return t
 }

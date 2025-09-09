@@ -16,7 +16,7 @@ type StratStates struct {
 }
 
 type stratState struct {
-	name          string
+	Name          string
 	lastSubmitted time.Time
 	orderDetails  []orderDetail
 }
@@ -26,10 +26,10 @@ type orderDetail struct {
 	status string
 }
 
-func NewStratStates(fname string) *StratStates {
+func NewStratStates(filename string) *StratStates {
 	states := make(map[string]stratState)
-	if data, err := os.ReadFile(fname); err != nil {
-		_, err := os.Create(fname)
+	if data, err := os.ReadFile(filename); err != nil {
+		_, err := os.Create(filename)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -42,7 +42,7 @@ func NewStratStates(fname string) *StratStates {
 	}
 	return &StratStates{
 		states: states,
-		fname:  fname,
+		fname:  filename,
 	}
 
 }
@@ -56,6 +56,7 @@ func newStratState(ts time.Time) stratState {
 
 func (ss *StratStates) PPrint() {
 	bytes, _ := json.MarshalIndent(ss.states, "", "\t")
+	fmt.Println("Strategy States:")
 	fmt.Println(string(bytes))
 }
 
@@ -70,17 +71,33 @@ func (ss *StratStates) Submit(stratname string, ts time.Time) {
 		ss.states[stratname] = state
 	}
 	// TODO: write back to file
+	byt, err := json.MarshalIndent(ss.states, "", "\t")
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = os.WriteFile(ss.fname, byt, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
-func (ss *StratStates) StatusByName(stratname string) *stratState {
+func (ss *StratStates) StatusByName(stratname string) (stratState, error) {
 	ss.mu.RLock()
 	defer ss.mu.RUnlock()
 
 	if state, ok := ss.states[stratname]; ok {
-		return &state
+		return state, nil
 	}
-	// TODO: Complete this
-	return nil
+	return stratState{}, fmt.Errorf("No status for strategy name")
 }
 
+func (ss *StratStates) LastSubmitted(stratname string) (time.Time, error) {
+	ss.mu.RLock()
+	defer ss.mu.RUnlock()
+
+	if state, ok := ss.states[stratname]; ok {
+		return state.lastSubmitted, nil
+	}
+	return time.Now().AddDate(-1, 0, 0), fmt.Errorf("No status for strategy name")
+}
 func (ss *StratStates) UpdateByID(id string) {}

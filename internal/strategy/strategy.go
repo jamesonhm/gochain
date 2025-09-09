@@ -7,9 +7,10 @@ import (
 )
 
 type Strategy struct {
-	Name            string `json:"name"`
-	Underlying      string `json:"underlying"`
-	Legs            []Leg  `json:"legs"`
+	Name            string    `json:"name"`
+	Underlying      string    `json:"underlying"`
+	Legs            []Leg     `json:"legs"`
+	EntryTime       EntryTime `json:"entry-time"`
 	RiskParams      RiskParams
 	EntryConditions map[string]map[string]interface{} `json:"entry-conditions"`
 	entryConditions map[string]Condition
@@ -27,6 +28,11 @@ type Leg struct {
 	StrikeMethod  StrikeMethod `json:"strike-selection-method"`
 	StrikeMethVal float64      `json:"strike-selection-value"`
 	Round         int          `json:"round-nearest"`
+}
+
+type EntryTime struct {
+	MinTime string `json:"min-time"`
+	MaxTime string `json:"max-time"`
 }
 
 type RiskParams struct {
@@ -124,4 +130,8 @@ func (s *Strategy) ListDTEs() []int {
 		dtes = append(dtes, leg.DTE)
 	}
 	return dtes
+}
+
+func (s *Strategy) SubmissionVsEntry(lastSubmitted time.Time) bool {
+
 }
