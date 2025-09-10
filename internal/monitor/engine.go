@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/jamesonhm/gochain/internal/dt"
 	"github.com/jamesonhm/gochain/internal/dxlink"
 	"github.com/jamesonhm/gochain/internal/executor"
 	"github.com/jamesonhm/gochain/internal/strategy"
@@ -60,8 +61,16 @@ func (e *Engine) Run(ctx context.Context) {
 
 func (e *Engine) checkAllStrategies(ctx context.Context) {
 	for _, s := range e.strategies {
-		if subTime, err := e.stratStates.LastSubmitted(s.Name); err != nil {
-			if subTime
+		// is "now" within the entry window
+		if !s.TimeInEntry(time.Now().In(dt.TZNY())) {
+			continue
+		}
+		// is the last submit time within the entry window
+		if subTime, err := e.stratStates.LastSubmitted(s.Name); err == nil {
+			if s.TimeInEntry(subTime) {
+				slog.Info("(checkAllStrategies) Already submitted", "Strategy", s.Name, "LastSubmitTime", subTime)
+				continue
+			}
 		}
 		if s.CheckEntryConditions(e.portfolio, e.candles, e.options) {
 			slog.LogAttrs(ctx, slog.LevelInfo, "Entry Conditions met", slog.String("strat name", s.Name))

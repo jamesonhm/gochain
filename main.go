@@ -46,7 +46,11 @@ func main() {
 	}
 	fmt.Printf("VIX ON MOVE: %.2f\n", move)
 
-	strats := loadStrategies()
+	strats, err := loadStrategies()
+	if err != nil {
+		slog.Error("", "unable to load strategies", err)
+		return
+	}
 	stratStates := strategy.NewStratStates("teststates.json")
 	stratStates.PPrint()
 
@@ -176,13 +180,14 @@ func main() {
 		fmt.Println(err)
 	}
 
-	executor := executor.NewEngine(tastyClient, acctNum, streamClient, 1, ctx)
+	executor := executor.NewEngine(tastyClient, acctNum, streamClient, stratStates, 1, ctx)
 
 	monitor := monitor.NewEngine(
 		tastyClient,
 		streamClient,
 		yahooClient,
 		executor,
+		stratStates,
 		5*time.Second,
 	)
 	for _, strat := range strats {

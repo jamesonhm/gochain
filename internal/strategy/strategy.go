@@ -2,8 +2,17 @@ package strategy
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"os"
+	"time"
+
+	"github.com/jamesonhm/gochain/internal/dt"
+)
+
+const (
+	MIN_TIME = "9:32AM"
+	MAX_TIME = "3:58PM"
 )
 
 type Strategy struct {
@@ -30,6 +39,7 @@ type Leg struct {
 	Round         int          `json:"round-nearest"`
 }
 
+// Entry window times in the "Kitchen" format/layout (3:04PM)
 type EntryTime struct {
 	MinTime string `json:"min-time"`
 	MaxTime string `json:"max-time"`
@@ -50,6 +60,10 @@ func FromFile(fpath string, f *ConditionFactory) (Strategy, error) {
 
 	decoder := json.NewDecoder(file)
 	if err := decoder.Decode(&strat); err != nil {
+		return strat, err
+	}
+
+	if err := strat.validateEntryTimes(); err != nil {
 		return strat, err
 	}
 	if strat.EntryConditions != nil {
@@ -132,6 +146,43 @@ func (s *Strategy) ListDTEs() []int {
 	return dtes
 }
 
-func (s *Strategy) SubmissionVsEntry(lastSubmitted time.Time) bool {
+// check if a time is within the current entry time window
+func (s *Strategy) TimeInEntry(t time.Time) bool {
+	if t.After(dt.ParseTimeAsToday(s.EntryTime.MinTime)) &&
+		t.Before(dt.ParseTimeAsToday(s.EntryTime.MaxTime)) {
+		return true
+	}
+	return false
+}
 
+func (s *Strategy) validateEntryTimes() error {
+	var t time.Time
+	var err error
+	if s.EntryTime.MinTime == "" {
+		return fmt.Errorf("(strategy: `%s`) EntryTime.MinTime is required", s.Name)
+	}
+	if t, err = time.Parse(time.Kitchen, s.EntryTime.MinTime); err != nil {
+		return fmt.Errorf("(strategy: `%s`) Invalid format for EntryTime.Min: %s, should be `3:40PM`", s.Name, s.EntryTime.MinTime)
+	}
+	minmin, _ := time.Parse(time.Kitchen, MIN_TIME)
+	maxmax, _ := time.Parse(time.Kitchen, MAX_TIME)
+	if t.Before(minmin) {
+		return fmt.Errorf("(strategy: `%s`) EntryTime.MinTime is before %s", s.Name, MIN_TIME)
+	} else if t.After(maxmax) {
+		return fmt.Errorf("(strategy: `%s`) EntryTime.MinTime is after %s", s.Name, MAX_TIME)
+	}
+
+	if s.EntryTime.MaxTime == "" {
+		s.EntryTime.MaxTime = dt.ParseTimeAsToday(s.EntryTime.MinTime).Add(1 * time.Minute).Format(time.Kitchen)
+	}
+	if t, err = time.Parse(time.Kitchen, s.EntryTime.MaxTime); err != nil {
+		return fmt.Errorf("(strategy: `%s`) Invalid format for EntryTime.MaxTime: %s, should be `3:40PM`", s.Name, s.EntryTime.MaxTime)
+	}
+	if t.After(maxmax) {
+		return fmt.Errorf("(strategy: `%s`) EntryTime.MaxTime is after %s", s.Name, MAX_TIME)
+	} else if t.Before(minmin) {
+		return fmt.Errorf("(strategy: `%s`) EntryTime.MaxTime is before %s", s.Name, MIN_TIME)
+	}
+
+	return nil
 }

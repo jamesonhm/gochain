@@ -21,6 +21,10 @@
             "round-nearest": 0
         }
     ],
+    "entry-time": {
+        "min-time": "9:35AM",
+        "max-time": "9:40AM"
+    },
     "entry-conditions": {
         "day-of-week": {
             "days": ["mon", "tues", "weds"]

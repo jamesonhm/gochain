@@ -82,13 +82,14 @@ func YMDEqual(d1 time.Time, d2 time.Time) bool {
 	return d1.Year() == d2.Year() && d1.Month() == d2.Month() && d1.Day() == d2.Day()
 }
 
-// parses a string representing an hour and minute in 24hr format to a time.Time with todays date
+// parses a string representing an hour and minute in "kitchen" format ("3:04PM") to a time.Time with todays date
 func ParseTimeAsToday(timestr string) time.Time {
-	daystr := time.Now().In(TZNY()).Format(time.DateOnly)
+	day := time.Now().In(TZNY())
+	daystr := day.Format(time.DateOnly)
 	dtstr := fmt.Sprintf("%s %s", daystr, timestr)
-	t, err := time.ParseInLocation(time.DateTime, dtstr, TZNY())
+	t, err := time.ParseInLocation("2006-01-02 3:04PM", dtstr, TZNY())
 	if err != nil {
-
+		return day
 	}
 	return t
 }
