@@ -10,8 +10,9 @@ import (
 	"github.com/jamesonhm/gochain/internal/dt"
 )
 
+// TODO: Set min time back to 9:32am
 const (
-	MIN_TIME = "9:32AM"
+	MIN_TIME = "6:32AM"
 	MAX_TIME = "3:58PM"
 )
 
@@ -131,6 +132,7 @@ func (s *Strategy) CheckEntryConditions(
 ) bool {
 	for name, condition := range s.entryConditions {
 		if !condition(options, candles, portfolio) {
+			slog.Info("Condition evaluated False", "strategy", s.Name, "condition", name)
 			return false
 		}
 		slog.Info("Condition evaluated True", "strategy", s.Name, "condition", name)

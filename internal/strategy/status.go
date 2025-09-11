@@ -17,13 +17,13 @@ type StratStates struct {
 
 type stratState struct {
 	Name          string
-	lastSubmitted time.Time
-	orderDetails  []orderDetail
+	LastSubmitted time.Time
+	OrderDetails  []orderDetail
 }
 
 type orderDetail struct {
-	id     string
-	status string
+	Id     string
+	Status string
 }
 
 func NewStratStates(filename string) *StratStates {
@@ -49,8 +49,8 @@ func NewStratStates(filename string) *StratStates {
 
 func newStratState(ts time.Time) stratState {
 	return stratState{
-		lastSubmitted: ts,
-		orderDetails:  make([]orderDetail, 0),
+		LastSubmitted: ts,
+		OrderDetails:  make([]orderDetail, 0),
 	}
 }
 
@@ -67,10 +67,10 @@ func (ss *StratStates) Submit(stratname string, ts time.Time) {
 	if state, ok := ss.states[stratname]; !ok {
 		ss.states[stratname] = newStratState(ts)
 	} else {
-		state.lastSubmitted = ts
+		state.LastSubmitted = ts
 		ss.states[stratname] = state
 	}
-	// TODO: write back to file
+
 	byt, err := json.MarshalIndent(ss.states, "", "\t")
 	if err != nil {
 		log.Fatal(err)
@@ -96,7 +96,7 @@ func (ss *StratStates) LastSubmitted(stratname string) (time.Time, error) {
 	defer ss.mu.RUnlock()
 
 	if state, ok := ss.states[stratname]; ok {
-		return state.lastSubmitted, nil
+		return state.LastSubmitted, nil
 	}
 	return time.Now().AddDate(-1, 0, 0), fmt.Errorf("No status for strategy name")
 }

@@ -48,7 +48,7 @@ func main() {
 
 	strats, err := loadStrategies()
 	if err != nil {
-		slog.Error("", "unable to load strategies", err)
+		logger.Error("", "unable to load strategies", err)
 		return
 	}
 	stratStates := strategy.NewStratStates("teststates.json")
@@ -178,6 +178,7 @@ func main() {
 	err = streamClient.Connect()
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	executor := executor.NewEngine(tastyClient, acctNum, streamClient, stratStates, 1, ctx)
@@ -194,12 +195,13 @@ func main() {
 		monitor.AddStrategy(strat)
 	}
 	go monitor.Run(ctx)
+	fmt.Printf("-------Monitor Started------")
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func(wg *sync.WaitGroup) {
 		defer wg.Done()
-		time.Sleep(10 * time.Second)
+		time.Sleep(120 * time.Second)
 		streamClient.Close()
 	}(&wg)
 	wg.Wait()

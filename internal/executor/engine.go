@@ -111,7 +111,7 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 					fmt.Errorf("Error parsing optData.Greek.Symbol: %s, %w", optData.Greek.Symbol, err)
 			}
 			midPrice = (*optData.Quote.AskPrice + *optData.Quote.BidPrice) / 2
-			fmt.Printf("mid price for leg %d: %.2f\n", i+1, midPrice)
+			fmt.Printf("(orderFromStrategy) mid price for leg %d: %.2f\n", i+1, midPrice)
 		case strategy.Relative:
 			if i == 0 {
 				return tasty.NewOrder{}, fmt.Errorf("Strike Method `Relative` cannot be the first leg")
@@ -127,7 +127,7 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 				return tasty.NewOrder{}, fmt.Errorf("Unable to get Opt Data with symbol: %s, %w", optSymbol.DxLinkString(), err)
 			}
 			midPrice = (*optData.Quote.AskPrice + *optData.Quote.BidPrice) / 2
-			fmt.Printf("mid price for leg %d: %.2f\n", i+1, midPrice)
+			fmt.Printf("(orderFromStrategy) mid price for leg %d: %.2f\n", i+1, midPrice)
 		}
 
 		if leg.Side == strategy.Buy {
@@ -137,12 +137,12 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 			action = tasty.STO
 			price += midPrice
 		}
-		fmt.Printf("updated Price: %.2f\n", price)
+		fmt.Printf("(orderFromStrategy) updated Price: %.2f\n", price)
 
 		if optSymbol == nil {
 			return tasty.NewOrder{}, fmt.Errorf("optSymbol is nil for leg %d with strikeMethod %v", i, leg.StrikeMethod)
 		}
-		fmt.Printf("optSymbol for order leg: %s\n", optSymbol.OCCString())
+		fmt.Printf("(orderFromStrategy) optSymbol for order leg: %s\n", optSymbol.OCCString())
 		orderLegs = append(orderLegs, tasty.NewOrderLeg{
 			InstrumentType: tasty.EquityOptionIT,
 			Symbol:         optSymbol.OCCString(),

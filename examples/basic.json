@@ -6,7 +6,7 @@
             "option-type": "P",
             "option-side": "sell",
             "quantity": 1,
-            "days-to-expiration": 4,
+            "days-to-expiration": 8,
             "strike-selection-method": "delta",
             "strike-selection-value": -0.30,
             "round-nearest": 5
@@ -15,19 +15,19 @@
             "option-type": "P",
             "option-side": "buy",
             "quantity": 1,
-            "days-to-expiration": 4,
+            "days-to-expiration": 8,
             "strike-selection-method": "relative",
             "strike-selection-value": -5,
             "round-nearest": 0
         }
     ],
     "entry-time": {
-        "min-time": "9:35AM",
-        "max-time": "9:40AM"
+        "min-time": "8:30AM",
+        "max-time": "9:10AM"
     },
     "entry-conditions": {
         "day-of-week": {
-            "days": ["mon", "tues", "weds"]
+            "days": ["mon", "tues", "weds", "thurs", "fri"]
         }
     }
 }

@@ -157,6 +157,7 @@ func (c *DxLinkClient) Connect() error {
 
 	// Start message handler
 	go c.handleMessages()
+	go c.keepAlive()
 
 	setupMsg := SetupMsg{
 		Type:                   "SETUP",
@@ -286,6 +287,21 @@ func (c *DxLinkClient) sendMessage(msg interface{}) error {
 	}
 
 	return nil
+}
+
+func (c *DxLinkClient) keepAlive() {
+	for {
+		select {
+		case <-c.ctx.Done():
+			return
+		default:
+			time.Sleep(30 * time.Second)
+			c.sendMessage(KeepAliveMsg{
+				Type:    KeepAlive,
+				Channel: 0,
+			})
+		}
+	}
 }
 
 // handleMessages reads and processes incoming
@@ -470,7 +486,15 @@ func (c *DxLinkClient) processMessage(message []byte) {
 		resp := ErrorMsg{}
 		err := json.Unmarshal(message, &resp)
 		if err != nil {
-			slog.Error("unable to unmarshal error msg", "err", err)
+			c.dxlog.Error("unable to unmarshal error msg", "err", err)
+			return
+		}
+		c.dxlog.Info("SERVER <-", "", resp)
+	case string(KeepAlive):
+		resp := KeepAliveMsg{}
+		err := json.Unmarshal(message, &resp)
+		if err != nil {
+			c.dxlog.Error("unable to unmarshal keepalive msg", "err", err)
 			return
 		}
 		c.dxlog.Info("SERVER <-", "", resp)
@@ -484,7 +508,7 @@ func (c *DxLinkClient) processMessage(message []byte) {
 		//	c.handleDataMessage(message)
 		//}
 		//c.handleDataMessage(message)
-		slog.Info("Unknown message type", "msg", string(message))
+		c.dxlog.Info("Unknown message type", "msg", string(message))
 	}
 }
 
