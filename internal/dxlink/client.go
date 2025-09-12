@@ -131,6 +131,9 @@ func FilterOptionsDates(dates []time.Time) filterFunc {
 			}
 		}
 		fmt.Printf("Length Option subs after filter: %d\n", len(filtered))
+		if len(filtered) > 0 {
+			fmt.Println(filtered)
+		}
 		return filtered
 	}
 }

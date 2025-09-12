@@ -89,7 +89,6 @@ func (c *TastyAPI) request(
 	if err != nil {
 		return fmt.Errorf("error marshaling payload: %w", err)
 	}
-	fmt.Println("request payload:", string(body))
 
 	req, err := http.NewRequestWithContext(ctx, method, path, bytes.NewBuffer(body))
 	if err != nil {

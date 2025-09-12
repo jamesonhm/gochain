@@ -2,6 +2,7 @@ package dxlink
 
 import (
 	"fmt"
+	"log/slog"
 	"math"
 	"time"
 
@@ -44,7 +45,6 @@ func (c *DxLinkClient) OptionDataByDelta(
 	targetDelta float64,
 	holidays []time.Time,
 ) (*OptionData, error) {
-	fmt.Println("got to Option data by delta")
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -61,7 +61,7 @@ func (c *DxLinkClient) OptionDataByDelta(
 		Strike:     s,
 		OptionType: optType,
 	}
-	fmt.Printf("OptionDataByDelta: option after rounding: %s\n", opt.DxLinkString())
+	slog.Info("OptionDataByDelta", "option after rounding", opt.DxLinkString())
 	delta, err := c.getOptDelta(opt.DxLinkString())
 	if err != nil {
 		return nil, fmt.Errorf("OptionDataByDelta: unable to find INITIAL option in subscription data: %s, %w", opt.DxLinkString(), err)

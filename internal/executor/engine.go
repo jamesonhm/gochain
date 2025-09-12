@@ -53,6 +53,7 @@ func NewEngine(
 // called by monitor engine when conditions are met
 // TODO: submit to open vs submit to close...
 func (e *Engine) SubmitOrder(s strategy.Strategy) {
+	// TODO: add a stratStates.Attempt() method to prevent retrying endlessly? gets checked in monitor before submit
 	order, err := e.orderFromStrategy(s)
 	if err != nil {
 		slog.Error("Unable to create order from strategy:", "error", err)
@@ -61,7 +62,7 @@ func (e *Engine) SubmitOrder(s strategy.Strategy) {
 	fmt.Printf("This is where the order goes into the queue: %+v\n", order)
 	e.stratStates.Submit(s.Name, time.Now().In(dt.TZNY()))
 	e.stratStates.PPrint()
-	// e.orderQueue <- order
+	e.orderQueue <- order
 }
 
 func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) {
@@ -185,6 +186,7 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 		Price:       price,
 		PriceEffect: effect,
 		Legs:        orderLegs,
+		PreflightID: "JHM-987654",
 	}, nil
 }
 

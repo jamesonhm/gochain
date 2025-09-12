@@ -132,7 +132,7 @@ func main() {
 			}
 		}
 	} else {
-		mktPrices["XSP"] = 648.37
+		mktPrices["XSP"] = 658.75
 	}
 	fmt.Printf("Last Market Prices: %+v\n", mktPrices)
 
@@ -195,7 +195,7 @@ func main() {
 		monitor.AddStrategy(strat)
 	}
 	go monitor.Run(ctx)
-	fmt.Printf("-------Monitor Started------")
+	fmt.Printf("-------Monitor Started------\n")
 
 	var wg sync.WaitGroup
 	wg.Add(1)
