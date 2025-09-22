@@ -102,7 +102,7 @@ type NewOrder struct {
 	GtcDate      string        `json:"gtc-date"`
 	OrderType    OrderType     `json:"order-type"`
 	StopTrigger  float64       `json:"stop-trigger,omitempty"`
-	Price        float64       `json:"price,omitempty"`
+	Price        string        `json:"price,omitempty"`
 	PriceEffect  PriceEffect   `json:"price-effect,omitempty"`
 	Value        float64       `json:"value,omitempty"`
 	ValueEffect  PriceEffect   `json:"value-effect,omitempty"`

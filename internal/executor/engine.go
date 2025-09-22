@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math"
 	"sync"
 	"time"
 
@@ -59,7 +60,8 @@ func (e *Engine) SubmitOrder(s strategy.Strategy) {
 		slog.Error("Unable to create order from strategy:", "error", err)
 		return
 	}
-	fmt.Printf("This is where the order goes into the queue: %+v\n", order)
+	bytes, _ := json.MarshalIndent(order, "", "\t")
+	fmt.Printf("This is where the order goes into the queue: %+v\n", string(bytes))
 	e.stratStates.Submit(s.Name, time.Now().In(dt.TZNY()))
 	e.stratStates.PPrint()
 	e.orderQueue <- order
@@ -183,7 +185,7 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 	return tasty.NewOrder{
 		TimeInForce: "Day",
 		OrderType:   "Limit",
-		Price:       price,
+		Price:       fmt.Sprintf("%.2f", price),
 		PriceEffect: effect,
 		Legs:        orderLegs,
 		PreflightID: "JHM-987654",
@@ -213,4 +215,9 @@ func (e *Engine) worker() {
 			fmt.Println(string(respbyt))
 		}
 	}
+}
+
+func roundToDecimal(num float64, places int) float64 {
+	factor := math.Pow(10, float64(places))
+	return math.Round(num*factor) / factor
 }

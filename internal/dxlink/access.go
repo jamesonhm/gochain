@@ -48,6 +48,13 @@ func (c *DxLinkClient) OptionDataByDelta(
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
+	var delta float64 = 0.0
+	var dist float64 = 99.9
+	var tempDist float64 = 0.0
+	var tempOpt *options.OptionSymbol
+	var err error
+	var attempt int = 0
+
 	// find exp date
 	exp := dt.DTEToDateHolidays(time.Now(), dte, holidays)
 	atm, err := c.getUnderlyingPrice(underlying)
@@ -55,65 +62,158 @@ func (c *DxLinkClient) OptionDataByDelta(
 		return nil, fmt.Errorf("OptionDataByDelta: unable to get underlying price for '%s'\n", underlying)
 	}
 	s := roundNearest(atm, round)
-	opt := options.OptionSymbol{
+	opt := &options.OptionSymbol{
 		Underlying: underlying,
 		Date:       exp,
 		Strike:     s,
 		OptionType: optType,
 	}
-	slog.Info("OptionDataByDelta", "option after rounding", opt.DxLinkString())
-	delta, err := c.getOptDelta(opt.DxLinkString())
-	if err != nil {
-		return nil, fmt.Errorf("OptionDataByDelta: unable to find INITIAL option in subscription data: %s, %w", opt.DxLinkString(), err)
-	}
 
-	dist := math.Abs(delta - targetDelta)
-	fmt.Printf("OptionDataByDelta: Initial values, option: %s, delta: %.6f, distance: %.6f\n", opt.DxLinkString(), delta, dist)
-	// start a loop and increment to closest delta or delta = 0
-	if delta > targetDelta {
-		for s += float64(round); s < s*1.1; s += float64(round) {
-			opt.IncrementStrike(float64(round))
-			delta, err := c.getOptDelta(opt.DxLinkString())
+	for attempt < 5 {
+		// condition initial starting point not found yet
+		if delta == 0.0 && tempDist == 0.0 {
+			delta, err = c.getOptDelta(opt.DxLinkString())
 			if err != nil {
-				return nil, fmt.Errorf("OptionDataByDelta: unable to find option in subscription data: %s, %w", opt.DxLinkString(), err)
+				attempt += 1
+				tempOpt = opt.NewRelative(float64(round))
+				slog.Info("unable to find initial delta", "option", opt.DxLinkString(), "attempt", attempt, "error", err)
+				continue
+			} else {
+				attempt = 0
+				tempDist = math.Abs(delta - targetDelta)
 			}
-			if math.Abs(delta-targetDelta) > dist {
-				opt.DecrementStrike(float64(round))
-				optDataPtr, err := c.GetOptData(opt.DxLinkString())
-				if err != nil {
-					return nil, err
-				}
-				fmt.Printf("Opt Data Ptr: %+v\n", *optDataPtr)
-				return optDataPtr, nil
-			}
-			dist = math.Abs(delta - targetDelta)
-
-			fmt.Printf("OptionDataByDelta: option: %s, delta: %.6f, distance: %.6f\n", opt.DxLinkString(), delta, dist)
 		}
-		return nil, fmt.Errorf("no option found incrementing")
-	} else {
-		for s -= float64(round); s > s*0.9; s -= float64(round) {
-			opt.DecrementStrike(float64(round))
-			delta, err := c.getOptDelta(opt.DxLinkString())
+		// have a delta and a dist and a targetDelta
+		if tempDist > dist {
+			// return prev, non-temp opt
+			optDataPtr, err := c.GetOptData(opt.DxLinkString())
 			if err != nil {
-				return nil, fmt.Errorf("OptionDataByDelta: unable to find option in subscription data: %s, %w", opt.DxLinkString(), err)
+				return nil, err
 			}
-			if math.Abs(delta-targetDelta) > dist {
-				opt.IncrementStrike(float64(round))
-				optDataPtr, err := c.GetOptData(opt.DxLinkString())
-				if err != nil {
-					return nil, err
-				}
-				fmt.Printf("Opt Data Ptr: %+v\n", optDataPtr)
-				return optDataPtr, nil
-			}
-			dist = math.Abs(delta - targetDelta)
-
-			fmt.Printf("OptionDataByDelta:  option: %s, delta: %.6f, distance: %.6f\n", opt.DxLinkString(), delta, dist)
+			return optDataPtr, nil
 		}
-		return nil, fmt.Errorf("no option found decrementing")
+		if tempOpt != nil {
+			opt = tempOpt
+		}
+		dist = tempDist
+		if delta > targetDelta {
+			// decrement new temp opt
+			tempOpt = opt.NewRelative(-1 * float64(round))
+			delta, err = c.getOptDelta(tempOpt.DxLinkString())
+			if err != nil {
+				attempt += 1
+				slog.Info("unable to find delta", "option", tempOpt.DxLinkString(), "attempt", attempt, "error", err)
+				continue
+			}
+			tempDist = math.Abs(delta - targetDelta)
+		} else if delta < targetDelta {
+			// increment new temp opt
+			tempOpt = opt.NewRelative(float64(round))
+			delta, err = c.getOptDelta(tempOpt.DxLinkString())
+			if err != nil {
+				attempt += 1
+				slog.Info("unable to find delta", "option", tempOpt.DxLinkString(), "attempt", attempt, "error", err)
+				continue
+			}
+			tempDist = math.Abs(delta - targetDelta)
+		}
 	}
+	return nil, fmt.Errorf("OptionDataByDelta: Max attempts reached\n")
 }
+
+// searches the map of optionSubs for the date, and strike nearest the delta based on the rounding value
+//func (c *DxLinkClient) OptionDataByDelta(
+//	underlying string,
+//	dte int,
+//	optType options.OptionType,
+//	round int,
+//	targetDelta float64,
+//	holidays []time.Time,
+//) (*OptionData, error) {
+//	c.mu.RLock()
+//	defer c.mu.RUnlock()
+//
+//	var delta float64
+//	var dist float64
+//	var err error
+//	var attempt int
+//
+//	// find exp date
+//	exp := dt.DTEToDateHolidays(time.Now(), dte, holidays)
+//	atm, err := c.getUnderlyingPrice(underlying)
+//	if err != nil {
+//		return nil, fmt.Errorf("OptionDataByDelta: unable to get underlying price for '%s'\n", underlying)
+//	}
+//	s := roundNearest(atm, round)
+//	opt := options.OptionSymbol{
+//		Underlying: underlying,
+//		Date:       exp,
+//		Strike:     s,
+//		OptionType: optType,
+//	}
+//	slog.Info("OptionDataByDelta", "option after rounding", opt.DxLinkString())
+//	delta, err = c.getOptDelta(opt.DxLinkString())
+//	if err != nil {
+//		delta = 50
+//		slog.Info("OptionDataByDelta: unable to find INITIAL", "option", opt.DxLinkString(), "error", err)
+//		//return nil, fmt.Errorf("OptionDataByDelta: unable to find INITIAL option in subscription data: %s, %w", opt.DxLinkString(), err)
+//	}
+//
+//	dist = math.Abs(delta - targetDelta)
+//	attempt = 0
+//	slog.Info("OptionDataByDelta: Initial values", "option", opt.DxLinkString(), "delta", delta, "distance", dist)
+//	// start a loop and increment to closest delta or delta = 0
+//	if delta > targetDelta {
+//		//for s += float64(round); s < s*1.1; s += float64(round) {
+//		for attempt < 3 {
+//			//opt.IncrementStrike(float64(round))
+//			offset := float64((attempt + 1) * round)
+//			temp := opt.NewRelative(offset)
+//			delta, err := c.getOptDelta(temp.DxLinkString())
+//			if err != nil {
+//				attempt += 1
+//				slog.Info("OptionDataByDelta: unable to find", "option", temp.DxLinkString(), "attempt", attempt, "error", err)
+//				continue
+//				//return nil, fmt.Errorf("OptionDataByDelta: unable to find option in subscription data: %s, %w", opt.DxLinkString(), err)
+//			}
+//			if math.Abs(delta-targetDelta) > dist {
+//				opt.DecrementStrike(float64(round))
+//				optDataPtr, err := c.GetOptData(opt.DxLinkString())
+//				if err != nil {
+//					return nil, err
+//				}
+//				fmt.Printf("Opt Data Ptr: %+v\n", *optDataPtr)
+//				return optDataPtr, nil
+//			}
+//			attempt = 0
+//			dist = math.Abs(delta - targetDelta)
+//
+//			fmt.Printf("OptionDataByDelta: option: %s, delta: %.6f, distance: %.6f\n", opt.DxLinkString(), delta, dist)
+//		}
+//		return nil, fmt.Errorf("no option found incrementing")
+//	} else {
+//		for s -= float64(round); s > s*0.9; s -= float64(round) {
+//			opt.DecrementStrike(float64(round))
+//			delta, err := c.getOptDelta(opt.DxLinkString())
+//			if err != nil {
+//				return nil, fmt.Errorf("OptionDataByDelta: unable to find option in subscription data: %s, %w", opt.DxLinkString(), err)
+//			}
+//			if math.Abs(delta-targetDelta) > dist {
+//				opt.IncrementStrike(float64(round))
+//				optDataPtr, err := c.GetOptData(opt.DxLinkString())
+//				if err != nil {
+//					return nil, err
+//				}
+//				fmt.Printf("Opt Data Ptr: %+v\n", optDataPtr)
+//				return optDataPtr, nil
+//			}
+//			dist = math.Abs(delta - targetDelta)
+//
+//			fmt.Printf("OptionDataByDelta:  option: %s, delta: %.6f, distance: %.6f\n", opt.DxLinkString(), delta, dist)
+//		}
+//		return nil, fmt.Errorf("no option found decrementing")
+//	}
+//}
 
 func (c *DxLinkClient) getUnderlyingData(sym string) (*UnderlyingData, error) {
 	c.mu.RLock()

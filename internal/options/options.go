@@ -122,6 +122,16 @@ func ParseOCCOption(option string) (*OptionSymbol, error) {
 	return &res, nil
 }
 
+// returns a new optionSymbol with the strike offset by the amount arg
+func (o OptionSymbol) NewRelative(amt float64) *OptionSymbol {
+	return &OptionSymbol{
+		Underlying: o.Underlying,
+		Date:       o.Date,
+		OptionType: o.OptionType,
+		Strike:     o.Strike + amt,
+	}
+}
+
 func (o *OptionSymbol) IncrementStrike(amt float64) {
 	o.Strike += amt
 }
