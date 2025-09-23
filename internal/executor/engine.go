@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"strconv"
 	"sync"
 	"time"
 
@@ -54,15 +55,16 @@ func NewEngine(
 // called by monitor engine when conditions are met
 // TODO: submit to open vs submit to close...
 func (e *Engine) SubmitOrder(s strategy.Strategy) {
-	// TODO: add a stratStates.Attempt() method to prevent retrying endlessly? gets checked in monitor before submit
 	order, err := e.orderFromStrategy(s)
 	if err != nil {
 		slog.Error("Unable to create order from strategy:", "error", err)
 		return
 	}
+	pfid := strconv.Itoa(e.stratStates.NextPFID())
+	order.PreflightID = pfid
 	bytes, _ := json.MarshalIndent(order, "", "\t")
 	fmt.Printf("This is where the order goes into the queue: %+v\n", string(bytes))
-	e.stratStates.Submit(s.Name, time.Now().In(dt.TZNY()))
+	e.stratStates.Submit(s.Name, time.Now().In(dt.TZNY()), pfid)
 	e.stratStates.PPrint()
 	e.orderQueue <- order
 }
@@ -188,7 +190,6 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 		Price:       fmt.Sprintf("%.2f", price),
 		PriceEffect: effect,
 		Legs:        orderLegs,
-		PreflightID: "JHM-987654",
 	}, nil
 }
 

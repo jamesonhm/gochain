@@ -174,6 +174,10 @@ func main() {
 			fmt.Println(err)
 		}
 	}
+	if streamClient.LenOptionSubs() == 0 {
+		slog.Error("No Options after filtering")
+		return
+	}
 
 	err = streamClient.Connect()
 	if err != nil {

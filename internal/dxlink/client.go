@@ -79,6 +79,10 @@ func (c *DxLinkClient) UpdateOptionSubs(
 	return nil
 }
 
+func (c *DxLinkClient) LenOptionSubs() int {
+	return len(c.optionSubs)
+}
+
 type filterFunc func(rawOptions []string, mktPrice float64, pctRange float64) []string
 
 func FilterOptionsDays(days int) filterFunc {

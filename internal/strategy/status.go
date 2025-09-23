@@ -4,31 +4,39 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"sync"
 	"time"
 )
 
 type StratStates struct {
-	states map[string]stratState
 	mu     sync.RWMutex
 	fname  string
+	states states
 }
 
-type stratState struct {
-	Name          string
-	LastSubmitted time.Time
-	OrderDetails  []orderDetail
+type states struct {
+	SeqPfid    int                    `json:"seq-pfid"`
+	Strategies map[string]stratOrders `json:"strategies"`
+}
+
+type stratOrders struct {
+	LastSubmitted time.Time              `json:"last-submitted"`
+	OrderDetails  map[string]orderDetail `json:"order-details"`
 }
 
 type orderDetail struct {
-	Id     string
-	Status string
+	OrderId string `json:"order-id"`
+	Status  string `json:"status"`
 }
 
 func NewStratStates(filename string) *StratStates {
-	states := make(map[string]stratState)
+	states := states{
+		Strategies: make(map[string]stratOrders),
+	}
 	if data, err := os.ReadFile(filename); err != nil {
+		slog.Info("Unable to read strat states file, creating new")
 		_, err := os.Create(filename)
 		if err != nil {
 			log.Fatal(err)
@@ -47,31 +55,69 @@ func NewStratStates(filename string) *StratStates {
 
 }
 
-func newStratState(ts time.Time) stratState {
-	return stratState{
+func newStratOrders(ts time.Time, pfid string) stratOrders {
+	return stratOrders{
 		LastSubmitted: ts,
-		OrderDetails:  make([]orderDetail, 0),
+		OrderDetails: map[string]orderDetail{
+			pfid: orderDetail{},
+		},
 	}
 }
 
 func (ss *StratStates) PPrint() {
-	bytes, _ := json.MarshalIndent(ss.states, "", "\t")
+	bytes, _ := json.MarshalIndent(ss.states, "", "  ")
 	fmt.Println("Strategy States:")
 	fmt.Println(string(bytes))
 }
 
-func (ss *StratStates) Submit(stratname string, ts time.Time) {
+func (ss *StratStates) Submit(stratname string, ts time.Time, pfid string) {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 
-	if state, ok := ss.states[stratname]; !ok {
-		ss.states[stratname] = newStratState(ts)
+	if orders, ok := ss.states.Strategies[stratname]; !ok {
+		ss.states.Strategies[stratname] = newStratOrders(ts, pfid)
 	} else {
-		state.LastSubmitted = ts
-		ss.states[stratname] = state
+		orders.LastSubmitted = ts
+		orders.OrderDetails[pfid] = orderDetail{}
+		ss.states.Strategies[stratname] = orders
 	}
 
-	byt, err := json.MarshalIndent(ss.states, "", "\t")
+	ss.writefile()
+}
+
+func (ss *StratStates) StatusByName(stratname string) (stratOrders, error) {
+	ss.mu.RLock()
+	defer ss.mu.RUnlock()
+
+	if orders, ok := ss.states.Strategies[stratname]; ok {
+		return orders, nil
+	}
+	return stratOrders{}, fmt.Errorf("No status for strategy name")
+}
+
+func (ss *StratStates) LastSubmitted(stratname string) (time.Time, error) {
+	ss.mu.RLock()
+	defer ss.mu.RUnlock()
+
+	if state, ok := ss.states.Strategies[stratname]; ok {
+		return state.LastSubmitted, nil
+	}
+	return time.Now().AddDate(-1, 0, 0), fmt.Errorf("No status for strategy name")
+}
+
+func (ss *StratStates) NextPFID() int {
+	ss.mu.Lock()
+	defer ss.mu.Unlock()
+
+	ss.states.SeqPfid += 1
+	ss.writefile()
+	return ss.states.SeqPfid
+}
+
+func (ss *StratStates) UpdateByID(id string) {}
+
+func (ss *StratStates) writefile() {
+	byt, err := json.MarshalIndent(ss.states, "", "  ")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -80,24 +126,3 @@ func (ss *StratStates) Submit(stratname string, ts time.Time) {
 		log.Fatal(err)
 	}
 }
-
-func (ss *StratStates) StatusByName(stratname string) (stratState, error) {
-	ss.mu.RLock()
-	defer ss.mu.RUnlock()
-
-	if state, ok := ss.states[stratname]; ok {
-		return state, nil
-	}
-	return stratState{}, fmt.Errorf("No status for strategy name")
-}
-
-func (ss *StratStates) LastSubmitted(stratname string) (time.Time, error) {
-	ss.mu.RLock()
-	defer ss.mu.RUnlock()
-
-	if state, ok := ss.states[stratname]; ok {
-		return state.LastSubmitted, nil
-	}
-	return time.Now().AddDate(-1, 0, 0), fmt.Errorf("No status for strategy name")
-}
-func (ss *StratStates) UpdateByID(id string) {}

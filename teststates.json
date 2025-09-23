@@ -1,7 +1,18 @@
 {
-	"basic PCS": {
-		"Name": "",
-		"LastSubmitted": "2025-09-22T08:29:59.201517906-04:00",
-		"OrderDetails": []
-	}
+  "seq-pfid": 2,
+  "strategies": {
+    "basic PCS": {
+      "last-submitted": "2025-09-23T09:47:43.657703352-04:00",
+      "order-details": {
+        "1": {
+          "order-id": "",
+          "status": ""
+        },
+        "2": {
+          "order-id": "",
+          "status": ""
+        }
+      }
+    }
+  }
 }

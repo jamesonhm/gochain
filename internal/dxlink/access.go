@@ -81,6 +81,7 @@ func (c *DxLinkClient) OptionDataByDelta(
 			} else {
 				attempt = 0
 				tempDist = math.Abs(delta - targetDelta)
+				slog.Info("found initial delta", "option", opt.DxLinkString(), "delta", delta, "dist", tempDist)
 			}
 		}
 		// have a delta and a dist and a targetDelta
@@ -88,8 +89,10 @@ func (c *DxLinkClient) OptionDataByDelta(
 			// return prev, non-temp opt
 			optDataPtr, err := c.GetOptData(opt.DxLinkString())
 			if err != nil {
+				slog.Error("unable to get option data", "option", opt.DxLinkString(), "error", err)
 				return nil, err
 			}
+			slog.Info("returning option data", "option", opt.DxLinkString())
 			return optDataPtr, nil
 		}
 		if tempOpt != nil {
@@ -106,6 +109,7 @@ func (c *DxLinkClient) OptionDataByDelta(
 				continue
 			}
 			tempDist = math.Abs(delta - targetDelta)
+			slog.Info("decremented option", "option", tempOpt.DxLinkString(), "delta", delta, "dist", tempDist)
 		} else if delta < targetDelta {
 			// increment new temp opt
 			tempOpt = opt.NewRelative(float64(round))
@@ -116,6 +120,7 @@ func (c *DxLinkClient) OptionDataByDelta(
 				continue
 			}
 			tempDist = math.Abs(delta - targetDelta)
+			slog.Info("incremented option", "option", tempOpt.DxLinkString(), "delta", delta, "dist", tempDist)
 		}
 	}
 	return nil, fmt.Errorf("OptionDataByDelta: Max attempts reached\n")
