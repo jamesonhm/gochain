@@ -17,12 +17,12 @@ const (
 )
 
 type Strategy struct {
-	Name            string    `json:"name"`
-	Underlying      string    `json:"underlying"`
-	Legs            []Leg     `json:"legs"`
-	EntryTime       EntryTime `json:"entry-time"`
-	RiskParams      RiskParams
+	Name            string                            `json:"name"`
+	Underlying      string                            `json:"underlying"`
+	Legs            []Leg                             `json:"legs"`
+	EntryTime       EntryTime                         `json:"entry-time"`
 	EntryConditions map[string]map[string]interface{} `json:"entry-conditions"`
+	RetryConfig     RetryConfig                       `json:"retry-config"`
 	entryConditions map[string]Condition
 	exitConditions  map[string]Condition
 }
@@ -44,6 +44,13 @@ type Leg struct {
 type EntryTime struct {
 	MinTime string `json:"min-time"`
 	MaxTime string `json:"max-time"`
+}
+
+type RetryConfig struct {
+	Enabled      bool `json:"enabled"`
+	MaxRetries   int  `json:"max-retries"`
+	PriceAdjust  int  `json:"price-adjust"`
+	MaxPriceMove int  `json:"max-price-move"`
 }
 
 type RiskParams struct {
@@ -76,23 +83,6 @@ func FromFile(fpath string, f *ConditionFactory) (Strategy, error) {
 	}
 
 	return strat, nil
-}
-
-func NewStrategy(
-	name,
-	underlying string,
-	legs []Leg,
-	risk RiskParams,
-	entries map[string]Condition,
-) Strategy {
-	strat := Strategy{
-		Name:            name,
-		Underlying:      underlying,
-		Legs:            legs,
-		RiskParams:      risk,
-		entryConditions: entries,
-	}
-	return strat
 }
 
 func NewLeg(

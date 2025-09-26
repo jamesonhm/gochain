@@ -48,10 +48,10 @@ func main() {
 
 	strats, err := loadStrategies()
 	if err != nil {
-		logger.Error("", "unable to load strategies", err)
+		logger.Error("unable to load strategies", "error", err)
 		return
 	}
-	stratStates := strategy.NewStratStates("teststates.json")
+	stratStates := strategy.NewStatus("teststates.json")
 	stratStates.PPrint()
 
 	// SB USER

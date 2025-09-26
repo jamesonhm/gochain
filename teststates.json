@@ -2,17 +2,75 @@
   "seq-pfid": 2,
   "strategies": {
     "basic PCS": {
-      "last-submitted": "2025-09-23T09:47:43.657703352-04:00",
-      "order-details": {
-        "1": {
-          "order-id": "",
-          "status": ""
+      "last-submitted": "2025-09-26T08:50:53.964234091-04:00",
+      "wrapped-orders": [
+        {
+          "pfid": "1",
+          "submit-time": "0001-01-01T00:00:00Z",
+          "last-retry": "0001-01-01T00:00:00Z",
+          "retry-attempts": 0,
+          "order": {
+            "time-in-force": "Day",
+            "gtc-date": "",
+            "order-type": "Limit",
+            "price": "1.52",
+            "price-effect": "Credit",
+            "preflight-id": "1",
+            "legs": [
+              {
+                "instrument-type": "Equity Option",
+                "symbol": "XSP   251003P00660000",
+                "quantity": 1,
+                "action": "Sell to Open"
+              },
+              {
+                "instrument-type": "Equity Option",
+                "symbol": "XSP   251003P00655000",
+                "quantity": 1,
+                "action": "Buy to Open"
+              }
+            ],
+            "rules": {
+              "route-after": "",
+              "cancel-at": "",
+              "conditions": null
+            }
+          }
         },
-        "2": {
-          "order-id": "",
-          "status": ""
+        {
+          "pfid": "2",
+          "submit-time": "2025-09-26T08:50:53.964234091-04:00",
+          "last-retry": "0001-01-01T00:00:00Z",
+          "retry-attempts": 0,
+          "order": {
+            "time-in-force": "Day",
+            "gtc-date": "",
+            "order-type": "Limit",
+            "price": "1.29",
+            "price-effect": "Credit",
+            "preflight-id": "2",
+            "legs": [
+              {
+                "instrument-type": "Equity Option",
+                "symbol": "XSP   251003P00660000",
+                "quantity": 1,
+                "action": "Sell to Open"
+              },
+              {
+                "instrument-type": "Equity Option",
+                "symbol": "XSP   251003P00655000",
+                "quantity": 1,
+                "action": "Buy to Open"
+              }
+            ],
+            "rules": {
+              "route-after": "",
+              "cancel-at": "",
+              "conditions": null
+            }
+          }
         }
-      }
+      ]
     }
   }
 }

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"math"
 	"strconv"
 	"sync"
 	"time"
@@ -21,7 +20,7 @@ type Engine struct {
 	apiClient      *tasty.TastyAPI
 	acctNum        string
 	optionProvider *dxlink.DxLinkClient
-	stratStates    *strategy.StratStates
+	stratStates    *strategy.Status
 	orderQueue     chan tasty.NewOrder
 	wg             sync.WaitGroup
 	workerCount    int
@@ -32,7 +31,7 @@ func NewEngine(
 	apiClient *tasty.TastyAPI,
 	acctNum string,
 	optionProvider *dxlink.DxLinkClient,
-	stratStates *strategy.StratStates,
+	stratStates *strategy.Status,
 	workerCount int,
 	ctx context.Context,
 ) *Engine {
@@ -64,7 +63,7 @@ func (e *Engine) SubmitOrder(s strategy.Strategy) {
 	order.PreflightID = pfid
 	bytes, _ := json.MarshalIndent(order, "", "\t")
 	fmt.Printf("This is where the order goes into the queue: %+v\n", string(bytes))
-	e.stratStates.Submit(s.Name, time.Now().In(dt.TZNY()), pfid)
+	e.stratStates.Submit(s.Name, time.Now().In(dt.TZNY()), pfid, order)
 	e.stratStates.PPrint()
 	e.orderQueue <- order
 }
@@ -194,31 +193,33 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 }
 
 func (e *Engine) startWorkers() {
-	for i := 0; i < e.workerCount; i++ {
+	for i := 1; i < e.workerCount+1; i++ {
 		e.wg.Add(1)
-		go e.worker()
+		go e.worker(i)
 	}
 }
 
-func (e *Engine) worker() {
+func (e *Engine) worker(id int) {
 	defer e.wg.Done()
 
 	for order := range e.orderQueue {
 		resp, err := e.apiClient.SubmitOrderDryRun(e.ctx, e.acctNum, &order)
 		if err != nil {
-			slog.Error("(executor.worker) unable to submit order dry run", "order", order, "error", err)
+			slog.Error("(executor.worker) order dry run", "workerid", id, "order", order, "error", err)
 			continue
 		}
-		respbyt, err := json.MarshalIndent(resp, "", "\t")
+		// TODO: do something with the returned buying power effect or fees?
+		respbyt, err := json.MarshalIndent(resp, "", "  ")
 		if err != nil {
-			slog.Error("(executor.worker) unable to marshal dry run response", "error", err)
+			slog.Error("(executor.worker) unable to marshal dry run response", "workerid", id, "error", err)
 		} else {
 			fmt.Println(string(respbyt))
 		}
-	}
-}
 
-func roundToDecimal(num float64, places int) float64 {
-	factor := math.Pow(10, float64(places))
-	return math.Round(num*factor) / factor
+		resp, err = e.apiClient.SubmitOrder(e.ctx, e.acctNum, &order)
+		if err != nil {
+			slog.Error("(executor.worker) order submit", "workerid", id, "order", order, "error", err)
+			continue
+		}
+	}
 }

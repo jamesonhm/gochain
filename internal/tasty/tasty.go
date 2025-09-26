@@ -109,7 +109,13 @@ func (c *TastyAPI) request(
 		}
 		req.URL.RawQuery = qstring.Encode()
 	}
-	slog.LogAttrs(ctx, slog.LevelInfo, "TastyTrade Call", slog.String("URL", req.URL.String()))
+	slog.LogAttrs(
+		ctx,
+		slog.LevelInfo,
+		"TastyTrade Call",
+		slog.String("URL", req.URL.String()),
+		slog.String("method", req.Method),
+	)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

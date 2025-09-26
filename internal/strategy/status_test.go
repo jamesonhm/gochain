@@ -6,12 +6,16 @@ import (
 
 	"github.com/go-playground/assert/v2"
 	"github.com/jamesonhm/gochain/internal/dt"
+	"github.com/jamesonhm/gochain/internal/tasty"
 )
 
 func TestStatusSubmit(t *testing.T) {
-	stratstates := NewStratStates("test_states.json")
+	stratstates := NewStatus("test_states.json")
 	submit_time := time.Date(2025, 8, 1, 13, 0, 0, 0, dt.TZNY())
-	stratstates.Submit("test_strat", submit_time)
+	order := tasty.NewOrder{}
+	stratstates.Submit("test_strat", submit_time, "1", order)
 
-	assert.Equal(t, stratstates.StatusByName("test_strat").lastSubmitted, submit_time)
+	status, err := stratstates.StatusByName("test_strat")
+	assert.Equal(t, err, nil)
+	assert.Equal(t, status.LastSubmitted, submit_time)
 }

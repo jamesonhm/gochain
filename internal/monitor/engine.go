@@ -19,7 +19,7 @@ type Engine struct {
 	candles      *yahoo.YahooAPI
 	strategies   []strategy.Strategy
 	executor     *executor.Engine
-	stratStates  *strategy.StratStates
+	stratStates  *strategy.Status
 	scanInterval time.Duration
 }
 
@@ -28,7 +28,7 @@ func NewEngine(
 	options *dxlink.DxLinkClient,
 	candles *yahoo.YahooAPI,
 	executor *executor.Engine,
-	stratStates *strategy.StratStates,
+	stratStates *strategy.Status,
 	scanInterval time.Duration,
 ) *Engine {
 	return &Engine{

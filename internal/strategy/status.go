@@ -8,31 +8,45 @@ import (
 	"os"
 	"sync"
 	"time"
+
+	"github.com/jamesonhm/gochain/internal/tasty"
 )
 
-type StratStates struct {
+type Status struct {
 	mu     sync.RWMutex
 	fname  string
-	states states
+	states StrategyStatus
 }
 
-type states struct {
+type StrategyStatus struct {
 	SeqPfid    int                    `json:"seq-pfid"`
 	Strategies map[string]stratOrders `json:"strategies"`
 }
 
 type stratOrders struct {
-	LastSubmitted time.Time              `json:"last-submitted"`
-	OrderDetails  map[string]orderDetail `json:"order-details"`
+	LastSubmitted time.Time `json:"last-submitted"`
+	//RetryConfig   RetryConfig            `json:"retry-config"`
+	//OrderDetails map[string]orderDetail `json:"order-details"`
+	WrappedOrders []WrappedOrder `json:"wrapped-orders"`
+}
+
+type WrappedOrder struct {
+	PreflightID   string         `json:"pfid"`
+	SubmitTime    time.Time      `json:"submit-time"`
+	LastRetry     time.Time      `json:"last-retry"`
+	RetryAttempts int            `json:"retry-attempts"`
+	Order         tasty.NewOrder `json:"order"`
+	// TODO: other submit metrics here?
 }
 
 type orderDetail struct {
-	OrderId string `json:"order-id"`
-	Status  string `json:"status"`
+	OrderId string  `json:"order-id"`
+	Price   float64 `json:"price"`
+	Status  string  `json:"status"`
 }
 
-func NewStratStates(filename string) *StratStates {
-	states := states{
+func NewStatus(filename string) *Status {
+	states := StrategyStatus{
 		Strategies: make(map[string]stratOrders),
 	}
 	if data, err := os.ReadFile(filename); err != nil {
@@ -48,44 +62,76 @@ func NewStratStates(filename string) *StratStates {
 			}
 		}
 	}
-	return &StratStates{
+	return &Status{
 		states: states,
 		fname:  filename,
 	}
 
 }
 
-func newStratOrders(ts time.Time, pfid string) stratOrders {
+func newStratOrders(ts time.Time, pfid string, order tasty.NewOrder) stratOrders {
 	return stratOrders{
 		LastSubmitted: ts,
-		OrderDetails: map[string]orderDetail{
-			pfid: orderDetail{},
-		},
+		WrappedOrders: []WrappedOrder{newWrappedOrder(ts, pfid, order)},
 	}
 }
 
-func (ss *StratStates) PPrint() {
+func newWrappedOrder(ts time.Time, pfid string, order tasty.NewOrder) WrappedOrder {
+	return WrappedOrder{
+		PreflightID:   pfid,
+		RetryAttempts: 0,
+		Order:         order,
+		SubmitTime:    ts,
+	}
+}
+
+//func newStratOrders(ts time.Time, pfid string) stratOrders {
+//	return stratOrders{
+//		LastSubmitted: ts,
+//		OrderDetails: map[string]orderDetail{
+//			pfid: orderDetail{},
+//		},
+//	}
+//}
+
+func (ss *Status) PPrint() {
 	bytes, _ := json.MarshalIndent(ss.states, "", "  ")
 	fmt.Println("Strategy States:")
 	fmt.Println(string(bytes))
 }
 
-func (ss *StratStates) Submit(stratname string, ts time.Time, pfid string) {
+func (ss *Status) Submit(stratname string, ts time.Time, pfid string, order tasty.NewOrder) {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 
 	if orders, ok := ss.states.Strategies[stratname]; !ok {
-		ss.states.Strategies[stratname] = newStratOrders(ts, pfid)
+		ss.states.Strategies[stratname] = newStratOrders(ts, pfid, order)
 	} else {
 		orders.LastSubmitted = ts
-		orders.OrderDetails[pfid] = orderDetail{}
+		//orders.OrderDetails[pfid] = orderDetail{}
+		orders.WrappedOrders = append(orders.WrappedOrders, newWrappedOrder(ts, pfid, order))
 		ss.states.Strategies[stratname] = orders
 	}
 
 	ss.writefile()
 }
 
-func (ss *StratStates) StatusByName(stratname string) (stratOrders, error) {
+//func (ss *StratStates) Submit(stratname string, ts time.Time, pfid string) {
+//	ss.mu.Lock()
+//	defer ss.mu.Unlock()
+//
+//	if orders, ok := ss.states.Strategies[stratname]; !ok {
+//		ss.states.Strategies[stratname] = newStratOrders(ts, pfid)
+//	} else {
+//		orders.LastSubmitted = ts
+//		orders.OrderDetails[pfid] = orderDetail{}
+//		ss.states.Strategies[stratname] = orders
+//	}
+//
+//	ss.writefile()
+//}
+
+func (ss *Status) StatusByName(stratname string) (stratOrders, error) {
 	ss.mu.RLock()
 	defer ss.mu.RUnlock()
 
@@ -95,7 +141,7 @@ func (ss *StratStates) StatusByName(stratname string) (stratOrders, error) {
 	return stratOrders{}, fmt.Errorf("No status for strategy name")
 }
 
-func (ss *StratStates) LastSubmitted(stratname string) (time.Time, error) {
+func (ss *Status) LastSubmitted(stratname string) (time.Time, error) {
 	ss.mu.RLock()
 	defer ss.mu.RUnlock()
 
@@ -105,7 +151,7 @@ func (ss *StratStates) LastSubmitted(stratname string) (time.Time, error) {
 	return time.Now().AddDate(-1, 0, 0), fmt.Errorf("No status for strategy name")
 }
 
-func (ss *StratStates) NextPFID() int {
+func (ss *Status) NextPFID() int {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 
@@ -114,9 +160,9 @@ func (ss *StratStates) NextPFID() int {
 	return ss.states.SeqPfid
 }
 
-func (ss *StratStates) UpdateByID(id string) {}
+func (ss *Status) UpdateByID(id string) {}
 
-func (ss *StratStates) writefile() {
+func (ss *Status) writefile() {
 	byt, err := json.MarshalIndent(ss.states, "", "  ")
 	if err != nil {
 		log.Fatal(err)
