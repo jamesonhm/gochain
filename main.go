@@ -83,33 +83,11 @@ func main() {
 
 	acctNum := accts[0].Account.AccountNumber
 
-	//acct, err := tastyClient.GetAccount(ctx, acctNum)
-	//if err != nil {
-	//	fmt.Println(err)
-	//} else {
-	//	fmt.Printf("%+v\n", acct)
-	//}
-
-	//status, err := tastyClient.GetAccountTradingStatus(ctx, acctNum)
-	//if err != nil {
-	//	fmt.Println(err)
-	//} else {
-	//	fmt.Printf("%+v\n", status)
-	//}
-
-	//pos, err := tastyClient.GetAccountPositions(ctx, acctNum, nil)
-	//if err != nil {
-	//	fmt.Println(err)
-	//} else {
-	//	fmt.Printf("%+v\n", pos)
-	//}
-
-	//bal, err := tastyClient.GetAccountBalances(ctx, acctNum)
-	//if err != nil {
-	//	fmt.Println(err)
-	//} else {
-	//	fmt.Printf("%+v\n", bal)
-	//}
+	acctStreamer := tastyClient.NewAccountStreamer(ctx, []string{acctNum}, false)
+	err = acctStreamer.Connect()
+	if err != nil {
+		slog.Error("unable to connect to acccount streamer", "error", err)
+	}
 
 	// Get curr market price for each tracked symbol
 	// To be used in filtering subscribed option symbols

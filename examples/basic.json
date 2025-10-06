@@ -29,5 +29,13 @@
         "day-of-week": {
             "days": ["mon", "tues", "weds", "thurs", "fri"]
         }
+    },
+    "entry-slippage": 2,
+    "retry-config": {
+        "enabled": true,
+        "interval-secs": 10,
+        "max-retries": 10,
+        "price-adjust": 1,
+        "max-price-move": 20
     }
 }

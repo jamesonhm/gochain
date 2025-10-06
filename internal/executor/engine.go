@@ -155,34 +155,17 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 		})
 	}
 
-	//type NewOrder struct {
-	//	TimeInForce  TimeInForce   `json:"time-in-force"`
-	//	GtcDate      string        `json:"gtc-date"`
-	//	OrderType    OrderType     `json:"order-type"`
-	//	StopTrigger  float32       `json:"stop-trigger,omitempty"`
-	//	Price        float32       `json:"price,omitempty"`
-	//	PriceEffect  PriceEffect   `json:"price-effect,omitempty"`
-	//	Value        float32       `json:"value,omitempty"`
-	//	ValueEffect  PriceEffect   `json:"value-effect,omitempty"`
-	//	Source       string        `json:"source,omitempty"`
-	//	PartitionKey string        `json:"partition-key,omitempty"`
-	//	PreflightID  string        `json:"preflight-id,omitempty"`
-	//	Legs         []NewOrderLeg `json:"legs"`
-	//	Rules        NewOrderRules `json:"rules,omitempty"`
-	//}
-
-	//type NewOrderLeg struct {
-	//	InstrumentType InstrumentType `json:"instrument-type"`
-	//	Symbol         string         `json:"symbol"`
-	//	Quantity       float32        `json:"quantity,omitempty"`
-	//	Action         OrderAction    `json:"action"` (STO, BTO, STC, BTC, ...)
-	//}
+	// Add Entry Slippage
+	if price > 0.0 {
+		price -= (float64(s.EntrySlippage) / 100)
+	} else {
+		price += (float64(s.EntrySlippage) / 100)
+	}
 	if price > 0.0 {
 		effect = tasty.Credit
 	} else {
 		effect = tasty.Debit
 	}
-	// TODO: add slippage to price
 	return tasty.NewOrder{
 		TimeInForce: "Day",
 		OrderType:   "Limit",

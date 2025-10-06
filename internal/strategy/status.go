@@ -36,14 +36,17 @@ type WrappedOrder struct {
 	LastRetry     time.Time      `json:"last-retry"`
 	RetryAttempts int            `json:"retry-attempts"`
 	Order         tasty.NewOrder `json:"order"`
+	// Flag Field "Held" to indicate a retry worker is handling this order?
 	// TODO: other submit metrics here?
+	// Short/Long Ratio
+	// Underlying price @ order complete
 }
 
-type orderDetail struct {
-	OrderId string  `json:"order-id"`
-	Price   float64 `json:"price"`
-	Status  string  `json:"status"`
-}
+//type orderDetail struct {
+//	OrderId string  `json:"order-id"`
+//	Price   float64 `json:"price"`
+//	Status  string  `json:"status"`
+//}
 
 func NewStatus(filename string) *Status {
 	states := StrategyStatus{

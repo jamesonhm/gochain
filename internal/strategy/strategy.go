@@ -22,6 +22,7 @@ type Strategy struct {
 	Legs            []Leg                             `json:"legs"`
 	EntryTime       EntryTime                         `json:"entry-time"`
 	EntryConditions map[string]map[string]interface{} `json:"entry-conditions"`
+	EntrySlippage   int                               `json:"entry-slippage"`
 	RetryConfig     RetryConfig                       `json:"retry-config"`
 	entryConditions map[string]Condition
 	exitConditions  map[string]Condition
@@ -48,6 +49,7 @@ type EntryTime struct {
 
 type RetryConfig struct {
 	Enabled      bool `json:"enabled"`
+	IntervalSecs int  `json:"interval-secs"`
 	MaxRetries   int  `json:"max-retries"`
 	PriceAdjust  int  `json:"price-adjust"`
 	MaxPriceMove int  `json:"max-price-move"`
