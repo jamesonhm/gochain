@@ -135,16 +135,14 @@ func FilterOptionsDates(dates []time.Time) filterFunc {
 			}
 		}
 		fmt.Printf("Length Option subs after filter: %d\n", len(filtered))
-		if len(filtered) > 0 {
-			fmt.Println(filtered)
-		}
+		//if len(filtered) > 0 {
+		//	fmt.Println(filtered)
+		//}
 		return filtered
 	}
 }
 
 func (c *DxLinkClient) Connect() error {
-	//c.mu.Lock()
-	//defer c.mu.Unlock()
 
 	if c.connected {
 		return fmt.Errorf("client already connected")
@@ -157,7 +155,7 @@ func (c *DxLinkClient) Connect() error {
 
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		return fmt.Errorf("dial error for url: %s : %w", u.String(), err)
+		return fmt.Errorf("DXLINK dial error for url: %s : %w", u.String(), err)
 	}
 	c.conn = conn
 	c.connected = true
@@ -246,6 +244,7 @@ func (c *DxLinkClient) Close() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	slog.Info("Closing WS connection")
 	if !c.connected {
 		return fmt.Errorf("client not connected")
 	}
@@ -326,8 +325,7 @@ func (c *DxLinkClient) handleMessages() {
 			_, message, err := c.conn.ReadMessage()
 			if err != nil {
 				slog.Error("Error reading message", "err", err)
-				// TODO: try reconnect
-				continue
+				c.reconnect()
 			}
 
 			go c.processMessage(message)
@@ -460,7 +458,6 @@ func (c *DxLinkClient) processMessage(message []byte) {
 			fmt.Printf("%s\n", string(message))
 			return
 		}
-		//slog.Info("SERVER <-", "", resp)
 
 		c.mu.Lock()
 		defer c.mu.Unlock()
@@ -506,15 +503,6 @@ func (c *DxLinkClient) processMessage(message []byte) {
 		}
 		c.dxlog.Info("SERVER <-", "", resp)
 	default:
-		//c.mu.Lock()
-		//callback, exists := c.callbacks[msgType]
-		//c.mu.Unlock()
-		//if exists {
-		//	callback(message)
-		//} else {
-		//	c.handleDataMessage(message)
-		//}
-		//c.handleDataMessage(message)
 		c.dxlog.Info("Unknown message type", "msg", string(message))
 	}
 }

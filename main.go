@@ -55,7 +55,7 @@ func main() {
 	stratStates.PPrint()
 
 	// SB USER
-	tastyClient := tasty.New(10*time.Second, 60*time.Second, 60, tasty.TastySandbox)
+	tastyClient := tasty.New(30*time.Second, 60*time.Second, 60, tasty.TastySandbox)
 	login := tasty.LoginInfo{
 		Login:      mustEnv("TASTY_USER"),
 		Password:   mustEnv("SB_PASSWORD"),
@@ -83,7 +83,7 @@ func main() {
 
 	acctNum := accts[0].Account.AccountNumber
 
-	acctStreamer := tastyClient.NewAccountStreamer(ctx, []string{acctNum}, false)
+	acctStreamer := tastyClient.NewAccountStreamer(ctx, acctNum, false)
 	err = acctStreamer.Connect()
 	if err != nil {
 		slog.Error("unable to connect to acccount streamer", "error", err)
@@ -187,6 +187,7 @@ func main() {
 		streamClient.Close()
 	}(&wg)
 	wg.Wait()
+	return
 
 }
 

@@ -191,13 +191,17 @@ func (e *Engine) worker(id int) {
 			slog.Error("(executor.worker) order dry run", "workerid", id, "order", order, "error", err)
 			continue
 		}
-		// TODO: do something with the returned buying power effect or fees?
 		respbyt, err := json.MarshalIndent(resp, "", "  ")
 		if err != nil {
 			slog.Error("(executor.worker) unable to marshal dry run response", "workerid", id, "error", err)
 		} else {
 			fmt.Println(string(respbyt))
 		}
+		if len(resp.OrderResponse.Warnings) > 0 {
+			slog.Warn("executor.worker) order dry run", "workerid", id, "warnings", resp.OrderResponse.Warnings)
+			continue
+		}
+		// TODO: do something with the returned buying power effect or fees?
 
 		resp, err = e.apiClient.SubmitOrder(e.ctx, e.acctNum, &order)
 		if err != nil {

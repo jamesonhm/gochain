@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -17,7 +18,7 @@ const (
 )
 
 type AccountStreamer struct {
-	accts          []string
+	acct           string
 	conn           *websocket.Conn
 	url            string
 	token          string
@@ -28,13 +29,14 @@ type AccountStreamer struct {
 	retries        int
 	delay          time.Duration
 	expBackoff     bool
+	mu             sync.RWMutex
 }
 
 type ActionMsg struct {
-	Action    string   `json:"action"`
-	Value     []string `json:"value,omitempty"`
-	AuthToken string   `json:"auth-token"`
-	RequestID int      `json:"request-id"`
+	Action    string `json:"action"`
+	Value     string `json:"value,omitempty"`
+	AuthToken string `json:"auth-token"`
+	RequestID int    `json:"request-id"`
 }
 
 type ConnectRespMsg struct {
@@ -45,7 +47,7 @@ type ConnectRespMsg struct {
 	RequestID   int      `json:"request-id"`
 }
 
-func (c *TastyAPI) NewAccountStreamer(ctx context.Context, accts []string, prod bool) *AccountStreamer {
+func (c *TastyAPI) NewAccountStreamer(ctx context.Context, acct string, prod bool) *AccountStreamer {
 	ctx, cancel := context.WithCancel(ctx)
 	var url string
 	if prod {
@@ -54,7 +56,7 @@ func (c *TastyAPI) NewAccountStreamer(ctx context.Context, accts []string, prod 
 		url = SandboxURL
 	}
 	return &AccountStreamer{
-		accts:          accts,
+		acct:           acct,
 		ctx:            ctx,
 		cancel:         cancel,
 		delay:          1 * time.Second,
@@ -89,7 +91,7 @@ func (as *AccountStreamer) Connect() error {
 
 	setupMsg := ActionMsg{
 		Action:    "connect",
-		Value:     []string{},
+		Value:     as.acct,
 		AuthToken: as.token,
 		RequestID: as.messageCounter,
 	}
@@ -105,6 +107,9 @@ func (as *AccountStreamer) Connect() error {
 }
 
 func (as *AccountStreamer) Close() error {
+	as.mu.Lock()
+	defer as.mu.Unlock()
+
 	if !as.connected {
 		return fmt.Errorf("client not connected")
 	}
@@ -126,6 +131,9 @@ func (as *AccountStreamer) Close() error {
 }
 
 func (as *AccountStreamer) sendMessage(msg ActionMsg) error {
+	as.mu.Lock()
+	defer as.mu.Unlock()
+
 	if as.conn == nil {
 		return fmt.Errorf("unable to send message, no connection")
 	}
@@ -217,6 +225,18 @@ func (as *AccountStreamer) processMessage(message []byte) {
 		err := json.Unmarshal(message, &resp)
 		if err != nil {
 			slog.Error("unable to unmarshal", "heartbeat msg", string(message))
+			return
+		}
+		slog.Info("ACCT STREAMER <-", "", resp)
+	case "Order":
+		type OrderNotification struct {
+			Type  string `json:"type"`
+			Order Order  `json:"data"`
+		}
+		resp := OrderNotification{}
+		err := json.Unmarshal(message, &resp)
+		if err != nil {
+			slog.Error("unable to unmarshal", "order notification", string(message))
 			return
 		}
 		slog.Info("ACCT STREAMER <-", "", resp)
