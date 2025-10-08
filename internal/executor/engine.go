@@ -61,6 +61,7 @@ func (e *Engine) SubmitOrder(s strategy.Strategy) {
 	}
 	pfid := strconv.Itoa(e.stratStates.NextPFID())
 	order.PreflightID = pfid
+	order.Source = s.Name
 	bytes, _ := json.MarshalIndent(order, "", "\t")
 	fmt.Printf("This is where the order goes into the queue: %+v\n", string(bytes))
 	e.stratStates.Submit(s.Name, time.Now().In(dt.TZNY()), pfid, order)

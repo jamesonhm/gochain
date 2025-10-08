@@ -7,46 +7,47 @@ import (
 )
 
 type Order struct {
-	ID                       int             `json:"id"`
 	AccountNumber            string          `json:"account-number"`
-	TimeInForce              TimeInForce     `json:"time-in-force"`
-	GtcDate                  string          `json:"gtc-date"`
-	OrderType                OrderType       `json:"order-type"`
-	Size                     int             `json:"size"`
-	UnderlyingSymbol         string          `json:"underlying-symbol"`
-	UnderlyingInstrumentType InstrumentType  `json:"underlying-instrument-type"`
-	Price                    decimal.Decimal `json:"price"`
-	PriceEffect              PriceEffect     `json:"price-effect"`
-	Value                    decimal.Decimal `json:"value"`
-	ValueEffect              PriceEffect     `json:"value-effect"`
-	StopTrigger              decimal.Decimal `json:"stop-trigger"`
-	Status                   OrderStatus     `json:"status"`
 	ContingentStatus         string          `json:"contingent-status"`
 	ConfirmationStatus       string          `json:"confirmation-status"`
 	Cancellable              bool            `json:"cancellable"`
 	CancelledAt              time.Time       `json:"cancelled-at"`
 	CancelUserID             string          `json:"cancel-user-id"`
 	CancelUsername           string          `json:"cancel-username"`
+	ComplexOrderID           int             `json:"complex-order-id"`
+	ComplexOrderTag          string          `json:"complex-order-tag"`
 	Editable                 bool            `json:"editable"`
 	Edited                   bool            `json:"edited"`
 	ExtExchangeOrderNumber   string          `json:"ext-exchange-order-number"`
 	ExtClientOrderID         string          `json:"ext-client-order-id"`
 	ExtGlobalOrderNumber     int             `json:"ext-global-order-number"`
+	GtcDate                  string          `json:"gtc-date"`
+	ID                       int             `json:"id"`
+	InFlightAt               string          `json:"in-flight-at"`
+	Legs                     []OrderLeg      `json:"legs"`
+	LiveAt                   string          `json:"live-at"`
+	OrderType                OrderType       `json:"order-type"`
+	PreflightID              string          `json:"preflight-id"`
+	Price                    decimal.Decimal `json:"price"`
+	PriceEffect              PriceEffect     `json:"price-effect"`
+	ReceivedAt               time.Time       `json:"received-at"`
 	ReplacingOrderID         string          `json:"replacing-order-id"`
 	ReplacesOrderID          string          `json:"replaces-order-id"`
-	ReceivedAt               time.Time       `json:"received-at"`
-	UpdatedAt                int             `json:"updated-at"`
-	InFlightAt               string          `json:"in-flight-at"`
-	LiveAt                   string          `json:"live-at"`
 	RejectReason             string          `json:"reject-reason"`
+	Rules                    OrderRules      `json:"rules"`
+	Size                     int             `json:"size"`
+	Source                   string          `json:"source"`
+	Status                   OrderStatus     `json:"status"`
+	StopTrigger              decimal.Decimal `json:"stop-trigger"`
+	TerminalAt               time.Time       `json:"terminal-at"`
+	TimeInForce              TimeInForce     `json:"time-in-force"`
+	UnderlyingSymbol         string          `json:"underlying-symbol"`
+	UnderlyingInstrumentType InstrumentType  `json:"underlying-instrument-type"`
+	UpdatedAt                int             `json:"updated-at"`
 	UserID                   string          `json:"user-id"`
 	Username                 string          `json:"username"`
-	TerminalAt               time.Time       `json:"terminal-at"`
-	ComplexOrderID           int             `json:"complex-order-id"`
-	ComplexOrderTag          string          `json:"complex-order-tag"`
-	PreflightID              string          `json:"preflight-id"`
-	Legs                     []OrderLeg      `json:"legs"`
-	Rules                    OrderRules      `json:"rules"`
+	Value                    decimal.Decimal `json:"value"`
+	ValueEffect              PriceEffect     `json:"value-effect"`
 }
 
 type OrderLeg struct {
