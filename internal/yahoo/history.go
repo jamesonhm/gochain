@@ -53,67 +53,62 @@ type OHLCItem struct {
 	Volume  float64 `json:"volume"`
 }
 
-func (c *YahooAPI) GetOHLCHistory(ctx context.Context, params *HistoryParams) (*HistoryResponse, error) {
+func (c *YahooAPI) getOHLCHistory(
+	ctx context.Context,
+	params *HistoryParams,
+	cache_lifetime time.Duration,
+) (*HistoryResponse, error) {
 	res := &HistoryResponse{}
 	path := c.baseurl + HistoryPath
-	err := c.cachedRequest(ctx, path, params, res)
+	err := c.cachedRequest(ctx, path, params, res, cache_lifetime)
 	return res, err
 }
 
-func (c *YahooAPI) ONMove(ctx context.Context, symbol string) (float64, error) {
+func (c *YahooAPI) IntradayMove(symbol string) (float64, error) {
+	const cache_lifetime = 30 * time.Second
+
 	histParams := HistoryParams{
 		Symbol:        symbol,
 		Interval:      "1d",
 		DiffAndSplits: false,
 	}
-	res, err := c.GetOHLCHistory(ctx, &histParams)
+	ctx := context.TODO()
+	res, err := c.getOHLCHistory(ctx, &histParams, cache_lifetime)
 	if err != nil {
 		return 0, err
 	}
-	var currOpen, prevClose float64
-	var prevTS int64 = 0
-	midnight := dt.Midnight(time.Now()).Unix()
 
+	var open, closep float64
+	midnight := dt.Midnight(time.Now()).Unix()
 	for ts, ohlc := range res.Body {
 		if ts > midnight {
-			currOpen = ohlc.Open
-			fmt.Printf("Current opent %.2f at TS %d, %s\n", currOpen, ts, time.Unix(ts, 0))
-		}
-		if ts > prevTS && ts < midnight {
-			prevTS = ts
+			open = ohlc.Open
+			closep = ohlc.Close
+			fmt.Printf("open %.2f, close: %.2f at TS %d, %s\n", open, closep, ts, time.Unix(ts, 0))
+			return open - closep, nil
 		}
 	}
-	prevClose = res.Body[prevTS].Close
-	fmt.Printf("Prev Close %.2f at TS %d, %s\n", prevClose, prevTS, time.Unix(prevTS, 0))
-
-	return currOpen - prevClose, nil
+	return 0, fmt.Errorf("No current TS found")
 }
 
-//func (c *YahooAPI) ONMoveOLD(symbol string) (float64, error) {
-//	reqNewData := false
-//	midnight := dt.Midnight(time.Now()).Unix()
-//	if hist, ok := c.cache[symbol]; !ok {
-//		reqNewData = true
-//	} else if hist.Meta.RegularMarketTime < midnight {
-//		reqNewData = true
+//func (c *YahooAPI) ONMove(symbol string) (float64, error) {
+//	const cache_lifetime = 8 * time.Hour
+//
+//	histParams := HistoryParams{
+//		Symbol:        symbol,
+//		Interval:      "1d",
+//		DiffAndSplits: false,
 //	}
-//	if reqNewData {
-//		ctx := context.TODO()
-//		histParams := HistoryParams{
-//			Symbol:        symbol,
-//			Interval:      "1d",
-//			DiffAndSplits: false,
-//		}
-//		res, err := c.GetOHLCHistory(ctx, &histParams)
-//		if err != nil {
-//			return 0, err
-//		}
-//		c.cache[symbol] = res
+//	ctx := context.TODO()
+//	res, err := c.getOHLCHistory(ctx, &histParams, cache_lifetime)
+//	if err != nil {
+//		return 0, err
 //	}
+//
 //	var currOpen, prevClose float64
 //	var prevTS int64 = 0
-//
-//	for ts, ohlc := range c.cache[symbol].Body {
+//	midnight := dt.Midnight(time.Now()).Unix()
+//	for ts, ohlc := range res.Body {
 //		if ts > midnight {
 //			currOpen = ohlc.Open
 //			fmt.Printf("Current opent %.2f at TS %d, %s\n", currOpen, ts, time.Unix(ts, 0))
@@ -122,7 +117,7 @@ func (c *YahooAPI) ONMove(ctx context.Context, symbol string) (float64, error) {
 //			prevTS = ts
 //		}
 //	}
-//	prevClose = c.cache[symbol].Body[prevTS].Close
+//	prevClose = res.Body[prevTS].Close
 //	fmt.Printf("Prev Close %.2f at TS %d, %s\n", prevClose, prevTS, time.Unix(prevTS, 0))
 //
 //	return currOpen - prevClose, nil

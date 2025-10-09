@@ -7,6 +7,7 @@ import (
 
 type cacheEntry struct {
 	createdAt time.Time
+	lifetime  time.Duration
 	val       []byte
 }
 
@@ -25,11 +26,12 @@ func NewCache(interval time.Duration) *Cache {
 	return &cache
 }
 
-func (c *Cache) Add(key string, val []byte) {
+func (c *Cache) Add(key string, val []byte, lifetime time.Duration) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	entry := cacheEntry{
 		createdAt: time.Now(),
+		lifetime:  lifetime,
 		val:       val,
 	}
 	c.entries[key] = entry
@@ -61,7 +63,7 @@ func (c *Cache) pruneEntries(interval time.Duration) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	for k, v := range c.entries {
-		if now.Sub(v.createdAt) > interval {
+		if now.Sub(v.createdAt) > v.lifetime {
 			delete(c.entries, k)
 		}
 	}

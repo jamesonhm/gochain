@@ -30,7 +30,7 @@ func New(
 	timeout time.Duration,
 	rate_period time.Duration,
 	rate_count int,
-	cache_retention time.Duration,
+	cache_interval time.Duration,
 ) *YahooAPI {
 	return &YahooAPI{
 		apikey:  key,
@@ -39,7 +39,7 @@ func New(
 			Timeout: timeout,
 		},
 		limiter: rate.New(rate_period, rate_count),
-		cache:   NewCache(cache_retention),
+		cache:   NewCache(cache_interval),
 	}
 }
 
@@ -48,6 +48,7 @@ func (c *YahooAPI) cachedRequest(
 	path string,
 	params,
 	response any,
+	cache_lifetime time.Duration,
 ) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path, nil)
 	if err != nil {
@@ -75,6 +76,11 @@ func (c *YahooAPI) cachedRequest(
 
 	slog.LogAttrs(ctx, slog.LevelInfo, "Yahoo API Call", slog.String("URL", req.URL.String()))
 
+	err = c.limiter.Wait(ctx)
+	if err != nil {
+		return err
+	}
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
@@ -98,7 +104,7 @@ func (c *YahooAPI) cachedRequest(
 		return fmt.Errorf("Body Unmarshal Error: %w", err)
 	}
 
-	c.cache.Add(req.URL.String(), body)
+	c.cache.Add(req.URL.String(), body, cache_lifetime)
 	return nil
 }
 

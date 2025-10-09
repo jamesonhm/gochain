@@ -34,7 +34,7 @@ func main() {
 	// Env Variable Load
 	godotenv.Load()
 
-	yahooClient := yahoo.New(mustEnv("YAHOO_API_KEY"), 10*time.Second, 1*time.Second, 1)
+	yahooClient := yahoo.New(mustEnv("YAHOO_API_KEY"), 10*time.Second, 1*time.Second, 1, 10*time.Second)
 	//histParams := yahoo.HistoryParams{
 	//	Symbol:        "^VIX",
 	//	Interval:      "1d",
