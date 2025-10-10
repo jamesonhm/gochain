@@ -16,6 +16,7 @@ const (
 	MAX_TIME = "3:58PM"
 )
 
+// TODO: where does `Use Exact DTE`, ... go?
 type Strategy struct {
 	Name            string                            `json:"name"`
 	Underlying      string                            `json:"underlying"`
@@ -112,6 +113,7 @@ type OptionsProvider interface {
 
 type CandlesProvider interface {
 	ONMove(string) (float64, error)
+	IntradayMove(string) (float64, error)
 }
 
 type PortfolioProvider interface {

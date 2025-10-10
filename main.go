@@ -42,9 +42,14 @@ func main() {
 	//}
 	move, err := yahooClient.ONMove("^VIX")
 	if err != nil {
-		fmt.Println(err)
+		logger.Error("unable to get overnight move for `^VIX`", "error", err)
 	}
 	fmt.Printf("VIX ON MOVE: %.2f\n", move)
+	intraday_move, err := yahooClient.IntradayMove("^VIX")
+	if err != nil {
+		logger.Error("unable to get intraday move for `^VIX`", "error", err)
+	}
+	fmt.Printf("VIX Intraday MOVE: %.2f\n", intraday_move)
 
 	strats, err := loadStrategies()
 	if err != nil {

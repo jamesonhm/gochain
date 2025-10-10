@@ -15,8 +15,8 @@ type QuotesParams struct {
 }
 
 type QuotesResponse struct {
-	Meta QuotesMeta          `json:"meta"`
-	Body map[int64]QuoteItem `json:"body"`
+	Meta QuotesMeta  `json:"meta"`
+	Body []QuoteItem `json:"body"`
 }
 
 type QuotesMeta struct {

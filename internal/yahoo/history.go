@@ -85,7 +85,7 @@ func (c *YahooAPI) IntradayMove(symbol string) (float64, error) {
 			open = ohlc.Open
 			closep = ohlc.Close
 			fmt.Printf("open %.2f, close: %.2f at TS %d, %s\n", open, closep, ts, time.Unix(ts, 0))
-			return open - closep, nil
+			return closep - open, nil
 		}
 	}
 	return 0, fmt.Errorf("No current TS found")

@@ -1,8 +1,8 @@
 {
-  "seq-pfid": 4,
+  "seq-pfid": 5,
   "strategies": {
     "basic PCS": {
-      "last-submitted": "2025-10-08T07:23:04.759760585-04:00",
+      "last-submitted": "2025-10-10T08:07:16.885527856-04:00",
       "wrapped-orders": [
         {
           "pfid": "1",
@@ -93,6 +93,40 @@
               {
                 "instrument-type": "Equity Option",
                 "symbol": "XSP   251015P00665000",
+                "quantity": 1,
+                "action": "Buy to Open"
+              }
+            ],
+            "rules": {
+              "route-after": "",
+              "cancel-at": "",
+              "conditions": null
+            }
+          }
+        },
+        {
+          "pfid": "5",
+          "submit-time": "2025-10-10T08:07:16.885527856-04:00",
+          "last-retry": "0001-01-01T00:00:00Z",
+          "retry-attempts": 0,
+          "order": {
+            "time-in-force": "Day",
+            "gtc-date": "",
+            "order-type": "Limit",
+            "price": "0.95",
+            "price-effect": "Credit",
+            "source": "basic PCS",
+            "preflight-id": "5",
+            "legs": [
+              {
+                "instrument-type": "Equity Option",
+                "symbol": "XSP   251017P00670000",
+                "quantity": 1,
+                "action": "Sell to Open"
+              },
+              {
+                "instrument-type": "Equity Option",
+                "symbol": "XSP   251017P00665000",
                 "quantity": 1,
                 "action": "Buy to Open"
               }
