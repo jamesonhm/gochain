@@ -25,6 +25,7 @@ type Engine struct {
 	wg             sync.WaitGroup
 	workerCount    int
 	ctx            context.Context
+	liveOrder      bool
 }
 
 func NewEngine(
@@ -34,6 +35,7 @@ func NewEngine(
 	stratStates *strategy.Status,
 	workerCount int,
 	ctx context.Context,
+	liveOrder bool,
 ) *Engine {
 
 	e := &Engine{
@@ -44,6 +46,7 @@ func NewEngine(
 		orderQueue:     make(chan tasty.NewOrder, 10),
 		workerCount:    workerCount,
 		ctx:            ctx,
+		liveOrder:      liveOrder,
 	}
 
 	e.startWorkers()
@@ -204,10 +207,12 @@ func (e *Engine) worker(id int) {
 		}
 		// TODO: do something with the returned buying power effect or fees?
 
-		resp, err = e.apiClient.SubmitOrder(e.ctx, e.acctNum, &order)
-		if err != nil {
-			slog.Error("(executor.worker) order submit", "workerid", id, "order", order, "error", err)
-			continue
+		if e.liveOrder {
+			resp, err = e.apiClient.SubmitOrder(e.ctx, e.acctNum, &order)
+			if err != nil {
+				slog.Error("(executor.worker) order submit", "workerid", id, "order", order, "error", err)
+				continue
+			}
 		}
 	}
 }

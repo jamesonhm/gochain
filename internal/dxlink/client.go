@@ -244,7 +244,7 @@ func (c *DxLinkClient) Close() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	slog.Info("Closing WS connection")
+	slog.Info("Closing DxLink WS connection")
 	if !c.connected {
 		return fmt.Errorf("client not connected")
 	}
@@ -324,7 +324,7 @@ func (c *DxLinkClient) handleMessages() {
 
 			_, message, err := c.conn.ReadMessage()
 			if err != nil {
-				slog.Error("Error reading message", "err", err)
+				slog.Error("Error reading DxLink message", "err", err)
 				c.reconnect()
 			}
 

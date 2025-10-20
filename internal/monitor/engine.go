@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -49,6 +50,7 @@ func (e *Engine) Run(ctx context.Context) {
 	ticker := time.NewTicker(e.scanInterval)
 	defer ticker.Stop()
 
+	fmt.Printf("-------Monitor Started------\n")
 	for {
 		select {
 		case <-ctx.Done():

@@ -2,7 +2,6 @@ package strategy
 
 import (
 	"fmt"
-	"time"
 )
 
 type ConditionFactory struct {

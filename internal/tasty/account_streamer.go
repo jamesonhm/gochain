@@ -184,7 +184,7 @@ func (as *AccountStreamer) handleMessages() {
 
 			_, message, err := as.conn.ReadMessage()
 			if err != nil {
-				slog.Error("Error reading message", "err", err)
+				slog.Error("Error reading AcctStreamer message", "err", err)
 				continue
 			}
 
