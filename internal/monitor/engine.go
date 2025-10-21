@@ -67,7 +67,7 @@ func (e *Engine) checkAllStrategies(ctx context.Context) {
 		if !s.TimeInEntry(time.Now().In(dt.TZNY())) {
 			slog.LogAttrs(
 				ctx,
-				slog.LevelInfo,
+				slog.LevelDebug,
 				"(checkAllStrategies) now not within entry time",
 				slog.String("Strategy", s.Name),
 				slog.Time("now", time.Now().In(dt.TZNY())),

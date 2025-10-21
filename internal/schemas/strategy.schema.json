@@ -1,0 +1,77 @@
+{
+    "title": "Strategy",
+    "description": "definition of the various components of an option strategy.",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "strategy name"
+        },
+        "underlying": {
+            "type": "string",
+            "description": "the symbol of the equity for which this strategy should be applied",
+            "examples": ["XSP", "SPY", "SPX"]
+        },
+        "legs": {
+            "type": "array",
+            "items": {
+                "$ref": "option-leg.schema.json"
+            }
+        },
+        "entry-time": {
+            "type": "object",
+            "properties": {
+                "min-time": {
+                    "type": "string",
+                    "description": "kitchen clock time in the format `7:20AM`"
+                },
+                "max-time": {
+                    "type": "string",
+                    "description": "kitchen clock time in the format `7:20AM`"
+                }
+            }
+        },
+        "entry-slippage": {
+            "type": "integer",
+            "description": "a number representing the number of cents to adjust the price by at entry time. If the entry is for a credit, this will reduce the credit, if for a debit, this will increase the debit"
+        },
+        "entry-conditions": {
+            "type": "object",
+            "properties": {
+                "day-of-week": {
+                    "type": "object",
+                    "properties": {
+                        "days": {
+                            "type": "array", 
+                            "minItems": 1, 
+                            "maxItems": 5,
+                            "items": {
+                                "enum": ["mon", "tues", "weds", "thurs", "fri"]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "retry-config": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "interval-secs": {
+                    "type": "integer"
+                },
+                "max-retries": {
+                    "type": "integer"
+                },
+                "price-adjust": {
+                    "type": "integer"
+                },
+                "max-price-move": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

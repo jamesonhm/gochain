@@ -1,0 +1,35 @@
+{
+    "$id": "option-leg.schema.json",
+    "title": "strategy option definition",
+    "type": "object",
+    "properties": {
+        "option-type": {
+            "enum": ["P", "C"],
+            "description": "put or call option",
+
+        },
+        "option-side": {
+            "enum": ["sell", "buy"]
+        },
+        "quantity": {
+            "type": "integer",
+            "description": "number of contracts for one instance of the strategy"
+        },
+        "days-to-expiration": {
+            "type": "integer",
+            "description": "calendar days to find the expiration date"
+        },
+        "strike-selection-method": {
+            "enum": ["delta", "relative"],
+            "description": "how the strike price is found for this leg.  delta selects the strike that is closest to the specified value, relative selects a strike at a fixed offset from the previous leg. **TODO:`percent` and `fixed premium`?"
+        },
+        "strike-selection-value": {
+            "type": "number",
+            "description": "the value that will be used for the specified method.  depending on the method the value will represent different units"
+        },
+        "round-nearest": {
+            "type": "integer",
+            "description": "only strikes divisible by this value will be selected. Use 0 or 1 for no rounding"
+        }
+    }
+}
