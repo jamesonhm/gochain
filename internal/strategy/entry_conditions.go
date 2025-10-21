@@ -14,6 +14,9 @@ type Condition func(
 	portfolio PortfolioProvider,
 ) bool
 
+// Checks that may require `stratStates` to be part of the monitor
+// Max Open Trades
+
 // Factory functions for each condition type
 func createDayOfWeekCondition(params map[string]interface{}) (Condition, error) {
 	daysInterface, ok := params["days"]
@@ -112,15 +115,4 @@ func createVixONMoveCondition(params map[string]interface{}) (Condition, error) 
 		vixMoveD := decimal.NewFromFloat(vixMove)
 		return minParam.LessThanOrEqual(vixMoveD) && maxParam.GreaterThanOrEqual(vixMoveD)
 	}, nil
-}
-
-func VixONMoveMax(threshold float64) Condition {
-	return func(_ OptionsProvider, candles CandlesProvider, _ PortfolioProvider) bool {
-		vixMove, err := candles.ONMove("^VIX")
-		if err != nil {
-			slog.Error("VixONMoveMax Entry Condition", "error", err)
-			return false
-		}
-		return vixMove <= threshold
-	}
 }

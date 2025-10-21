@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	//"encoding/json"
 	"fmt"
 	"log/slog"
 	"maps"
@@ -92,8 +93,17 @@ func main() {
 	acctErrChan := make(chan error, 1)
 	marketErrChan := make(chan error, 1)
 
-	// start account streamer
 	acctNum := accts[0].Account.AccountNumber
+	//balance, err := tastyClient.GetAccountBalances(ctx, acctNum)
+	//if err != nil {
+	//	logger.Error("unable to get balance info", "error", err)
+	//} else {
+	//	bytes, _ := json.MarshalIndent(balance, "", "  ")
+	//	fmt.Println("Balance")
+	//	fmt.Println(string(bytes))
+	//}
+
+	// start account streamer
 	acctStreamer := tastyClient.NewAccountStreamer(ctx, acctNum, tastyClient.Env == tasty.TastyProd)
 
 	startAcctStream := func() {
@@ -116,6 +126,7 @@ func main() {
 	streamer, err := tastyClient.GetQuoteStreamerToken(ctx)
 	if err != nil {
 		logger.Error("unable to get streamer token", "error", err)
+		MKT_STREAM = false
 	}
 	streamClient := dxlink.New(ctx, streamer.DXLinkURL, streamer.Token)
 
@@ -213,11 +224,11 @@ func main() {
 	case sig := <-sigChan:
 		logger.Info("Gracefully shutting down", "Received signal:", sig)
 		cancel()
-	case <-acctErrChan:
-		logger.Info("Account Streamer Error: %v. Shutting down...")
+	case acctErr := <-acctErrChan:
+		logger.Info("Account Streamer Shutting down...", "Error:", acctErr)
 		cancel()
-	case <-marketErrChan:
-		logger.Info("Market Streamer Error: %v. Shutting down...")
+	case mktErr := <-marketErrChan:
+		logger.Info("Market Streamer Shutting down...", "Error:", mktErr)
 		cancel()
 	}
 

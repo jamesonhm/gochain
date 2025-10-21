@@ -12,7 +12,7 @@ const (
 	AccountPath              = "/customers/me/accounts/{account_number}"
 	AccountTradingStatusPath = "/accounts{account_number}/trading-status"
 	AccountPositionsPath     = "/accounts/{account_number}/positions"
-	AccountBalancesPath      = "/accounts/{account_number}/balances"
+	AccountBalancesPath      = "/accounts/{account_number}/balances/{currency}"
 	DoNotExercisesPath       = "/accounts/{account_number}/do-not-exercises"
 )
 
@@ -58,6 +58,7 @@ func (c *TastyAPI) GetAccountBalances(ctx context.Context, acctNum string) (*Acc
 	res := &AccountBalanceResponse{}
 	path := c.baseurl + AccountBalancesPath
 	path = strings.ReplaceAll(path, "{account_number}", acctNum)
+	path = strings.ReplaceAll(path, "{currency}", "USD")
 	err := c.request(ctx, http.MethodGet, auth, path, nil, nil, res)
 	return &res.AccountBalances, err
 }
