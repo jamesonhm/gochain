@@ -2,7 +2,6 @@ package yahoo
 
 import (
 	"context"
-	"fmt"
 	"time"
 )
 
@@ -90,8 +89,8 @@ type QuoteItem struct {
 func (c *YahooAPI) getQuote(
 	ctx context.Context,
 	params *QuotesParams,
-	cache_lifetime time.Duration,
 ) (*QuotesResponse, error) {
+	const cache_lifetime = 8 * time.Hour
 	res := &QuotesResponse{}
 	path := c.baseurl + QuotesPath
 	err := c.cachedRequest(ctx, path, params, res, cache_lifetime)
@@ -99,21 +98,33 @@ func (c *YahooAPI) getQuote(
 }
 
 func (c *YahooAPI) ONMove(symbol string) (float64, error) {
-	const cache_lifetime = 8 * time.Hour
-
 	quoteParams := QuotesParams{
 		Symbol: symbol,
 	}
 	ctx := context.TODO()
-	res, err := c.getQuote(ctx, &quoteParams, cache_lifetime)
+	res, err := c.getQuote(ctx, &quoteParams)
 	if err != nil {
 		return 0, err
 	}
 
 	currOpen := res.Body[0].RegularMarketOpen
-	fmt.Printf("Current opent %.2f\n", currOpen)
 	prevClose := res.Body[0].RegularMarketPreviousClose
-	fmt.Printf("Prev Close %.2f\n", prevClose)
 
 	return currOpen - prevClose, nil
+}
+
+func (c *YahooAPI) ONMovePct(symbol string) (float64, error) {
+	quoteParams := QuotesParams{
+		Symbol: symbol,
+	}
+	ctx := context.TODO()
+	res, err := c.getQuote(ctx, &quoteParams)
+	if err != nil {
+		return 0, err
+	}
+
+	currOpen := res.Body[0].RegularMarketOpen
+	prevClose := res.Body[0].RegularMarketPreviousClose
+
+	return ((currOpen - prevClose) / prevClose) * 100, nil
 }

@@ -16,6 +16,7 @@ func NewConditionFactory() *ConditionFactory {
 	}
 
 	factory.RegisterFactory("day-of-week", createDayOfWeekCondition)
+	factory.RegisterFactory("vix-overnight-move", createVixONMoveCondition)
 
 	return factory
 }

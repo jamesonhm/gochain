@@ -25,6 +25,7 @@ type Strategy struct {
 	EntryConditions map[string]map[string]interface{} `json:"entry-conditions"`
 	EntrySlippage   int                               `json:"entry-slippage"`
 	RetryConfig     RetryConfig                       `json:"retry-config"`
+	Allocation      string                            `json:"allocation"`
 	entryConditions map[string]Condition
 	exitConditions  map[string]Condition
 }
@@ -113,6 +114,7 @@ type OptionsProvider interface {
 
 type CandlesProvider interface {
 	ONMove(string) (float64, error)
+	ONMovePct(string) (float64, error)
 	IntradayMove(string) (float64, error)
 }
 

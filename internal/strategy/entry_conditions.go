@@ -72,47 +72,72 @@ func createDayOfWeekCondition(params map[string]interface{}) (Condition, error) 
 	}, nil
 }
 
+func strInterToDec(strInter interface{}) (decimal.Decimal, error) {
+	if val, ok := strInter.(string); ok {
+		dec, err := decimal.NewFromString(val)
+		if err != nil {
+			return decimal.NewFromInt(0), err
+		}
+		return dec, nil
+	} else {
+		return decimal.NewFromInt(0), fmt.Errorf("unable to type cast to string: %v", strInter)
+	}
+}
+
 func createVixONMoveCondition(params map[string]interface{}) (Condition, error) {
 	minInter, minOk := params["min"]
 	maxInter, maxOk := params["max"]
 	if !minOk && !maxOk {
 		return nil, fmt.Errorf("VIX ON Move Condition requires at least one of `min` or `max`")
 	}
+	var units string
+	var ok bool
+	if unitsInter, unitsOk := params["units"]; !unitsOk {
+		units = "percent"
+	} else {
+		if units, ok = unitsInter.(string); !ok {
+			units = "percent"
+		}
+	}
 
 	var minParam decimal.Decimal
 	var maxParam decimal.Decimal
 	var err error
 	if minOk {
-		if minStr, ok := minInter.(string); ok {
-			minParam, err = decimal.NewFromString(minStr)
-			if err != nil {
-				return nil, fmt.Errorf("VIX ON Move unable to convert `min` param to decimal: %s", minStr)
-			}
-		} else {
-			return nil, fmt.Errorf("VIX ON Move `min` parameters should be entered as strings: %v", minInter)
+		minParam, err = strInterToDec(minInter)
+		if err != nil {
+			return nil, fmt.Errorf("VIX ON Move unable to get decimal from min param: %v, %w", minInter, err)
 		}
 	} else {
 		minParam = decimal.NewFromInt(-999)
 	}
 	if maxOk {
-		if maxStr, ok := maxInter.(string); ok {
-			maxParam, err = decimal.NewFromString(maxStr)
-			if err != nil {
-				return nil, fmt.Errorf("VIX ON Move unable to convert `max` param to decimal: %s", maxStr)
-			}
-		} else {
-			return nil, fmt.Errorf("VIX ON Move `max` parameters should be entered as strings: %v", maxInter)
+		maxParam, err = strInterToDec(maxInter)
+		if err != nil {
+			return nil, fmt.Errorf("VIX ON Move unable to get decimal from max param: %v, %w", maxInter, err)
 		}
 	} else {
 		maxParam = decimal.NewFromInt(999)
 	}
 	return func(_ OptionsProvider, candles CandlesProvider, _ PortfolioProvider) bool {
-		vixMove, err := candles.ONMove("^VIX")
-		if err != nil {
-			slog.Error("Unable to get VixONMove for Entry Condition", "error", err)
-			return false
+		var vixMoveD decimal.Decimal
+		switch units {
+		case "percent":
+			vixMove, err := candles.ONMovePct("^VIX")
+			if err != nil {
+				slog.Error("Unable to get VixONMovePct for Entry Condition", "error", err)
+				return false
+			}
+			vixMoveD = decimal.NewFromFloat(vixMove)
+		case "absolute":
+			vixMove, err := candles.ONMove("^VIX")
+			if err != nil {
+				slog.Error("Unable to get VixONMove for Entry Condition", "error", err)
+				return false
+			}
+			vixMoveD = decimal.NewFromFloat(vixMove)
 		}
-		vixMoveD := decimal.NewFromFloat(vixMove)
+
 		return minParam.LessThanOrEqual(vixMoveD) && maxParam.GreaterThanOrEqual(vixMoveD)
 	}, nil
 }

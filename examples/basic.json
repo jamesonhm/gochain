@@ -28,6 +28,10 @@
     "entry-conditions": {
         "day-of-week": {
             "days": ["mon", "tues", "weds", "thurs", "fri"]
+        },
+        "vix-overnight-move": {
+            "max": "-0.01",
+            "min": "-99"
         }
     },
     "entry-slippage": 2,

@@ -50,6 +50,18 @@
                             }
                         }
                     }
+                },
+                "vix-overnight-move": {
+                    "type": "object",
+                    "properties": {
+                        "min": {
+                            "type": "string",
+                            "examples": ["0.01"]
+                        },
+                        "max": {
+                            "type": "string"
+                        }
+                    }
                 }
             }
         },

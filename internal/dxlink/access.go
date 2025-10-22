@@ -59,7 +59,7 @@ func (c *DxLinkClient) OptionDataByDelta(
 	exp := dt.DTEToDateHolidays(time.Now(), dte, holidays)
 	atm, err := c.getUnderlyingPrice(underlying)
 	if err != nil {
-		return nil, fmt.Errorf("OptionDataByDelta: unable to get underlying price for '%s'\n", underlying)
+		return nil, fmt.Errorf("OptionDataByDelta: unable to get underlying price for '%s'", underlying)
 	}
 	s := roundNearest(atm, round)
 	opt := &options.OptionSymbol{

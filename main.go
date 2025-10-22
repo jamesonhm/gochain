@@ -32,7 +32,7 @@ func main() {
 	var MKT_STREAM bool = false
 	// determines wether an order is actually posted
 	var LIVE_ORDER bool = false
-	var PROD_ACCT bool = true
+	var PROD_ACCT bool = false
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	//slog.SetDefault(logger)
