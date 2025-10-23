@@ -27,15 +27,16 @@ type stratOrders struct {
 	LastSubmitted time.Time `json:"last-submitted"`
 	//RetryConfig   RetryConfig            `json:"retry-config"`
 	//OrderDetails map[string]orderDetail `json:"order-details"`
-	WrappedOrders []WrappedOrder `json:"wrapped-orders"`
+	//WrappedOrders []WrappedOrder `json:"wrapped-orders"`
+	WrappedOrders map[string]WrappedOrder `json:"wrapped-orders"`
 }
 
 type WrappedOrder struct {
-	PreflightID   string         `json:"pfid"`
-	SubmitTime    time.Time      `json:"submit-time"`
-	LastRetry     time.Time      `json:"last-retry"`
-	RetryAttempts int            `json:"retry-attempts"`
-	Order         tasty.NewOrder `json:"order"`
+	PreflightID   string      `json:"pfid"`
+	SubmitTime    time.Time   `json:"submit-time"`
+	LastRetry     time.Time   `json:"last-retry"`
+	RetryAttempts int         `json:"retry-attempts"`
+	Order         tasty.Order `json:"order"`
 	// Flag Field "Held" to indicate a retry worker is handling this order?
 	// TODO: other submit metrics here?
 	// Short/Long Ratio
@@ -72,14 +73,23 @@ func NewStatus(filename string) *Status {
 
 }
 
-func newStratOrders(ts time.Time, pfid string, order tasty.NewOrder) stratOrders {
-	return stratOrders{
-		LastSubmitted: ts,
-		WrappedOrders: []WrappedOrder{newWrappedOrder(ts, pfid, order)},
-	}
-}
+//func newStratOrders(ts time.Time, pfid string, order tasty.NewOrder) stratOrders {
+//	return stratOrders{
+//		LastSubmitted: ts,
+//		WrappedOrders: []WrappedOrder{newWrappedOrder(ts, pfid, order)},
+//	}
+//}
 
-func newWrappedOrder(ts time.Time, pfid string, order tasty.NewOrder) WrappedOrder {
+//func newWrappedOrder(ts time.Time, pfid string, order tasty.NewOrder) WrappedOrder {
+//	return WrappedOrder{
+//		PreflightID:   pfid,
+//		RetryAttempts: 0,
+//		Order:         order,
+//		SubmitTime:    ts,
+//	}
+//}
+
+func newWrappedOrder(ts time.Time, pfid string, order tasty.Order) WrappedOrder {
 	return WrappedOrder{
 		PreflightID:   pfid,
 		RetryAttempts: 0,
@@ -88,14 +98,14 @@ func newWrappedOrder(ts time.Time, pfid string, order tasty.NewOrder) WrappedOrd
 	}
 }
 
-//func newStratOrders(ts time.Time, pfid string) stratOrders {
-//	return stratOrders{
-//		LastSubmitted: ts,
-//		OrderDetails: map[string]orderDetail{
-//			pfid: orderDetail{},
-//		},
-//	}
-//}
+func newStratOrders(ts time.Time, pfid string, order tasty.Order) stratOrders {
+	return stratOrders{
+		LastSubmitted: ts,
+		WrappedOrders: map[string]WrappedOrder{
+			pfid: newWrappedOrder(ts, pfid, order),
+		},
+	}
+}
 
 func (ss *Status) PPrint() {
 	bytes, _ := json.MarshalIndent(ss.states, "", "  ")
@@ -103,7 +113,7 @@ func (ss *Status) PPrint() {
 	fmt.Println(string(bytes))
 }
 
-func (ss *Status) Submit(stratname string, ts time.Time, pfid string, order tasty.NewOrder) {
+func (ss *Status) SubmitOrder(stratname string, ts time.Time, pfid string, order tasty.Order) {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 
@@ -111,23 +121,23 @@ func (ss *Status) Submit(stratname string, ts time.Time, pfid string, order tast
 		ss.states.Strategies[stratname] = newStratOrders(ts, pfid, order)
 	} else {
 		orders.LastSubmitted = ts
-		//orders.OrderDetails[pfid] = orderDetail{}
-		orders.WrappedOrders = append(orders.WrappedOrders, newWrappedOrder(ts, pfid, order))
+		orders.WrappedOrders[pfid] = newWrappedOrder(ts, pfid, order)
 		ss.states.Strategies[stratname] = orders
 	}
 
 	ss.writefile()
 }
 
-//func (ss *StratStates) Submit(stratname string, ts time.Time, pfid string) {
+//func (ss *Status) Submit(stratname string, ts time.Time, pfid string, order tasty.NewOrder) {
 //	ss.mu.Lock()
 //	defer ss.mu.Unlock()
 //
 //	if orders, ok := ss.states.Strategies[stratname]; !ok {
-//		ss.states.Strategies[stratname] = newStratOrders(ts, pfid)
+//		ss.states.Strategies[stratname] = newStratOrders(ts, pfid, order)
 //	} else {
 //		orders.LastSubmitted = ts
-//		orders.OrderDetails[pfid] = orderDetail{}
+//		//orders.OrderDetails[pfid] = orderDetail{}
+//		orders.WrappedOrders = append(orders.WrappedOrders, newWrappedOrder(ts, pfid, order))
 //		ss.states.Strategies[stratname] = orders
 //	}
 //

@@ -29,7 +29,7 @@ import (
 
 func main() {
 	var ACCT_STREAM bool = true
-	var MKT_STREAM bool = false
+	var MKT_STREAM bool = true
 	// determines wether an order is actually posted
 	var LIVE_ORDER bool = false
 	var PROD_ACCT bool = false
@@ -45,7 +45,7 @@ func main() {
 	godotenv.Load()
 
 	yahooClient := yahoo.New(mustEnv("YAHOO_API_KEY"), 10*time.Second, 1*time.Second, 1, 10*time.Second)
-	move, err := yahooClient.ONMove("^VIX")
+	move, err := yahooClient.ONMovePct("^VIX")
 	if err != nil {
 		logger.Error("unable to get overnight move for `^VIX`", "error", err)
 	}

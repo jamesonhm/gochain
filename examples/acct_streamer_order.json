@@ -1,0 +1,284 @@
+# closing IBIT
+{
+    Type:Order 
+    Order:{
+        AccountNumber:5WZ36946 
+        ContingentStatus: 
+        ConfirmationStatus: 
+        Cancellable:false 
+        CancelledAt:0001-01-01 00:00:00 +0000 UTC 
+        CancelUserID: 
+        CancelUsername: 
+        ComplexOrderID:0 
+        ComplexOrderTag: 
+        Editable:false 
+        Edited:false 
+        ExtExchangeOrderNumber: 
+        ExtClientOrderID: 
+        ExtGlobalOrderNumber:0 
+        GtcDate: 
+        ID:415418725 
+        InFlightAt: 
+        Legs:[
+            {
+                InstrumentType:Equity Option 
+                Symbol:IBIT  251031P00062000 
+                Quantity:1 
+                RemainingQuantity:1 
+                Action:Sell to Close 
+                Fills:[]
+            } 
+            {
+                InstrumentType:Equity Option 
+                Symbol:IBIT  251031P00066000 
+                Quantity:1 
+                RemainingQuantity:1 
+                Action:Buy to Close 
+                Fills:[]
+            }
+        ] 
+        LiveAt: 
+        OrderType:Limit 
+        PreflightID: 
+        Price:2.85 
+        PriceEffect:Debit 
+        ReceivedAt:2025-10-22 14:34:04.474 +0000 +0000 
+        ReplacingOrderID: 
+        ReplacesOrderID: 
+        RejectReason: 
+        Rules:{RouteAfter: RoutedAt: CancelAt: CancelledAt: Conditions:[]} 
+        Size:1 
+        Source:desktop-javafx;2.31.0 
+        Status:Routed 
+        StopTrigger:0 
+        TerminalAt:0001-01-01 00:00:00 +0000 UTC 
+        TimeInForce:Day 
+        UnderlyingSymbol:IBIT 
+        UnderlyingInstrumentType:Equity 
+        UpdatedAt:1761143644547 
+        UserID: 
+        Username: 
+        Value:0 
+        ValueEffect:
+    }
+}
+2025/10/22 08:34:04 INFO ACCT STREAMER <- ""="
+{
+    Type:Order 
+    Order:{
+        AccountNumber:5WZ36946 
+        ContingentStatus: ,
+        ConfirmationStatus: 
+        Cancellable:true 
+        CancelledAt:0001-01-01 00:00:00 +0000 UTC 
+        CancelUserID: 
+        CancelUsername: 
+        ComplexOrderID:0 
+        ComplexOrderTag: 
+        Editable:true 
+        Edited:false 
+        ExtExchangeOrderNumber:1784209838029650179 
+        ExtClientOrderID:00030083b918c2c965 
+        ExtGlobalOrderNumber:33721 
+        GtcDate: 
+        ID:415418725 
+        InFlightAt: 
+        Legs:[
+            {
+                InstrumentType:Equity Option 
+                Symbol:IBIT  251031P00062000 
+                Quantity:1 
+                RemainingQuantity:1 
+                Action:Sell to Close 
+                Fills:[]
+            } 
+            {
+                InstrumentType:Equity Option 
+                Symbol:IBIT  251031P00066000 
+                Quantity:1 
+                RemainingQuantity:1 
+                Action:Buy to Close 
+                Fills:[]
+            }
+        ] 
+        LiveAt: 
+        OrderType:Limit 
+        PreflightID: 
+        Price:2.85 
+        PriceEffect:Debit 
+        ReceivedAt:2025-10-22 14:34:04.474 +0000 +0000 
+        ReplacingOrderID: 
+        ReplacesOrderID: 
+        RejectReason: 
+        Rules:{RouteAfter: RoutedAt: CancelAt: CancelledAt: Conditions:[]} 
+        Size:1 
+        Source:desktop-javafx;2.31.0 
+        Status:Live 
+        StopTrigger:0 
+        TerminalAt:0001-01-01 00:00:00 +0000 UTC 
+        TimeInForce:Day 
+        UnderlyingSymbol:IBIT 
+        UnderlyingInstrumentType:Equity 
+        UpdatedAt:1761143644688 
+        UserID: 
+        Username: 
+        Value:0 
+        ValueEffect:
+    }
+}
+2025/10/22 08:34:20 INFO ACCT STREAMER -> ""="{Action:heartbeat Value: AuthToken:pdYjLOyqH23-w-1FzmrsTF860M0UhAOrv5O534LeXXmXjT-Q1JMwJQ+C RequestID:36}"
+2025/10/22 08:34:20 INFO ACCT STREAMER <- ""="{Status:ok Action:heartbeat WSSessionID:d303c2da Value:[] RequestID:36}"
+2025/10/22 08:34:20 INFO ACCT STREAMER <- ""="
+{
+    Type:Order 
+    Order:{
+        AccountNumber:5WZ36946 
+        ContingentStatus: 
+        ConfirmationStatus: 
+        Cancellable:false 
+        CancelledAt:0001-01-01 00:00:00 +0000 UTC 
+        CancelUserID: 
+        CancelUsername: 
+        ComplexOrderID:0 
+        ComplexOrderTag: 
+        Editable:false 
+        Edited:false 
+        ExtExchangeOrderNumber:1784209838029650179 
+        ExtClientOrderID:00030083b918c2c965 
+        ExtGlobalOrderNumber:33721 
+        GtcDate: 
+        ID:415418725 
+        InFlightAt: 
+        Legs:[
+            {
+                InstrumentType:Equity Option 
+                Symbol:IBIT  251031P00062000 
+                Quantity:1 
+                RemainingQuantity:1 
+                Action:Sell to Close 
+                Fills:[]
+            } 
+            {
+                InstrumentType:Equity Option 
+                Symbol:IBIT  251031P00066000 
+                Quantity:1 
+                RemainingQuantity:0 
+                Action:Buy to Close 
+                Fills:[
+                {ExtGroupFillID:2263584914 ExtExecID:76015 FillID:OPT150276015 Quantity:1 FillPrice:5.02 FilledAt:2025-10-22 14:34:20.64 +0000 +0000 DestinationVenue:CITADEL_OPTIONS_A}
+                ]
+            }
+        ] 
+        LiveAt: 
+        OrderType:Limit 
+        PreflightID: 
+        Price:2.85 
+        PriceEffect:Debit 
+        ReceivedAt:2025-10-22 14:34:04.474 +0000 +0000 
+        ReplacingOrderID: 
+        ReplacesOrderID: 
+        RejectReason: 
+        Rules:{RouteAfter: RoutedAt: CancelAt: CancelledAt: Conditions:[]} 
+        Size:1 
+        Source:desktop-javafx;2.31.0 
+        Status:Filled 
+        StopTrigger:0 
+        TerminalAt:2025-10-22 14:34:20.697 +0000 +0000 
+        TimeInForce:Day 
+        UnderlyingSymbol:IBIT 
+        UnderlyingInstrumentType:Equity 
+        UpdatedAt:1761143660709 
+        UserID: 
+        Username: 
+        Value:0 
+        ValueEffect:
+    }
+}
+2025/10/22 08:34:20 INFO ACCT STREAMER <- ""="
+{
+    Type:Order 
+    Order:{
+        AccountNumber:5WZ36946 
+        ContingentStatus: 
+        ConfirmationStatus: 
+        Cancellable:false 
+        CancelledAt:0001-01-01 00:00:00 +0000 UTC 
+        CancelUserID: 
+        CancelUsername: 
+        ComplexOrderID:0 
+        ComplexOrderTag: 
+        Editable:false 
+        Edited:false 
+        ExtExchangeOrderNumber:1784209838029650179 
+        ExtClientOrderID:00030083b918c2c965 
+        ExtGlobalOrderNumber:33721 
+        GtcDate: 
+        ID:415418725 
+        InFlightAt: 
+        Legs:[
+            {
+                InstrumentType:Equity Option 
+                Symbol:IBIT  251031P00062000 
+                Quantity:1 
+                RemainingQuantity:0 
+                Action:Sell to Close 
+                Fills:[
+                    {ExtGroupFillID:2263584914 ExtExecID:76019 FillID:OPT150276019 Quantity:1 FillPrice:2.17 FilledAt:2025-10-22 14:34:20.64 +0000 +0000 DestinationVenue:CITADEL_OPTIONS_A}
+                ]
+            } 
+            {
+                InstrumentType:Equity Option 
+                Symbol:IBIT  251031P00066000 
+                Quantity:1 
+                RemainingQuantity:0 
+                Action:Buy to Close 
+                Fills:[
+                    {ExtGroupFillID:2263584914 ExtExecID:76015 FillID:OPT150276015 Quantity:1 FillPrice:5.02 FilledAt:2025-10-22 14:34:20.64 +0000 +0000 DestinationVenue:CITADEL_OPTIONS_A}
+                ]
+            }
+        ] 
+        LiveAt: 
+        OrderType:Limit 
+        PreflightID: 
+        Price:2.85 
+        PriceEffect:Debit 
+        ReceivedAt:2025-10-22 14:34:04.474 +0000 +0000 
+        ReplacingOrderID: 
+        ReplacesOrderID: 
+        RejectReason: 
+        Rules:{RouteAfter: RoutedAt: CancelAt: CancelledAt: Conditions:[]} 
+        Size:1 
+        Source:desktop-javafx;2.31.0 
+        Status:Filled 
+        StopTrigger:0 
+        TerminalAt:2025-10-22 14:34:20.697 +0000 +0000 
+        TimeInForce:Day 
+        UnderlyingSymbol:IBIT 
+        UnderlyingInstrumentType:Equity 
+        UpdatedAt:1761143660709 
+        UserID: 
+        Username: 
+        Value:0 
+        ValueEffect:
+    }
+}
+
+
+########################################################################
+# Opening new IBIT
+{Type:Order Order:{AccountNumber:5WZ36946 ContingentStatus: ConfirmationStatus: Cancellable:false CancelledAt:0001-01-01 00:00:00 +0000 UTC CancelUserID: CancelUsername: ComplexOrderID:0 ComplexOrderTag: Editable:false Edited:false ExtExchangeOrderNumber: ExtClientOrderID: ExtGlobalOrderNumber:0 GtcDate: ID:415423767 InFlightAt: Legs:[{InstrumentType:Equity Option Symbol:IBIT  251128P00060000 Quantity:1 RemainingQuantity:1 Action:Buy to Open Fills:[]} {InstrumentType:Equity Option Symbol:IBIT  251031P00060000 Quantity:1 RemainingQuantity:1 Action:Sell to Open Fills:[]}] LiveAt: OrderType:Limit PreflightID: Price:1.74 PriceEffect:Debit ReceivedAt:2025-10-22 14:38:57.049 +0000 +0000 ReplacingOrderID: ReplacesOrderID: RejectReason: Rules:{RouteAfter: RoutedAt: CancelAt: CancelledAt: Conditions:[]} Size:1 Source:desktop-javafx;2.31.0 Status:Routed StopTrigger:0 TerminalAt:0001-01-01 00:00:00 +0000 UTC TimeInForce:Day UnderlyingSymbol:IBIT UnderlyingInstrumentType:Equity UpdatedAt:1761143937110 UserID: Username: Value:0 ValueEffect:}}"
+2025/10/22 08:38:57 INFO ACCT STREAMER <- ""="{Type:Order Order:{AccountNumber:5WZ36946 ContingentStatus: ConfirmationStatus: Cancellable:true CancelledAt:0001-01-01 00:00:00 +0000 UTC CancelUserID: CancelUsername: ComplexOrderID:0 ComplexOrderTag: Editable:true Edited:false ExtExchangeOrderNumber:1784231493255010051 ExtClientOrderID:000300879718c2dd17 ExtGlobalOrderNumber:34711 GtcDate: ID:415423767 InFlightAt: Legs:[{InstrumentType:Equity Option Symbol:IBIT  251128P00060000 Quantity:1 RemainingQuantity:1 Action:Buy to Open Fills:[]} {InstrumentType:Equity Option Symbol:IBIT  251031P00060000 Quantity:1 RemainingQuantity:1 Action:Sell to Open Fills:[]}] LiveAt: OrderType:Limit PreflightID: Price:1.74 PriceEffect:Debit ReceivedAt:2025-10-22 14:38:57.049 +0000 +0000 ReplacingOrderID: ReplacesOrderID: RejectReason: Rules:{RouteAfter: RoutedAt: CancelAt: CancelledAt: Conditions:[]} Size:1 Source:desktop-javafx;2.31.0 Status:Live StopTrigger:0 TerminalAt:0001-01-01 00:00:00 +0000 UTC TimeInForce:Day UnderlyingSymbol:IBIT UnderlyingInstrumentType:Equity UpdatedAt:1761143937237 UserID: Username: Value:0 ValueEffect:}}"
+2025/10/22 08:38:57 INFO ACCT STREAMER <- ""="{Type:Order Order:{AccountNumber:5WZ36946 ContingentStatus: ConfirmationStatus: Cancellable:false CancelledAt:0001-01-01 00:00:00 +0000 UTC CancelUserID: CancelUsername: ComplexOrderID:0 ComplexOrderTag: Editable:false Edited:false ExtExchangeOrderNumber:1784231493255010051 ExtClientOrderID:000300879718c2dd17 ExtGlobalOrderNumber:34711 GtcDate: ID:415423767 InFlightAt: Legs:[{InstrumentType:Equity Option Symbol:IBIT  251128P00060000 Quantity:1 RemainingQuantity:0 Action:Buy to Open Fills:[{ExtGroupFillID:2263579908 ExtExecID:293252 FillID:OPT1150293252 Quantity:1 FillPrice:3.07 FilledAt:2025-10-22 14:38:57.246 +0000 +0000 DestinationVenue:CITADEL_OPTIONS_A}]} {InstrumentType:Equity Option Symbol:IBIT  251031P00060000 Quantity:1 RemainingQuantity:1 Action:Sell to Open Fills:[]}] LiveAt: OrderType:Limit PreflightID: Price:1.74 PriceEffect:Debit ReceivedAt:2025-10-22 14:38:57.049 +0000 +0000 ReplacingOrderID: ReplacesOrderID: RejectReason: Rules:{RouteAfter: RoutedAt: CancelAt: CancelledAt: Conditions:[]} Size:1 Source:desktop-javafx;2.31.0 Status:Filled StopTrigger:0 TerminalAt:2025-10-22 14:38:57.301 +0000 +0000 TimeInForce:Day UnderlyingSymbol:IBIT UnderlyingInstrumentType:Equity UpdatedAt:1761143937311 UserID: Username: Value:0 ValueEffect:}}"
+2025/10/22 08:38:57 INFO ACCT STREAMER <- ""="{Type:Order Order:{AccountNumber:5WZ36946 ContingentStatus: ConfirmationStatus: Cancellable:false CancelledAt:0001-01-01 00:00:00 +0000 UTC CancelUserID: CancelUsername: ComplexOrderID:0 ComplexOrderTag: Editable:false Edited:false ExtExchangeOrderNumber:1784231493255010051 ExtClientOrderID:000300879718c2dd17 ExtGlobalOrderNumber:34711 GtcDate: ID:415423767 InFlightAt: Legs:[{InstrumentType:Equity Option Symbol:IBIT  251128P00060000 Quantity:1 RemainingQuantity:0 Action:Buy to Open Fills:[{ExtGroupFillID:2263579908 ExtExecID:293252 FillID:OPT1150293252 Quantity:1 FillPrice:3.07 FilledAt:2025-10-22 14:38:57.246 +0000 +0000 DestinationVenue:CITADEL_OPTIONS_A}]} {InstrumentType:Equity Option Symbol:IBIT  251031P00060000 Quantity:1 RemainingQuantity:0 Action:Sell to Open Fills:[{ExtGroupFillID:2263579908 ExtExecID:293256 FillID:OPT1150293256 Quantity:1 FillPrice:1.33 FilledAt:2025-10-22 14:38:57.246 +0000 +0000 DestinationVenue:CITADEL_OPTIONS_A}]}] LiveAt: OrderType:Limit PreflightID: Price:1.74 PriceEffect:Debit ReceivedAt:2025-10-22 14:38:57.049 +0000 +0000 ReplacingOrderID: ReplacesOrderID: RejectReason: Rules:{RouteAfter: RoutedAt: CancelAt: CancelledAt: Conditions:[]} Size:1 Source:desktop-javafx;2.31.0 Status:Filled StopTrigger:0 TerminalAt:2025-10-22 14:38:57.301 +0000 +0000 TimeInForce:Day UnderlyingSymbol:IBIT UnderlyingInstrumentType:Equity UpdatedAt:1761143937311 UserID: Username: Value:0 ValueEffect:}}"
+
+#######
+# submit roll of GLD
+{Type:Order Order:{AccountNumber:5WZ36946 ContingentStatus: ConfirmationStatus: Cancellable:false CancelledAt:0001-01-01 00:00:00 +0000 UTC CancelUserID: CancelUsername: ComplexOrderID:0 ComplexOrderTag: Editable:false Edited:false ExtExchangeOrderNumber: ExtClientOrderID: ExtGlobalOrderNumber:0 GtcDate: ID:415433625 InFlightAt: Legs:[{InstrumentType:Equity Option Symbol:GLD   251031P00385000 Quantity:1 RemainingQuantity:1 Action:Sell to Open Fills:[]} {InstrumentType:Equity Option Symbol:GLD   251024P00385000 Quantity:1 RemainingQuantity:1 Action:Buy to Close Fills:[]}] LiveAt: OrderType:Limit PreflightID: Price:1.63 PriceEffect:Credit ReceivedAt:2025-10-22 14:48:53.93 +0000 +0000 ReplacingOrderID: ReplacesOrderID: RejectReason: Rules:{RouteAfter: RoutedAt: CancelAt: CancelledAt: Conditions:[]} Size:1 Source:desktop-javafx;2.31.0 Status:Routed StopTrigger:0 TerminalAt:0001-01-01 00:00:00 +0000 UTC TimeInForce:Day UnderlyingSymbol:GLD UnderlyingInstrumentType:Equity UpdatedAt:1761144533953 UserID: Username: Value:0 ValueEffect:}}"
+2025/10/22 08:48:54 INFO ACCT STREAMER <- ""="{Type:Order Order:{AccountNumber:5WZ36946 ContingentStatus: ConfirmationStatus: Cancellable:true CancelledAt:0001-01-01 00:00:00 +0000 UTC CancelUserID: CancelUsername: ComplexOrderID:0 ComplexOrderTag: Editable:true Edited:false ExtExchangeOrderNumber:1784273833040287239 ExtClientOrderID:000700641618c30399 ExtGlobalOrderNumber:25622 GtcDate: ID:415433625 InFlightAt: Legs:[{InstrumentType:Equity Option Symbol:GLD   251031P00385000 Quantity:1 RemainingQuantity:1 Action:Sell to Open Fills:[]} {InstrumentType:Equity Option Symbol:GLD   251024P00385000 Quantity:1 RemainingQuantity:1 Action:Buy to Close Fills:[]}] LiveAt: OrderType:Limit PreflightID: Price:1.63 PriceEffect:Credit ReceivedAt:2025-10-22 14:48:53.93 +0000 +0000 ReplacingOrderID: ReplacesOrderID: RejectReason: Rules:{RouteAfter: RoutedAt: CancelAt: CancelledAt: Conditions:[]} Size:1 Source:desktop-javafx;2.31.0 Status:Live StopTrigger:0 TerminalAt:0001-01-01 00:00:00 +0000 UTC TimeInForce:Day UnderlyingSymbol:GLD UnderlyingInstrumentType:Equity UpdatedAt:1761144534064 UserID: Username: Value:0 ValueEffect:}}
+
+# cancel, re-submit, fill of GLD
+{Type:Order Order:{AccountNumber:5WZ36946 ContingentStatus: ConfirmationStatus: Cancellable:false CancelledAt:2025-10-22 14:52:32.796 +0000 +0000 CancelUserID: CancelUsername: ComplexOrderID:0 ComplexOrderTag: Editable:false Edited:true ExtExchangeOrderNumber:1784273833040287239 ExtClientOrderID:000700641618c30399 ExtGlobalOrderNumber:25622 GtcDate: ID:415433625 InFlightAt: Legs:[{InstrumentType:Equity Option Symbol:GLD   251031P00385000 Quantity:1 RemainingQuantity:1 Action:Sell to Open Fills:[]} {InstrumentType:Equity Option Symbol:GLD   251024P00385000 Quantity:1 RemainingQuantity:1 Action:Buy to Close Fills:[]}] LiveAt: OrderType:Limit PreflightID: Price:1.63 PriceEffect:Credit ReceivedAt:2025-10-22 14:48:53.93 +0000 +0000 ReplacingOrderID: ReplacesOrderID: RejectReason: Rules:{RouteAfter: RoutedAt: CancelAt: CancelledAt: Conditions:[]} Size:1 Source:desktop-javafx;2.31.0 Status:Cancelled StopTrigger:0 TerminalAt:2025-10-22 14:52:32.817 +0000 +0000 TimeInForce:Day UnderlyingSymbol:GLD UnderlyingInstrumentType:Equity UpdatedAt:1761144752866 UserID: Username: Value:0 ValueEffect:}}"
+2025/10/22 08:52:33 INFO ACCT STREAMER <- ""="{Type:Order Order:{AccountNumber:5WZ36946 ContingentStatus: ConfirmationStatus: Cancellable:false CancelledAt:0001-01-01 00:00:00 +0000 UTC CancelUserID: CancelUsername: ComplexOrderID:0 ComplexOrderTag: Editable:false Edited:false ExtExchangeOrderNumber: ExtClientOrderID: ExtGlobalOrderNumber:0 GtcDate: ID:415437334 InFlightAt: Legs:[{InstrumentType:Equity Option Symbol:GLD   251024P00385000 Quantity:1 RemainingQuantity:1 Action:Buy to Close Fills:[]} {InstrumentType:Equity Option Symbol:GLD   251031P00385000 Quantity:1 RemainingQuantity:1 Action:Sell to Open Fills:[]}] LiveAt: OrderType:Limit PreflightID: Price:1.45 PriceEffect:Credit ReceivedAt:2025-10-22 14:52:32.723 +0000 +0000 ReplacingOrderID: ReplacesOrderID: RejectReason: Rules:{RouteAfter: RoutedAt: CancelAt: CancelledAt: Conditions:[]} Size:1 Source:desktop-javafx;2.31.0 Status:Routed StopTrigger:0 TerminalAt:0001-01-01 00:00:00 +0000 UTC TimeInForce:Day UnderlyingSymbol:GLD UnderlyingInstrumentType:Equity UpdatedAt:1761144753128 UserID: Username: Value:0 ValueEffect:}}"
+2025/10/22 08:52:33 INFO ACCT STREAMER <- ""="{Type:Order Order:{AccountNumber:5WZ36946 ContingentStatus: ConfirmationStatus: Cancellable:true CancelledAt:0001-01-01 00:00:00 +0000 UTC CancelUserID: CancelUsername: ComplexOrderID:0 ComplexOrderTag: Editable:true Edited:false ExtExchangeOrderNumber:1784289763069174408 ExtClientOrderID:10088001aa218c31216 ExtGlobalOrderNumber:6818 GtcDate: ID:415437334 InFlightAt: Legs:[{InstrumentType:Equity Option Symbol:GLD   251024P00385000 Quantity:1 RemainingQuantity:1 Action:Buy to Close Fills:[]} {InstrumentType:Equity Option Symbol:GLD   251031P00385000 Quantity:1 RemainingQuantity:1 Action:Sell to Open Fills:[]}] LiveAt: OrderType:Limit PreflightID: Price:1.45 PriceEffect:Credit ReceivedAt:2025-10-22 14:52:32.723 +0000 +0000 ReplacingOrderID: ReplacesOrderID: RejectReason: Rules:{RouteAfter: RoutedAt: CancelAt: CancelledAt: Conditions:[]} Size:1 Source:desktop-javafx;2.31.0 Status:Live StopTrigger:0 TerminalAt:0001-01-01 00:00:00 +0000 UTC TimeInForce:Day UnderlyingSymbol:GLD UnderlyingInstrumentType:Equity UpdatedAt:1761144753267 UserID: Username: Value:0 ValueEffect:}}"
+2025/10/22 08:52:33 INFO ACCT STREAMER <- ""="{Type:Order Order:{AccountNumber:5WZ36946 ContingentStatus: ConfirmationStatus: Cancellable:false CancelledAt:0001-01-01 00:00:00 +0000 UTC CancelUserID: CancelUsername: ComplexOrderID:0 ComplexOrderTag: Editable:false Edited:false ExtExchangeOrderNumber:1784289763069174408 ExtClientOrderID:10088001aa218c31216 ExtGlobalOrderNumber:6818 GtcDate: ID:415437334 InFlightAt: Legs:[{InstrumentType:Equity Option Symbol:GLD   251024P00385000 Quantity:1 RemainingQuantity:1 Action:Buy to Close Fills:[]} {InstrumentType:Equity Option Symbol:GLD   251031P00385000 Quantity:1 RemainingQuantity:0 Action:Sell to Open Fills:[{ExtGroupFillID:0 ExtExecID:0 FillID:51022311072192L0 Quantity:1 FillPrice:16.77 FilledAt:2025-10-22 14:52:33.262 +0000 +0000 DestinationVenue:JANE_STREET_OPTIONS_A}]}] LiveAt: OrderType:Limit PreflightID: Price:1.45 PriceEffect:Credit ReceivedAt:2025-10-22 14:52:32.723 +0000 +0000 ReplacingOrderID: ReplacesOrderID: RejectReason: Rules:{RouteAfter: RoutedAt: CancelAt: CancelledAt: Conditions:[]} Size:1 Source:desktop-javafx;2.31.0 Status:Filled StopTrigger:0 TerminalAt:2025-10-22 14:52:33.325 +0000 +0000 TimeInForce:Day UnderlyingSymbol:GLD UnderlyingInstrumentType:Equity UpdatedAt:1761144753336 UserID: Username: Value:0 ValueEffect:}}"
+2025/10/22 08:52:33 INFO ACCT STREAMER <- ""="{Type:Order Order:{AccountNumber:5WZ36946 ContingentStatus: ConfirmationStatus: Cancellable:false CancelledAt:0001-01-01 00:00:00 +0000 UTC CancelUserID: CancelUsername: ComplexOrderID:0 ComplexOrderTag: Editable:false Edited:false ExtExchangeOrderNumber:1784289763069174408 ExtClientOrderID:10088001aa218c31216 ExtGlobalOrderNumber:6818 GtcDate: ID:415437334 InFlightAt: Legs:[{InstrumentType:Equity Option Symbol:GLD   251024P00385000 Quantity:1 RemainingQuantity:0 Action:Buy to Close Fills:[{ExtGroupFillID:0 ExtExecID:0 FillID:51022311072192L1 Quantity:1 FillPrice:15.22 FilledAt:2025-10-22 14:52:33.262 +0000 +0000 DestinationVenue:JANE_STREET_OPTIONS_A}]} {InstrumentType:Equity Option Symbol:GLD   251031P00385000 Quantity:1 RemainingQuantity:0 Action:Sell to Open Fills:[{ExtGroupFillID:0 ExtExecID:0 FillID:51022311072192L0 Quantity:1 FillPrice:16.77 FilledAt:2025-10-22 14:52:33.262 +0000 +0000 DestinationVenue:JANE_STREET_OPTIONS_A}]}] LiveAt: OrderType:Limit PreflightID: Price:1.45 PriceEffect:Credit ReceivedAt:2025-10-22 14:52:32.723 +0000 +0000 ReplacingOrderID: ReplacesOrderID: RejectReason: Rules:{RouteAfter: RoutedAt: CancelAt: CancelledAt: Conditions:[]} Size:1 Source:desktop-javafx;2.31.0 Status:Filled StopTrigger:0 TerminalAt:2025-10-22 14:52:33.325 +0000 +0000 TimeInForce:Day UnderlyingSymbol:GLD UnderlyingInstrumentType:Equity UpdatedAt:1761144753336 UserID: Username: Value:0 ValueEffect:}}

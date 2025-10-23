@@ -239,6 +239,12 @@ func (as *AccountStreamer) processMessage(message []byte) {
 			slog.Error("unable to unmarshal", "order notification", string(message))
 			return
 		}
-		slog.Info("ACCT STREAMER <-", "", resp)
+		// get source = strat name or desktop app version
+		// get preflightID
+		slog.Info("ACCT STREAMER <- order resp:")
+		b, err := json.MarshalIndent(resp, "", "  ")
+		if err == nil {
+			fmt.Println(string(b))
+		}
 	}
 }
