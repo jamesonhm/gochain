@@ -1,4 +1,4 @@
-package tasty
+package acctstream
 
 import (
 	"context"
@@ -10,6 +10,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/jamesonhm/gochain/internal/dt"
+	"github.com/jamesonhm/gochain/internal/strategy"
+	"github.com/jamesonhm/gochain/internal/tasty"
 )
 
 const (
@@ -30,6 +33,8 @@ type AccountStreamer struct {
 	delay          time.Duration
 	expBackoff     bool
 	mu             sync.RWMutex
+	orderQueue     chan tasty.Order
+	stratStates    *strategy.Status
 }
 
 type ActionMsg struct {
@@ -47,7 +52,7 @@ type ConnectRespMsg struct {
 	RequestID   int      `json:"request-id"`
 }
 
-func (c *TastyAPI) NewAccountStreamer(ctx context.Context, acct string, prod bool) *AccountStreamer {
+func NewAccountStreamer(ctx context.Context, acct string, token string, prod bool) *AccountStreamer {
 	ctx, cancel := context.WithCancel(ctx)
 	var url string
 	if prod {
@@ -62,9 +67,10 @@ func (c *TastyAPI) NewAccountStreamer(ctx context.Context, acct string, prod boo
 		delay:          1 * time.Second,
 		expBackoff:     false,
 		retries:        3,
-		token:          *c.session.Data.SessionToken,
+		token:          token,
 		url:            url,
 		messageCounter: 1,
+		orderQueue:     make(chan tasty.Order, 10),
 	}
 }
 
@@ -230,8 +236,8 @@ func (as *AccountStreamer) processMessage(message []byte) {
 		slog.Info("ACCT STREAMER <-", "", resp)
 	case "Order":
 		type OrderNotification struct {
-			Type  string `json:"type"`
-			Order Order  `json:"data"`
+			Type  string      `json:"type"`
+			Order tasty.Order `json:"data"`
 		}
 		resp := OrderNotification{}
 		err := json.Unmarshal(message, &resp)
@@ -239,12 +245,30 @@ func (as *AccountStreamer) processMessage(message []byte) {
 			slog.Error("unable to unmarshal", "order notification", string(message))
 			return
 		}
-		// get source = strat name or desktop app version
-		// get preflightID
 		slog.Info("ACCT STREAMER <- order resp:")
 		b, err := json.MarshalIndent(resp, "", "  ")
 		if err == nil {
 			fmt.Println(string(b))
+		}
+		as.orderQueue <- resp.Order
+	}
+}
+
+func (as *AccountStreamer) updateOrderState(order tasty.Order) {
+	// get source = strat name or desktop app version
+	// get preflightID
+	for order := range as.orderQueue {
+		if order.Source == "" {
+			slog.Info("order update with no source. order id: %s", order.ID)
+			continue
+		}
+		if order.PreflightID == "" {
+			slog.Info("order update with no preflightID. order id: %s", order.ID)
+			continue
+		}
+		err := as.stratStates.UpdateOrder(order.Source, time.Now().In(dt.TZNY()), order.PreflightID, order)
+		if err != nil {
+			slog.Error("unable to update order from streamer: %w", err)
 		}
 	}
 }

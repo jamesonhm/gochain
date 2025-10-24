@@ -15,6 +15,7 @@ import (
 	//"sync"
 	"time"
 
+	"github.com/jamesonhm/gochain/internal/acctstream"
 	"github.com/jamesonhm/gochain/internal/dt"
 	"github.com/jamesonhm/gochain/internal/dxlink"
 	"github.com/jamesonhm/gochain/internal/executor"
@@ -104,7 +105,7 @@ func main() {
 	//}
 
 	// start account streamer
-	acctStreamer := tastyClient.NewAccountStreamer(ctx, acctNum, tastyClient.Env == tasty.TastyProd)
+	acctStreamer := acctstream.NewAccountStreamer(ctx, acctNum, tastyClient.GetToken(), tastyClient.Env == tasty.TastyProd)
 
 	startAcctStream := func() {
 		err = acctStreamer.Connect()

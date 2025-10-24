@@ -34,6 +34,7 @@ type stratOrders struct {
 type WrappedOrder struct {
 	PreflightID   string      `json:"pfid"`
 	SubmitTime    time.Time   `json:"submit-time"`
+	UpdateTime    time.Time   `json:"update-time"`
 	LastRetry     time.Time   `json:"last-retry"`
 	RetryAttempts int         `json:"retry-attempts"`
 	Order         tasty.Order `json:"order"`
@@ -173,7 +174,27 @@ func (ss *Status) NextPFID() int {
 	return ss.states.SeqPfid
 }
 
-func (ss *Status) UpdateByID(id string) {}
+func (ss *Status) UpdateOrder(stratname string, ts time.Time, pfid string, order tasty.Order) error {
+	ss.mu.Lock()
+	defer ss.mu.Unlock()
+
+	orders, ok := ss.states.Strategies[stratname]
+	if !ok {
+		return fmt.Errorf("no states found for stratname %s", stratname)
+	}
+	wo, ok := orders.WrappedOrders[pfid]
+	if !ok {
+		return fmt.Errorf("no order found for stratname %s and pfid %s", stratname, pfid)
+	}
+	wo.UpdateTime = ts
+	wo.Order = order
+
+	orders.WrappedOrders[pfid] = wo
+	ss.states.Strategies[stratname] = orders
+
+	ss.writefile()
+	return nil
+}
 
 func (ss *Status) writefile() {
 	byt, err := json.MarshalIndent(ss.states, "", "  ")

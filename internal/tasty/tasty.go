@@ -143,3 +143,10 @@ func (c *TastyAPI) GetUser() string {
 	}
 	return *c.session.Data.User.Username
 }
+
+func (c *TastyAPI) GetToken() string {
+	if c.session == nil {
+		return "NOT LOGGED IN"
+	}
+	return *c.session.Data.SessionToken
+}

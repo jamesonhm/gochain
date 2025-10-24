@@ -1,12 +1,13 @@
 {
-  "seq-pfid": 1,
+  "seq-pfid": 2,
   "strategies": {
     "basic PCS": {
-      "last-submitted": "2025-10-23T08:47:49.864481181-04:00",
+      "last-submitted": "2025-10-24T08:30:25.909731294-04:00",
       "wrapped-orders": {
         "1": {
           "pfid": "1",
           "submit-time": "2025-10-23T08:47:49.864481181-04:00",
+          "update-time": "0001-01-01T00:00:00Z",
           "last-retry": "0001-01-01T00:00:00Z",
           "retry-attempts": 0,
           "order": {
@@ -49,6 +50,79 @@
             "order-type": "Limit",
             "preflight-id": "1",
             "price": "0.9",
+            "price-effect": "Credit",
+            "received-at": "0001-01-01T00:00:00Z",
+            "replacing-order-id": "",
+            "replaces-order-id": "",
+            "reject-reason": "",
+            "rules": {
+              "route-after": "",
+              "routed-at": "",
+              "cancel-at": "",
+              "cancelled-at": "",
+              "conditions": []
+            },
+            "size": 1,
+            "source": "basic PCS",
+            "status": "Contingent",
+            "stop-trigger": "0",
+            "terminal-at": "0001-01-01T00:00:00Z",
+            "time-in-force": "Day",
+            "underlying-symbol": "XSP",
+            "underlying-instrument-type": "Equity",
+            "updated-at": 0,
+            "user-id": "",
+            "username": "",
+            "value": "0",
+            "value-effect": ""
+          }
+        },
+        "2": {
+          "pfid": "2",
+          "submit-time": "2025-10-24T08:30:25.909731294-04:00",
+          "update-time": "0001-01-01T00:00:00Z",
+          "last-retry": "0001-01-01T00:00:00Z",
+          "retry-attempts": 0,
+          "order": {
+            "account-number": "5WY91941",
+            "contingent-status": "Pending Condition",
+            "confirmation-status": "",
+            "cancellable": true,
+            "cancelled-at": "0001-01-01T00:00:00Z",
+            "cancel-user-id": "",
+            "cancel-username": "",
+            "complex-order-id": 0,
+            "complex-order-tag": "",
+            "editable": true,
+            "edited": false,
+            "ext-exchange-order-number": "",
+            "ext-client-order-id": "",
+            "ext-global-order-number": 0,
+            "gtc-date": "",
+            "id": 0,
+            "in-flight-at": "",
+            "legs": [
+              {
+                "instrument-type": "Equity Option",
+                "symbol": "XSP   251031P00670000",
+                "quantity": 1,
+                "remaining-quantity": 1,
+                "action": "Sell to Open",
+                "fills": []
+              },
+              {
+                "instrument-type": "Equity Option",
+                "symbol": "XSP   251031P00665000",
+                "quantity": 1,
+                "remaining-quantity": 1,
+                "action": "Buy to Open",
+                "fills": []
+              }
+            ],
+            "live-at": "",
+            "order-type": "Limit",
+            "preflight-id": "2",
+            "price": "0.98",
             "price-effect": "Credit",
             "received-at": "0001-01-01T00:00:00Z",
             "replacing-order-id": "",
