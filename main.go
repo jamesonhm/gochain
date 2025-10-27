@@ -15,14 +15,13 @@ import (
 	//"sync"
 	"time"
 
-	"github.com/jamesonhm/gochain/internal/acctstream"
 	"github.com/jamesonhm/gochain/internal/dt"
 	"github.com/jamesonhm/gochain/internal/dxlink"
 	"github.com/jamesonhm/gochain/internal/executor"
 	"github.com/jamesonhm/gochain/internal/monitor"
+	"github.com/jamesonhm/gochain/internal/strategy"
 
 	//"github.com/jamesonhm/gochain/internal/options"
-	"github.com/jamesonhm/gochain/internal/strategy"
 	"github.com/jamesonhm/gochain/internal/tasty"
 	"github.com/jamesonhm/gochain/internal/yahoo"
 	"github.com/joho/godotenv"
@@ -104,8 +103,17 @@ func main() {
 	//	fmt.Println(string(bytes))
 	//}
 
+	stratStates := strategy.NewStatus("teststates.json")
+	//stratStates.PPrint()
+
 	// start account streamer
-	acctStreamer := acctstream.NewAccountStreamer(ctx, acctNum, tastyClient.GetToken(), tastyClient.Env == tasty.TastyProd)
+	acctStreamer := tasty.NewAccountStreamer(
+		ctx,
+		acctNum,
+		tastyClient.GetToken(),
+		stratStates,
+		tastyClient.Env == tasty.TastyProd,
+	)
 
 	startAcctStream := func() {
 		err = acctStreamer.Connect()
@@ -202,9 +210,6 @@ func main() {
 	if MKT_STREAM {
 		go startMarketStream()
 	}
-
-	stratStates := strategy.NewStatus("teststates.json")
-	//stratStates.PPrint()
 
 	executor := executor.NewEngine(tastyClient, acctNum, streamClient, stratStates, 1, ctx, LIVE_ORDER)
 

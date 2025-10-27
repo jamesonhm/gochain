@@ -20,8 +20,12 @@ type Engine struct {
 	candles      *yahoo.YahooAPI
 	strategies   []strategy.Strategy
 	executor     *executor.Engine
-	stratStates  *strategy.Status
+	stratStates  StatusTracker
 	scanInterval time.Duration
+}
+
+type StatusTracker interface {
+	LastSubmitted(string) (time.Time, error)
 }
 
 func NewEngine(
@@ -29,7 +33,7 @@ func NewEngine(
 	options *dxlink.DxLinkClient,
 	candles *yahoo.YahooAPI,
 	executor *executor.Engine,
-	stratStates *strategy.Status,
+	stratStates StatusTracker,
 	scanInterval time.Duration,
 ) *Engine {
 	return &Engine{

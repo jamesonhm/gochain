@@ -20,7 +20,7 @@ type Engine struct {
 	apiClient      *tasty.TastyAPI
 	acctNum        string
 	optionProvider *dxlink.DxLinkClient
-	stratStates    *strategy.Status
+	stratStates    OrderSubmitter
 	orderQueue     chan tasty.NewOrder
 	wg             sync.WaitGroup
 	workerCount    int
@@ -28,11 +28,16 @@ type Engine struct {
 	liveOrder      bool
 }
 
+type OrderSubmitter interface {
+	SubmitOrder(string, time.Time, string, tasty.Order)
+	NextPFID() int
+}
+
 func NewEngine(
 	apiClient *tasty.TastyAPI,
 	acctNum string,
 	optionProvider *dxlink.DxLinkClient,
-	stratStates *strategy.Status,
+	stratStates OrderSubmitter,
 	workerCount int,
 	ctx context.Context,
 	liveOrder bool,

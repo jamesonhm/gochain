@@ -1,4 +1,4 @@
-package acctstream
+package tasty
 
 import (
 	"context"
@@ -11,8 +11,6 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/jamesonhm/gochain/internal/dt"
-	"github.com/jamesonhm/gochain/internal/strategy"
-	"github.com/jamesonhm/gochain/internal/tasty"
 )
 
 const (
@@ -33,8 +31,8 @@ type AccountStreamer struct {
 	delay          time.Duration
 	expBackoff     bool
 	mu             sync.RWMutex
-	orderQueue     chan tasty.Order
-	stratStates    *strategy.Status
+	orderQueue     chan Order
+	stratStatus    StatusUpdater
 }
 
 type ActionMsg struct {
@@ -52,7 +50,17 @@ type ConnectRespMsg struct {
 	RequestID   int      `json:"request-id"`
 }
 
-func NewAccountStreamer(ctx context.Context, acct string, token string, prod bool) *AccountStreamer {
+type StatusUpdater interface {
+	UpdateOrder(string, time.Time, string, Order) error
+}
+
+func NewAccountStreamer(
+	ctx context.Context,
+	acct string,
+	token string,
+	stratStatus StatusUpdater,
+	prod bool,
+) *AccountStreamer {
 	ctx, cancel := context.WithCancel(ctx)
 	var url string
 	if prod {
@@ -70,7 +78,8 @@ func NewAccountStreamer(ctx context.Context, acct string, token string, prod boo
 		token:          token,
 		url:            url,
 		messageCounter: 1,
-		orderQueue:     make(chan tasty.Order, 10),
+		orderQueue:     make(chan Order, 10),
+		stratStatus:    stratStatus,
 	}
 }
 
@@ -236,8 +245,8 @@ func (as *AccountStreamer) processMessage(message []byte) {
 		slog.Info("ACCT STREAMER <-", "", resp)
 	case "Order":
 		type OrderNotification struct {
-			Type  string      `json:"type"`
-			Order tasty.Order `json:"data"`
+			Type  string `json:"type"`
+			Order Order  `json:"data"`
 		}
 		resp := OrderNotification{}
 		err := json.Unmarshal(message, &resp)
@@ -254,7 +263,7 @@ func (as *AccountStreamer) processMessage(message []byte) {
 	}
 }
 
-func (as *AccountStreamer) updateOrderState(order tasty.Order) {
+func (as *AccountStreamer) updateOrderState(order Order) {
 	// get source = strat name or desktop app version
 	// get preflightID
 	for order := range as.orderQueue {
@@ -266,7 +275,7 @@ func (as *AccountStreamer) updateOrderState(order tasty.Order) {
 			slog.Info("order update with no preflightID. order id: %s", order.ID)
 			continue
 		}
-		err := as.stratStates.UpdateOrder(order.Source, time.Now().In(dt.TZNY()), order.PreflightID, order)
+		err := as.stratStatus.UpdateOrder(order.Source, time.Now().In(dt.TZNY()), order.PreflightID, order)
 		if err != nil {
 			slog.Error("unable to update order from streamer: %w", err)
 		}
