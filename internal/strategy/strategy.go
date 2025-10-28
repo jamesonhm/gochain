@@ -121,13 +121,18 @@ type CandlesProvider interface {
 type PortfolioProvider interface {
 }
 
+type StratStatusProvider interface {
+	OpenTrades(string) int
+}
+
 func (s *Strategy) CheckEntryConditions(
 	options OptionsProvider,
 	candles CandlesProvider,
 	portfolio PortfolioProvider,
+	status StratStatusProvider,
 ) bool {
 	for name, condition := range s.entryConditions {
-		if !condition(options, candles, portfolio) {
+		if !condition(options, candles, portfolio, status) {
 			slog.Info("Condition evaluated False", "strategy", s.Name, "condition", name)
 			return false
 		}

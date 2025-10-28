@@ -12,10 +12,8 @@ type Condition func(
 	options OptionsProvider,
 	candles CandlesProvider,
 	portfolio PortfolioProvider,
+	status StratStatusProvider,
 ) bool
-
-// Checks that may require `stratStates` to be part of the monitor
-// Max Open Trades
 
 // Factory functions for each condition type
 func createDayOfWeekCondition(params map[string]interface{}) (Condition, error) {
@@ -44,13 +42,11 @@ func createDayOfWeekCondition(params map[string]interface{}) (Condition, error) 
 	// Convert string days to time.Weekday
 	var weekdays []time.Weekday
 	dayMap := map[string]time.Weekday{
-		"sun": time.Sunday, "sunday": time.Sunday,
 		"mon": time.Monday, "monday": time.Monday,
 		"tues": time.Tuesday, "tuesday": time.Tuesday,
 		"weds": time.Wednesday, "wednesday": time.Wednesday,
 		"thurs": time.Thursday, "thursday": time.Thursday,
 		"fri": time.Friday, "friday": time.Friday,
-		"sat": time.Saturday, "saturday": time.Saturday,
 	}
 
 	for _, dayStr := range dayStrings {
@@ -61,7 +57,7 @@ func createDayOfWeekCondition(params map[string]interface{}) (Condition, error) 
 		}
 	}
 
-	return func(_ OptionsProvider, _ CandlesProvider, _ PortfolioProvider) bool {
+	return func(_ OptionsProvider, _ CandlesProvider, _ PortfolioProvider, _ StratStatusProvider) bool {
 		today := time.Now().Weekday()
 		for _, day := range weekdays {
 			if day == today {
@@ -119,7 +115,7 @@ func createVixONMoveCondition(params map[string]interface{}) (Condition, error) 
 	} else {
 		maxParam = decimal.NewFromInt(999)
 	}
-	return func(_ OptionsProvider, candles CandlesProvider, _ PortfolioProvider) bool {
+	return func(_ OptionsProvider, candles CandlesProvider, _ PortfolioProvider, _ StratStatusProvider) bool {
 		var vixMoveD decimal.Decimal
 		switch units {
 		case "percent":
@@ -139,5 +135,30 @@ func createVixONMoveCondition(params map[string]interface{}) (Condition, error) 
 		}
 
 		return minParam.LessThanOrEqual(vixMoveD) && maxParam.GreaterThanOrEqual(vixMoveD)
+	}, nil
+}
+
+func createMaxOpenTradesCondition(params map[string]interface{}) (Condition, error) {
+	maxInter, maxOk := params["max"]
+	nameInter, nameOk := params["strategy-name"]
+	if !maxOk || !nameOk {
+		return nil, fmt.Errorf("Max Open Trades Condition requires both `max` and `strategy-name` parameters")
+	}
+
+	var maxParam int
+	var ok bool
+	if maxParam, ok = maxInter.(int); !ok {
+		return nil, fmt.Errorf("Max Open Trades unable to get integer from max param: %v", maxInter)
+	}
+	var nameParam string
+	if nameParam, ok = nameInter.(string); !ok {
+		return nil, fmt.Errorf("Max Open Trades unable to get string from name param: %v", nameInter)
+	}
+
+	return func(_ OptionsProvider, _ CandlesProvider, _ PortfolioProvider, status StratStatusProvider) bool {
+		if status.OpenTrades(nameParam) >= maxParam {
+			return false
+		}
+		return true
 	}, nil
 }

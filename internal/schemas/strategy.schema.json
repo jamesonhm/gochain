@@ -46,7 +46,7 @@
                             "minItems": 1, 
                             "maxItems": 5,
                             "items": {
-                                "enum": ["mon", "tues", "weds", "thurs", "fri"]
+                                "enum": ["mon", "monday", "tues", "tuesday", "weds", "wednesday", "thurs", "thursday", "fri", "friday"]
                             }
                         }
                     }
@@ -59,6 +59,18 @@
                             "examples": ["0.01"]
                         },
                         "max": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "max-open-trades": {
+                    "type": "object",
+                    "required": ["max", "strategy-name"],
+                    "properties": {
+                        "max": {
+                            "type": "integer"
+                        },
+                        "strategy-name": {
                             "type": "string"
                         }
                     }

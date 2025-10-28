@@ -95,7 +95,7 @@ func (e *Engine) checkAllStrategies(ctx context.Context) {
 			}
 		}
 		slog.Info("(checkAllStrategies) last submitted not within entry time")
-		if s.CheckEntryConditions(e.portfolio, e.candles, e.options) {
+		if s.CheckEntryConditions(e.portfolio, e.candles, e.options, e.stratStates) {
 			slog.LogAttrs(
 				ctx,
 				slog.LevelInfo,

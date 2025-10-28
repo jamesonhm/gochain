@@ -32,6 +32,10 @@
         "vix-overnight-move": {
             "max": "-0.01",
             "min": "-99"
+        },
+        "max-open-trades": {
+            "max": 3,
+            "strategy-name": "basic PCS"
         }
     },
     "entry-slippage": 2,

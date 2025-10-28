@@ -165,6 +165,17 @@ func (ss *Status) LastSubmitted(stratname string) (time.Time, error) {
 	return time.Now().AddDate(-1, 0, 0), fmt.Errorf("No status for strategy name")
 }
 
+func (ss *Status) OpenTrades(stratname string) int {
+	ss.mu.RLock()
+	defer ss.mu.RUnlock()
+
+	if orders, ok := ss.states.Strategies[stratname]; ok {
+		return len(orders.WrappedOrders)
+	} else {
+		return 0
+	}
+}
+
 func (ss *Status) NextPFID() int {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
