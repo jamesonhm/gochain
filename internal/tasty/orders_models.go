@@ -99,19 +99,21 @@ type OrderPriceComponent struct {
 }
 
 type NewOrder struct {
-	TimeInForce  TimeInForce   `json:"time-in-force"`
-	GtcDate      string        `json:"gtc-date"`
-	OrderType    OrderType     `json:"order-type"`
-	StopTrigger  float64       `json:"stop-trigger,omitempty"`
-	Price        string        `json:"price,omitempty"`
-	PriceEffect  PriceEffect   `json:"price-effect,omitempty"`
-	Value        float64       `json:"value,omitempty"`
-	ValueEffect  PriceEffect   `json:"value-effect,omitempty"`
-	Source       string        `json:"source,omitempty"`
-	PartitionKey string        `json:"partition-key,omitempty"`
-	PreflightID  string        `json:"preflight-id,omitempty"`
-	Legs         []NewOrderLeg `json:"legs"`
-	Rules        NewOrderRules `json:"rules,omitempty"`
+	TimeInForce        TimeInForce   `json:"time-in-force"`
+	GtcDate            string        `json:"gtc-date"`
+	OrderType          OrderType     `json:"order-type"`
+	StopTrigger        float64       `json:"stop-trigger,omitempty"`
+	Price              string        `json:"price,omitempty"`
+	PriceEffect        PriceEffect   `json:"price-effect,omitempty"`
+	Value              float64       `json:"value,omitempty"`
+	ValueEffect        PriceEffect   `json:"value-effect,omitempty"`
+	AutomatedSource    bool          `json:"automated-source"`
+	ExternalIdentifier string        `json:"external-identifier"`
+	Source             string        `json:"source,omitempty"`
+	PartitionKey       string        `json:"partition-key,omitempty"`
+	PreflightID        string        `json:"preflight-id,omitempty"`
+	Legs               []NewOrderLeg `json:"legs"`
+	Rules              NewOrderRules `json:"rules,omitempty"`
 }
 
 type NewOrderLeg struct {

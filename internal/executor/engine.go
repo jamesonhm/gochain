@@ -20,15 +20,15 @@ type Engine struct {
 	apiClient      *tasty.TastyAPI
 	acctNum        string
 	optionProvider *dxlink.DxLinkClient
-	stratStates    OrderSubmitter
-	orderQueue     chan tasty.NewOrder
+	stratStates    StatusTracker
+	semaphore      chan struct{}
 	wg             sync.WaitGroup
 	workerCount    int
 	ctx            context.Context
 	liveOrder      bool
 }
 
-type OrderSubmitter interface {
+type StatusTracker interface {
 	SubmitOrder(string, time.Time, string, tasty.Order)
 	NextPFID() int
 }
@@ -37,7 +37,7 @@ func NewEngine(
 	apiClient *tasty.TastyAPI,
 	acctNum string,
 	optionProvider *dxlink.DxLinkClient,
-	stratStates OrderSubmitter,
+	stratStates StatusTracker,
 	workerCount int,
 	ctx context.Context,
 	liveOrder bool,
@@ -48,13 +48,13 @@ func NewEngine(
 		acctNum:        acctNum,
 		optionProvider: optionProvider,
 		stratStates:    stratStates,
-		orderQueue:     make(chan tasty.NewOrder, 10),
+		semaphore:      make(chan struct{}, workerCount),
 		workerCount:    workerCount,
 		ctx:            ctx,
 		liveOrder:      liveOrder,
 	}
 
-	e.startWorkers()
+	//e.startWorkers()
 	return e
 }
 
@@ -71,16 +71,20 @@ func (e *Engine) SubmitOrder(s strategy.Strategy) {
 	order.PreflightID = pfid
 	order.Source = s.Name
 	bytes, _ := json.MarshalIndent(order, "", "\t")
-	fmt.Printf("This is where the order goes into the queue: %+v\n", string(bytes))
+	fmt.Printf("This is where the order goes into the queue:\n%+v\n", string(bytes))
 	//e.stratStates.Submit(s.Name, time.Now().In(dt.TZNY()), pfid, order)
 	//e.stratStates.PPrint()
-	e.orderQueue <- order
+	e.semaphore <- struct{}{}
+	e.wg.Add(1)
+	go e.worker(order, s)
+	e.wg.Wait()
 }
 
 func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) {
 	// for each leg, calculate strike price
 	// create leg(s)
 	// create order struct
+	// TODO: change price/midPrice to decimal type
 	var price float64
 	var effect tasty.PriceEffect
 	var holidays []time.Time
@@ -184,43 +188,56 @@ func (e *Engine) orderFromStrategy(s strategy.Strategy) (tasty.NewOrder, error) 
 	}, nil
 }
 
-func (e *Engine) startWorkers() {
-	for i := 1; i < e.workerCount+1; i++ {
-		e.wg.Add(1)
-		go e.worker(i)
+//func (e *Engine) startWorkers() {
+//	for i := 1; i < e.workerCount+1; i++ {
+//		e.wg.Add(1)
+//		go e.worker(i)
+//	}
+//}
+
+// func (e *Engine) worker(id int) {
+func (e *Engine) worker(newOrder tasty.NewOrder, s strategy.Strategy) {
+	defer func() {
+		<-e.semaphore
+		e.wg.Done()
+	}()
+
+	//for order := range e.semaphore {
+	resp, err := e.apiClient.SubmitOrderDryRun(e.ctx, e.acctNum, &newOrder)
+	if err != nil {
+		slog.Error("(executor.worker) order dry run", "order", newOrder, "error", err)
+		return
 	}
+	orderResp := resp.OrderResponse.Order
+	e.stratStates.SubmitOrder(orderResp.Source, time.Now().In(dt.TZNY()), orderResp.PreflightID, orderResp)
+
+	respbyt, err := json.MarshalIndent(resp, "", "  ")
+	if err != nil {
+		slog.Error("(executor.worker) unable to marshal dry run response", "error", err)
+	} else {
+		fmt.Println(string(respbyt))
+	}
+	if len(resp.OrderResponse.Warnings) > 0 {
+		slog.Warn(
+			"(executor.worker) order dry run, will not go live",
+			"warnings", resp.OrderResponse.Warnings,
+		)
+		return
+	}
+	// TODO: do something with the returned buying power effect or fees?
+
+	// Update qty's for strat Allocation
+
+	if e.liveOrder {
+		resp, err = e.apiClient.SubmitOrder(e.ctx, e.acctNum, &newOrder)
+		if err != nil {
+			slog.Error("(executor.worker) order submit", "order", newOrder, "error", err)
+			return
+		}
+	}
+	//}
 }
 
-func (e *Engine) worker(id int) {
-	defer e.wg.Done()
-
-	for order := range e.orderQueue {
-		resp, err := e.apiClient.SubmitOrderDryRun(e.ctx, e.acctNum, &order)
-		if err != nil {
-			slog.Error("(executor.worker) order dry run", "workerid", id, "order", order, "error", err)
-			continue
-		}
-		orderResp := resp.OrderResponse.Order
-		e.stratStates.SubmitOrder(orderResp.Source, time.Now().In(dt.TZNY()), orderResp.PreflightID, orderResp)
-
-		respbyt, err := json.MarshalIndent(resp, "", "  ")
-		if err != nil {
-			slog.Error("(executor.worker) unable to marshal dry run response", "workerid", id, "error", err)
-		} else {
-			fmt.Println(string(respbyt))
-		}
-		if len(resp.OrderResponse.Warnings) > 0 {
-			slog.Warn("executor.worker) order dry run", "workerid", id, "warnings", resp.OrderResponse.Warnings)
-			continue
-		}
-		// TODO: do something with the returned buying power effect or fees?
-
-		if e.liveOrder {
-			resp, err = e.apiClient.SubmitOrder(e.ctx, e.acctNum, &order)
-			if err != nil {
-				slog.Error("(executor.worker) order submit", "workerid", id, "order", order, "error", err)
-				continue
-			}
-		}
-	}
+func allocationMultiple(s strategy.Strategy, orderResp tasty.OrderResponse) int {
+	return 0
 }

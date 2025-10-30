@@ -26,6 +26,7 @@ type Engine struct {
 
 type StatusTracker interface {
 	LastSubmitted(string) (time.Time, error)
+	OpenTrades(string) int
 }
 
 func NewEngine(
